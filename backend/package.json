@@ -1,0 +1,38 @@
+{
+  "name": "schemesetu-backend",
+  "version": "1.0.0",
+  "description": "SchemeSetu AI-driven government scheme matching and financial assistance backend for Smart India Hackathon 2026",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "schemesetu",
+    "sih2026",
+    "government-schemes",
+    "msme",
+    "financial-inclusion",
+    "express",
+    "recommendation"
+  ],
+  "author": "SchemeSetu Engineering Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.16",
+    "pdfkit": "^0.15.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "scheme-001",
+    "name": "Pradhan Mantri Mudra Yojana (PMMY) - Tarun",
+    "category": "Micro/Small Enterprise Loan",
+    "projectTypes": ["manufacturing", "services", "trading", "food processing", "retail", "agriculture allied"],
+    "interestRate": 8.5,
+    "minLoan": 500000,
+    "maxLoan": 1000000,
+    "tenure": "60 months",
+    "tenureMonths": 60,
+    "moratorium": "6 months",
+    "moratoriumMonths": 6,
+    "description": "Funding for established small businesses aiming for growth and expansion up to 10 Lakhs without collateral requirement.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 1000000,
+      "education": ["10th pass", "12th pass", "graduate", "post graduate", "diploma", "any"],
+      "locations": ["All India", "Tamil Nadu", "Andhra Pradesh", "Karnataka", "Maharashtra", "Telangana", "Delhi", "Gujarat"]
+    }
+  },
+  {
+    "id": "scheme-002",
+    "name": "Pradhan Mantri Mudra Yojana (PMMY) - Kishore",
+    "category": "Micro Enterprise Loan",
+    "projectTypes": ["manufacturing", "services", "trading", "food processing", "handicrafts", "textiles", "retail"],
+    "interestRate": 7.5,
+    "minLoan": 50000,
+    "maxLoan": 500000,
+    "tenure": "60 months",
+    "tenureMonths": 60,
+    "moratorium": "6 months",
+    "moratoriumMonths": 6,
+    "description": "Provides financial support from Rs. 50,000 up to Rs. 5 Lakhs for developing and growing micro business units.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 500000,
+      "education": ["8th pass", "10th pass", "12th pass", "graduate", "diploma", "any"],
+      "locations": ["All India", "Tamil Nadu", "Andhra Pradesh", "Karnataka", "Maharashtra", "Telangana", "Delhi", "Kerala", "Uttar Pradesh"]
+    }
+  },
+  {
+    "id": "scheme-003",
+    "name": "Pradhan Mantri Mudra Yojana (PMMY) - Shishu",
+    "category": "Micro Enterprise Seed Loan",
+    "projectTypes": ["retail", "street vending", "handicrafts", "services", "food processing", "agriculture allied"],
+    "interestRate": 6.5,
+    "minLoan": 10000,
+    "maxLoan": 50000,
+    "tenure": "36 months",
+    "tenureMonths": 36,
+    "moratorium": "3 months",
+    "moratoriumMonths": 3,
+    "description": "Targeted at early-stage small entrepreneurs and street vendors needing startup working capital up to Rs. 50,000.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 300000,
+      "education": ["none", "primary", "8th pass", "10th pass", "any"],
+      "locations": ["All India", "Tamil Nadu", "Andhra Pradesh", "Karnataka", "Maharashtra", "Delhi", "West Bengal", "Bihar", "Rajasthan"]
+    }
+  },
+  {
+    "id": "scheme-004",
+    "name": "Prime Minister Employment Generation Programme (PMEGP)",
+    "category": "Credit-Linked Subsidy Scheme",
+    "projectTypes": ["manufacturing", "services", "food processing", "agro-based industry", "textiles", "engineering"],
+    "interestRate": 9.0,
+    "minLoan": 100000,
+    "maxLoan": 2500000,
+    "tenure": "84 months",
+    "tenureMonths": 84,
+    "moratorium": "6 months",
+    "moratoriumMonths": 6,
+    "description": "Credit-linked subsidy program to generate self-employment ventures in non-farm sector with capital subsidies between 15% to 35%.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 600000,
+      "education": ["8th pass", "10th pass", "12th pass", "graduate", "post graduate", "diploma"],
+      "locations": ["All India", "Andhra Pradesh", "Tamil Nadu", "Karnataka", "Maharashtra", "Madhya Pradesh", "Odisha"]
+    }
+  },
+  {
+    "id": "scheme-005",
+    "name": "PM SVANidhi (Street Vendor's AtmaNirbhar Nidhi)",
+    "category": "Working Capital Microcredit",
+    "projectTypes": ["street vending", "food stall", "retail", "services", "food processing"],
+    "interestRate": 7.0,
+    "minLoan": 10000,
+    "maxLoan": 50000,
+    "tenure": "12 months",
+    "tenureMonths": 12,
+    "moratorium": "0 months",
+    "moratoriumMonths": 0,
+    "description": "Special micro-credit facility providing affordable working capital loans to urban and peri-urban street vendors with 7% interest subsidy on timely repayment.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 250000,
+      "education": ["none", "primary", "any"],
+      "locations": ["All India", "Andhra Pradesh", "Tamil Nadu", "Karnataka", "Maharashtra", "Delhi", "Gujarat", "Telangana"]
+    }
+  },
+  {
+    "id": "scheme-006",
+    "name": "Stand-Up India Scheme",
+    "category": "SC/ST & Women Entrepreneurship Loan",
+    "projectTypes": ["manufacturing", "services", "trading", "food processing", "agri-business"],
+    "interestRate": 8.0,
+    "minLoan": 1000000,
+    "maxLoan": 10000000,
+    "tenure": "84 months",
+    "tenureMonths": 84,
+    "moratorium": "18 months",
+    "moratoriumMonths": 18,
+    "description": "Facilitates bank loans between 10 Lakhs and 1 Crore to at least one SC or ST borrower and at least one woman borrower per bank branch.",
+    "eligibility": {
+      "minIncome": 0,
+      "maxIncome": 1500000,
+      "education": ["10th pass", "12th pass", "graduate", "diploma", "any"],
+      "locations": ["All India", "Tamil Nadu", "Andhra Pradesh", "Karnataka", "Maharashtra", "Delhi", "Punjab", "Haryana"]
+    }
+  }
+]

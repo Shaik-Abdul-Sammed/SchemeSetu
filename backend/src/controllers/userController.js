@@ -42,7 +42,7 @@ async function registerUser(req, res, next) {
       if (user.email === normalizedEmail) {
         return res.status(400).json({
           success: false,
-          error: 'An account with this email already exists.'
+          error: 'An account with this email address already exists.'
         });
       }
     }
@@ -147,7 +147,31 @@ async function loginUser(req, res, next) {
   }
 }
 
+/**
+ * GET /api/v1/users/me
+ */
+function getMe(req, res) {
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: 'Unauthorized.' });
+  }
+
+  const user = usersStore.get(req.user.id);
+  if (!user) {
+    return res.status(404).json({ success: false, error: 'User profile not found.' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    }
+  });
+}
+
 module.exports = {
   registerUser,
-  loginUser
+  loginUser,
+  getMe
 };

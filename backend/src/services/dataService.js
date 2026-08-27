@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const schemesData = require('../data/schemesData');
 
 // Fallback Schemes Dataset (guaranteed available even if files are missing)
 const FALLBACK_SCHEMES = [
@@ -125,17 +126,14 @@ const FALLBACK_SCHEMES = [
   }
 ];
 
-// Fallback Partners Dataset (guaranteed available even if files are missing)
+// Fallback Partners Dataset
 const FALLBACK_PARTNERS = [
   {
     id: 'partner-001',
     name: 'State Bank of India - MSME Development Branch',
     type: 'Public Sector Bank',
-    coordinates: {
-      lat: 13.0827,
-      lng: 80.2707
-    },
-    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-004', 'scheme-005', 'scheme-006'],
+    coordinates: { lat: 13.0827, lng: 80.2707 },
+    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-004', 'scheme-005', 'scheme-006', 'pm-kisan', 'ayushman-bharat'],
     fundAvailable: true,
     npaStatus: 'low',
     address: 'No. 22, Rajaji Salai, George Town, Chennai, Tamil Nadu 600001',
@@ -145,11 +143,8 @@ const FALLBACK_PARTNERS = [
     id: 'partner-002',
     name: 'Canara Bank - Micro & SME Center',
     type: 'Public Sector Bank',
-    coordinates: {
-      lat: 13.0569,
-      lng: 80.2425
-    },
-    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-005'],
+    coordinates: { lat: 13.0569, lng: 80.2425 },
+    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-005', 'pm-kisan'],
     fundAvailable: true,
     npaStatus: 'low',
     address: '563, Anna Salai, Teynampet, Chennai, Tamil Nadu 600018',
@@ -159,10 +154,7 @@ const FALLBACK_PARTNERS = [
     id: 'partner-003',
     name: 'Indian Bank - Entrepreneurship Support Hub',
     type: 'Public Sector Bank',
-    coordinates: {
-      lat: 13.0418,
-      lng: 80.2341
-    },
+    coordinates: { lat: 13.0418, lng: 80.2341 },
     schemes: ['scheme-002', 'scheme-003', 'scheme-004', 'scheme-005'],
     fundAvailable: true,
     npaStatus: 'medium',
@@ -173,10 +165,7 @@ const FALLBACK_PARTNERS = [
     id: 'partner-004',
     name: 'SIDBI Financial Services Hub',
     type: 'Development Financial Institution',
-    coordinates: {
-      lat: 13.0112,
-      lng: 80.2220
-    },
+    coordinates: { lat: 13.0112, lng: 80.2220 },
     schemes: ['scheme-001', 'scheme-004', 'scheme-006'],
     fundAvailable: true,
     npaStatus: 'low',
@@ -187,11 +176,8 @@ const FALLBACK_PARTNERS = [
     id: 'partner-005',
     name: 'NABARD District Development Office - Vijayawada',
     type: 'Rural Development Institution',
-    coordinates: {
-      lat: 16.5062,
-      lng: 80.6480
-    },
-    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-004', 'scheme-005'],
+    coordinates: { lat: 16.5062, lng: 80.6480 },
+    schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-004', 'scheme-005', 'pm-kisan'],
     fundAvailable: true,
     npaStatus: 'low',
     address: 'MG Road, Governorpet, Vijayawada, Andhra Pradesh 520002',
@@ -201,10 +187,7 @@ const FALLBACK_PARTNERS = [
     id: 'partner-006',
     name: 'Bank of Baroda MSME Center - Bengaluru',
     type: 'Public Sector Bank',
-    coordinates: {
-      lat: 12.9716,
-      lng: 77.5946
-    },
+    coordinates: { lat: 12.9716, lng: 77.5946 },
     schemes: ['scheme-001', 'scheme-002', 'scheme-003', 'scheme-004', 'scheme-006'],
     fundAvailable: true,
     npaStatus: 'low',
@@ -213,12 +196,8 @@ const FALLBACK_PARTNERS = [
   }
 ];
 
-// In-memory dynamic additions (e.g. newly registered partners)
 let registeredPartners = [];
 
-/**
- * Normalizes a raw scheme object across schema variations.
- */
 function normalizeScheme(raw, index) {
   if (!raw || typeof raw !== 'object') return null;
 
@@ -226,125 +205,74 @@ function normalizeScheme(raw, index) {
   const name = raw.name || raw.schemeName || raw.scheme_name || 'Government Assistance Scheme';
   const category = raw.category || raw.schemeCategory || raw.scheme_category || 'General';
 
-  const rawProjectTypes = raw.projectTypes || raw.project_types || raw.projectType || raw.project_type || [];
+  const rawProjectTypes = raw.projectTypes || raw.project_types || raw.projectType || raw.project_type || ['all'];
   const projectTypes = Array.isArray(rawProjectTypes)
     ? rawProjectTypes.map(p => String(p).toLowerCase().trim())
-    : (typeof rawProjectTypes === 'string' ? [rawProjectTypes.toLowerCase().trim()] : []);
+    : (typeof rawProjectTypes === 'string' ? [rawProjectTypes.toLowerCase().trim()] : ['all']);
 
-  const interestRate = Number(
-    raw.interestRate !== undefined ? raw.interestRate :
-    raw.interest_rate !== undefined ? raw.interest_rate :
-    raw.annualRate !== undefined ? raw.annualRate : 7.0
-  );
-
-  const minLoan = Number(
-    raw.minLoan !== undefined ? raw.minLoan :
-    raw.min_loan !== undefined ? raw.min_loan :
-    raw.minAmount !== undefined ? raw.minAmount : 10000
-  );
-
-  const maxLoan = Number(
-    raw.maxLoan !== undefined ? raw.maxLoan :
-    raw.max_loan !== undefined ? raw.max_loan :
-    raw.maxAmount !== undefined ? raw.maxAmount : 1000000
-  );
-
-  let tenureMonths = raw.tenureMonths !== undefined ? Number(raw.tenureMonths) :
-    raw.tenure_months !== undefined ? Number(raw.tenure_months) : null;
-  let tenure = raw.tenure || (tenureMonths ? `${tenureMonths} months` : '60 months');
-  if (tenureMonths === null) {
-    const match = String(tenure).match(/(\d+)/);
-    tenureMonths = match ? parseInt(match[1], 10) : 60;
-  }
-
-  let moratoriumMonths = raw.moratoriumMonths !== undefined ? Number(raw.moratoriumMonths) :
-    raw.moratorium_months !== undefined ? Number(raw.moratorium_months) : null;
-  let moratorium = raw.moratorium || (moratoriumMonths !== null ? `${moratoriumMonths} months` : '6 months');
-  if (moratoriumMonths === null) {
-    const match = String(moratorium).match(/(\d+)/);
-    moratoriumMonths = match ? parseInt(match[1], 10) : 0;
-  }
-
-  const description = raw.description || raw.desc || raw.summary || '';
+  const interestRate = Number(raw.interestRate !== undefined ? raw.interestRate : 7.0);
+  const minLoan = Number(raw.minLoan !== undefined ? raw.minLoan : 0);
+  const maxLoan = Number(raw.maxLoan !== undefined ? raw.maxLoan : (raw.maxIncome || 1000000));
+  const tenureMonths = Number(raw.tenureMonths || 60);
+  const moratoriumMonths = Number(raw.moratoriumMonths || 0);
+  const description = raw.description || raw.summary || '';
 
   const rawEligibility = raw.eligibility || {};
-  const minIncome = Number(
-    rawEligibility.minIncome !== undefined ? rawEligibility.minIncome :
-    rawEligibility.min_income !== undefined ? rawEligibility.min_income :
-    raw.minIncome !== undefined ? raw.minIncome : 0
-  );
-  const maxIncome = Number(
-    rawEligibility.maxIncome !== undefined ? rawEligibility.maxIncome :
-    rawEligibility.max_income !== undefined ? rawEligibility.max_income :
-    raw.maxIncome !== undefined ? raw.maxIncome : 500000
-  );
+  const minIncome = Number(rawEligibility.minIncome !== undefined ? rawEligibility.minIncome : 0);
+  const maxIncome = Number(rawEligibility.maxIncome !== undefined ? rawEligibility.maxIncome : (raw.maxIncome || 500000));
 
-  const rawEducation = rawEligibility.education || raw.education || [];
+  const rawEducation = rawEligibility.education || raw.education || ['any'];
   const education = Array.isArray(rawEducation)
     ? rawEducation.map(e => String(e).toLowerCase().trim())
-    : (typeof rawEducation === 'string' ? [rawEducation.toLowerCase().trim()] : []);
+    : [String(rawEducation).toLowerCase().trim()];
 
-  const rawLocations = rawEligibility.locations || rawEligibility.location || raw.locations || raw.location || ['All India'];
+  const rawLocations = rawEligibility.locations || raw.locations || [raw.state || 'All India'];
   const locations = Array.isArray(rawLocations)
     ? rawLocations.map(l => String(l).trim())
-    : (typeof rawLocations === 'string' ? [rawLocations.trim()] : ['All India']);
+    : [String(rawLocations).trim()];
 
   return {
     id: String(id),
     name: String(name),
     category: String(category),
     projectTypes,
-    interestRate: isNaN(interestRate) ? 7.0 : interestRate,
-    minLoan: isNaN(minLoan) ? 0 : minLoan,
-    maxLoan: isNaN(maxLoan) ? 1000000 : maxLoan,
-    tenure: String(tenure),
-    tenureMonths: isNaN(tenureMonths) ? 60 : tenureMonths,
-    moratorium: String(moratorium),
-    moratoriumMonths: isNaN(moratoriumMonths) ? 0 : moratoriumMonths,
+    interestRate,
+    minLoan,
+    maxLoan,
+    tenureMonths,
+    moratoriumMonths,
     description: String(description),
     eligibility: {
-      minIncome: isNaN(minIncome) ? 0 : minIncome,
-      maxIncome: isNaN(maxIncome) ? 500000 : maxIncome,
+      minIncome,
+      maxIncome,
       education,
       locations
     }
   };
 }
 
-/**
- * Normalizes a raw partner object across schema variations.
- */
 function normalizePartner(raw, index) {
   if (!raw || typeof raw !== 'object') return null;
 
-  const id = raw.id || raw.partnerId || raw.partner_id || `partner-${String(index + 1).padStart(3, '0')}`;
-  const name = raw.name || raw.partnerName || raw.partner_name || 'Financial Partner';
-  const type = raw.type || raw.partnerType || raw.partner_type || 'Bank';
+  const id = raw.id || raw.partnerId || `partner-${String(index + 1).padStart(3, '0')}`;
+  const name = raw.name || raw.partnerName || 'Financial Partner';
+  const type = raw.type || 'Bank';
 
   let coordinates = { lat: 0, lng: 0 };
   if (raw.coordinates && typeof raw.coordinates === 'object') {
-    coordinates.lat = Number(raw.coordinates.lat || raw.coordinates.latitude || 0);
-    coordinates.lng = Number(raw.coordinates.lng || raw.coordinates.longitude || 0);
+    coordinates.lat = Number(raw.coordinates.lat || 0);
+    coordinates.lng = Number(raw.coordinates.lng || 0);
   } else if (raw.lat !== undefined && raw.lng !== undefined) {
     coordinates.lat = Number(raw.lat);
     coordinates.lng = Number(raw.lng);
-  } else if (raw.latitude !== undefined && raw.longitude !== undefined) {
-    coordinates.lat = Number(raw.latitude);
-    coordinates.lng = Number(raw.longitude);
   }
 
-  const rawSchemes = raw.schemes || raw.supportedSchemes || raw.supported_schemes || [];
-  const schemes = Array.isArray(rawSchemes)
-    ? rawSchemes.map(s => String(s).trim())
-    : (typeof rawSchemes === 'string' ? [rawSchemes.trim()] : []);
-
-  const fundAvailable = raw.fundAvailable !== undefined ? Boolean(raw.fundAvailable) :
-    raw.fund_available !== undefined ? Boolean(raw.fund_available) :
-    raw.fundsAvailable !== undefined ? Boolean(raw.fundsAvailable) : true;
-
-  const npaStatus = String(raw.npaStatus || raw.npa_status || 'low').toLowerCase().trim();
-  const address = raw.address || raw.location || 'Local Branch';
-  const phone = raw.phone || raw.contact || raw.mobile || 'N/A';
+  const rawSchemes = raw.schemes || [];
+  const schemes = Array.isArray(rawSchemes) ? rawSchemes.map(s => String(s).trim()) : [];
+  const fundAvailable = raw.fundAvailable !== undefined ? Boolean(raw.fundAvailable) : true;
+  const npaStatus = String(raw.npaStatus || 'low').toLowerCase().trim();
+  const address = raw.address || 'Local Branch';
+  const phone = raw.phone || 'N/A';
 
   return {
     id: String(id),
@@ -359,117 +287,51 @@ function normalizePartner(raw, index) {
   };
 }
 
-/**
- * Loads and normalizes schemes dataset.
- */
 function loadSchemes() {
-  const possiblePaths = [
-    path.resolve(__dirname, '../../database/seeders/data/schemes.json'),
-    path.resolve(__dirname, '../../../database/seeders/data/schemes.json'),
-    path.resolve(process.cwd(), 'database/seeders/data/schemes.json'),
-    path.resolve(process.cwd(), '../database/seeders/data/schemes.json')
-  ];
+  const datasetMap = new Map();
 
-  for (const filePath of possiblePaths) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const rawData = fs.readFileSync(filePath, 'utf8');
-        const parsed = JSON.parse(rawData);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map(normalizeScheme).filter(Boolean);
-          if (normalized.length > 0) {
-            return normalized;
-          }
-        }
-      }
-    } catch (err) {
-      console.warn(`[DataService] Note: Unable to parse schemes file at ${filePath}: ${err.message}`);
+  FALLBACK_SCHEMES.map(normalizeScheme).forEach(s => {
+    if (s) datasetMap.set(s.id.toLowerCase(), s);
+  });
+
+  schemesData.map(normalizeScheme).forEach(s => {
+    if (s && !datasetMap.has(s.id.toLowerCase())) {
+      datasetMap.set(s.id.toLowerCase(), s);
     }
-  }
+  });
 
-  return FALLBACK_SCHEMES.map(normalizeScheme);
+  return Array.from(datasetMap.values());
 }
 
-/**
- * Loads and normalizes partners dataset including any dynamically registered partners.
- */
 function loadPartners() {
-  let partners = [];
-  const possiblePaths = [
-    path.resolve(__dirname, '../../database/seeders/data/partners.json'),
-    path.resolve(__dirname, '../../../database/seeders/data/partners.json'),
-    path.resolve(process.cwd(), 'database/seeders/data/partners.json'),
-    path.resolve(process.cwd(), '../database/seeders/data/partners.json')
-  ];
-
-  let loadedFromFile = false;
-  for (const filePath of possiblePaths) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const rawData = fs.readFileSync(filePath, 'utf8');
-        const parsed = JSON.parse(rawData);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map(normalizePartner).filter(Boolean);
-          if (normalized.length > 0) {
-            partners = normalized;
-            loadedFromFile = true;
-            break;
-          }
-        }
-      }
-    } catch (err) {
-      console.warn(`[DataService] Note: Unable to parse partners file at ${filePath}: ${err.message}`);
-    }
-  }
-
-  if (!loadedFromFile) {
-    partners = FALLBACK_PARTNERS.map(normalizePartner);
-  }
-
-  // Combine with in-memory registered partners (ensuring unique IDs)
+  let partners = FALLBACK_PARTNERS.map(normalizePartner);
   const existingIds = new Set(partners.map(p => p.id));
   for (const reg of registeredPartners) {
     if (!existingIds.has(reg.id)) {
       partners.push(reg);
     }
   }
-
   return partners;
 }
 
-/**
- * Retrieve all schemes.
- */
 function getSchemes() {
   return loadSchemes();
 }
 
-/**
- * Retrieve a scheme by its unique ID.
- */
 function getSchemeById(id) {
   const schemes = loadSchemes();
   return schemes.find(s => String(s.id).toLowerCase() === String(id).toLowerCase()) || null;
 }
 
-/**
- * Retrieve all partners.
- */
 function getPartners() {
   return loadPartners();
 }
 
-/**
- * Retrieve a partner by ID.
- */
 function getPartnerById(id) {
   const partners = loadPartners();
   return partners.find(p => String(p.id).toLowerCase() === String(id).toLowerCase()) || null;
 }
 
-/**
- * Register a new partner in memory.
- */
 function addPartner(partnerData) {
   const normalized = normalizePartner(partnerData, registeredPartners.length + 100);
   if (!normalized.id || normalized.id.startsWith('partner-')) {

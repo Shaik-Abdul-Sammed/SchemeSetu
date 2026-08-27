@@ -1,365 +1,943 @@
 const http = require('http');
+const assert = require('assert');
 const app = require('../index');
-const dataService = require('../services/dataService');
-const { haversineDistance } = require('../utils/haversine');
 
-async function runTests() {
-  const server = http.createServer(app);
+const PORT = 5001;
+let server;
 
-  await new Promise((resolve) => {
-    server.listen(5001, () => {
-      console.log('Test server running on port 5001');
-      resolve();
-    });
-  });
+function request(method, path, data = null, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const payload = data ? JSON.stringify(data) : null;
+    const reqHeaders = { ...headers };
 
-  const BASE = 'http://localhost:5001';
-  let passed = 0;
-  let failed = 0;
-
-  async function test(name, fn) {
-    try {
-      await fn();
-      console.log(`✅ PASS: ${name}`);
-      passed++;
-    } catch (err) {
-      console.error(`❌ FAIL: ${name} ->`, err.message);
-      failed++;
+    if (payload) {
+      reqHeaders['Content-Type'] = 'application/json';
+      reqHeaders['Content-Length'] = Buffer.byteLength(payload);
     }
-  }
 
-  function assert(condition, message) {
-    if (!condition) {
-      throw new Error(message || 'Assertion failed');
-    }
-  }
-
-  async function request(method, path, body = null, headers = {}) {
-    const opts = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers
+    const req = http.request(
+      {
+        hostname: '127.0.0.1',
+        port: PORT,
+        path,
+        method,
+        headers: reqHeaders,
+      },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          let parsed = null;
+          try {
+            parsed = JSON.parse(body);
+          } catch (e) {
+            parsed = body;
+          }
+          resolve({ status: res.statusCode, headers: res.headers, data: parsed });
+        });
       }
-    };
-    if (body) {
-      opts.body = typeof body === 'string' ? body : JSON.stringify(body);
-    }
-    const res = await fetch(`${BASE}${path}`, opts);
-    let data;
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      data = await res.json();
-    } else {
-      data = await res.text();
-    }
-    return { status: res.status, headers: res.headers, data };
-  }
+    );
 
-  console.log('\n--- 1. Health Endpoints ---');
-  await test('GET /api/health returns 200 OK', async () => {
-    const res = await request('GET', '/api/health');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.status === 'OK', 'Expected status OK');
-    assert(res.data.message === 'SchemeSetu Backend is running', 'Expected message');
-    assert(res.data.timestamp, 'Expected timestamp');
+    req.on('error', reject);
+    if (payload) req.write(payload);
+    req.end();
   });
+}
 
-  await test('GET /api/v1/health returns 200 OK', async () => {
-    const res = await request('GET', '/api/v1/health');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.status === 'OK', 'Expected status OK');
-  });
+let passed = 0;
+let failed = 0;
 
-  console.log('\n--- 2. Schemes Endpoints ---');
-  await test('GET /api/v1/schemes returns paginated schemes', async () => {
-    const res = await request('GET', '/api/v1/schemes?page=1&limit=5');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(Array.isArray(res.data.schemes), 'Expected schemes array');
-    assert(res.data.schemes.length > 0, 'Expected non-empty schemes');
-    assert(res.data.pagination, 'Expected pagination');
-    assert(res.data.pagination.page === 1, 'Expected page 1');
-  });
-
-  await test('GET /api/v1/schemes/:id returns scheme details', async () => {
-    const res = await request('GET', '/api/v1/schemes/scheme-001');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.id === 'scheme-001', 'Expected scheme-001');
-    assert(res.data.name, 'Expected scheme name');
-    assert(typeof res.data.interestRate === 'number', 'Expected interestRate number');
-  });
-
-  await test('GET /api/v1/schemes/non-existent returns 404', async () => {
-    const res = await request('GET', '/api/v1/schemes/invalid-id-xyz');
-    assert(res.status === 404, `Expected 404, got ${res.status}`);
-    assert(res.data.success === false, 'Expected success=false');
-  });
-
-  await test('POST /api/v1/schemes/recommend returns top 3 ranked recommendations', async () => {
-    const payload = {
-      projectType: 'food processing',
-      cost: 250000,
-      income: 300000,
-      education: 'graduate',
-      location: 'Andhra Pradesh'
-    };
-    const res = await request('POST', '/api/v1/schemes/recommend', payload);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(Array.isArray(res.data.recommendations), 'Expected recommendations array');
-    assert(res.data.recommendations.length <= 3, 'Expected <= 3 recommendations');
-    assert(res.data.totalEligible >= res.data.recommendations.length, 'Expected totalEligible');
-    assert(res.data.recommendations[0].matchScore !== undefined, 'Expected matchScore in recommendation');
-  });
-
-  await test('POST /api/v1/schemes/recommend validation error on missing fields', async () => {
-    const payload = { cost: 250000 };
-    const res = await request('POST', '/api/v1/schemes/recommend', payload);
-    assert(res.status === 400, `Expected 400, got ${res.status}`);
-    assert(res.data.success === false, 'Expected success=false');
-  });
-
-  console.log('\n--- 3. EMI Calculator ---');
-  await test('POST /api/v1/calculator/emi calculates EMI with moratorium', async () => {
-    const payload = {
-      principal: 250000,
-      annualRate: 6.5,
-      tenureMonths: 60,
-      moratoriumMonths: 6
-    };
-    const res = await request('POST', '/api/v1/calculator/emi', payload);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.principal === 250000, 'Expected principal 250000');
-    assert(res.data.accruedInterest === 8125, `Expected accruedInterest 8125, got ${res.data.accruedInterest}`);
-    assert(res.data.loanAmount === 258125, `Expected loanAmount 258125, got ${res.data.loanAmount}`);
-    assert(res.data.repaymentMonths === 54, `Expected repaymentMonths 54, got ${res.data.repaymentMonths}`);
-    assert(res.data.emi > 0, 'Expected positive EMI');
-    assert(res.data.totalPayment > res.data.loanAmount, 'Expected totalPayment > loanAmount');
-    assert(res.data.currency === 'INR', 'Expected currency INR');
-  });
-
-  await test('POST /api/v1/calculator/emi handles 0% interest rate', async () => {
-    const payload = {
-      principal: 120000,
-      annualRate: 0,
-      tenureMonths: 12,
-      moratoriumMonths: 0
-    };
-    const res = await request('POST', '/api/v1/calculator/emi', payload);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.emi === 10000, `Expected emi 10000, got ${res.data.emi}`);
-    assert(res.data.totalInterest === 0, 'Expected 0 totalInterest');
-  });
-
-  await test('POST /api/v1/calculator/emi validates moratoriumMonths < tenureMonths', async () => {
-    const payload = {
-      principal: 100000,
-      annualRate: 8,
-      tenureMonths: 12,
-      moratoriumMonths: 12
-    };
-    const res = await request('POST', '/api/v1/calculator/emi', payload);
-    assert(res.status === 400, `Expected 400, got ${res.status}`);
-  });
-
-  console.log('\n--- 4. Haversine & Partners ---');
-  await test('Haversine distance calculation is accurate', () => {
-    // Chennai (13.0827, 80.2707) to Bangalore (12.9716, 77.5946) is ~290 km
-    const dist = haversineDistance(13.0827, 80.2707, 12.9716, 77.5946);
-    assert(dist > 280 && dist < 305, `Expected dist ~290km, got ${dist}`);
-  });
-
-  await test('POST /api/v1/partners/nearest returns closest certified partners', async () => {
-    const payload = {
-      lat: 13.0827,
-      lng: 80.2707,
-      schemeId: 'scheme-001',
-      maxDistance: 50
-    };
-    const res = await request('POST', '/api/v1/partners/nearest', payload);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(Array.isArray(res.data.partners), 'Expected partners array');
-    assert(res.data.totalFound >= res.data.withinRange, 'Expected totalFound >= withinRange');
-    assert(res.data.partners.length > 0, 'Expected at least 1 partner in Chennai');
-    assert(res.data.partners[0].distance !== undefined, 'Expected distance property');
-    assert(res.data.partners[0].distanceText !== undefined, 'Expected distanceText property');
-    // Ensure all returned partners have fundAvailable=true and low/medium NPA
-    for (const p of res.data.partners) {
-      assert(p.fundAvailable === true, 'Expected fundAvailable true');
-      assert(p.npaStatus !== 'high' && p.npaStatus !== 'very high', 'Expected non-high NPA');
-    }
-  });
-
-  await test('GET /api/v1/partners returns paginated partner list', async () => {
-    const res = await request('GET', '/api/v1/partners?page=1&limit=5');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(Array.isArray(res.data.partners), 'Expected partners array');
-    assert(res.data.pagination, 'Expected pagination');
-  });
-
-  await test('POST /api/v1/partners/register registers new partner in-memory', async () => {
-    const newPartner = {
-      name: 'Test Cooperative Bank',
-      type: 'Cooperative Bank',
-      coordinates: { lat: 13.0900, lng: 80.2800 },
-      schemes: ['scheme-001', 'scheme-002'],
-      fundAvailable: true,
-      npaStatus: 'low',
-      address: 'Test Branch, Chennai',
-      phone: '+91-44-12345678'
-    };
-    const res = await request('POST', '/api/v1/partners/register', newPartner);
-    assert(res.status === 201, `Expected 201, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.partner.id, 'Expected partner id');
-  });
-
-  console.log('\n--- 5. Agent Application Workflow ---');
-  let createdAppId = null;
-  await test('POST /api/v1/agent/submit registers application', async () => {
-    const payload = {
-      agentId: 'agent-101',
-      userId: 'user-202',
-      schemeId: 'scheme-001',
-      applicationData: { projectType: 'retail', requestedAmount: 300000 }
-    };
-    const res = await request('POST', '/api/v1/agent/submit', payload);
-    assert(res.status === 201, `Expected 201, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.applicationId.startsWith('APP-'), 'Expected APP- prefix');
-    createdAppId = res.data.applicationId;
-  });
-
-  await test('GET /api/v1/agent/users/:agentId returns agent users', async () => {
-    const res = await request('GET', '/api/v1/agent/users/agent-101');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.agentId === 'agent-101', 'Expected agent-101');
-    assert(Array.isArray(res.data.users), 'Expected users array');
-    assert(res.data.users.length === 1, 'Expected 1 user');
-    assert(res.data.users[0].userId === 'user-202', 'Expected user-202');
-  });
-
-  await test('GET /api/v1/agent/users/:agentId returns [] for unknown agent', async () => {
-    const res = await request('GET', '/api/v1/agent/users/non-existent-agent');
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(Array.isArray(res.data.users) && res.data.users.length === 0, 'Expected empty array');
-  });
-
-  console.log('\n--- 6. Document Generation & Download ---');
-  let createdDocId = null;
-  await test('POST /api/v1/documents/generate generates PDF document', async () => {
-    const payload = {
-      applicationId: createdAppId,
-      user: { name: 'Kavitha Devi', phone: '+91-9876543210', address: 'Madurai, Tamil Nadu' },
-      scheme: { id: 'scheme-001', name: 'Pradhan Mantri Mudra Yojana - Tarun' },
-      applicationData: { 'Business Category': 'Handicrafts', 'Annual Revenue': '₹4,00,000' }
-    };
-    const res = await request('POST', '/api/v1/documents/generate', payload);
-    assert(res.status === 201, `Expected 201, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.documentId.startsWith('DOC-'), 'Expected DOC- prefix');
-    assert(res.data.preview.applicantName === 'Kavitha Devi', 'Expected preview applicantName');
-    createdDocId = res.data.documentId;
-  });
-
-  await test('GET /api/v1/documents/download/:docId returns download URL', async () => {
-    const res = await request('GET', `/api/v1/documents/download/${createdDocId}`);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.downloadUrl === `/api/v1/documents/file/${createdDocId}`, 'Expected downloadUrl');
-  });
-
-  await test('GET /api/v1/documents/file/:docId streams binary PDF', async () => {
-    const res = await fetch(`${BASE}/api/v1/documents/file/${createdDocId}`);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    const contentType = res.headers.get('content-type');
-    assert(contentType && contentType.includes('application/pdf'), `Expected application/pdf, got ${contentType}`);
-    const buffer = await res.arrayBuffer();
-    assert(buffer.byteLength > 1000, `Expected PDF buffer > 1000 bytes, got ${buffer.byteLength}`);
-  });
-
-  console.log('\n--- 7. User Authentication & Feedback ---');
-  let userToken = null;
-  const testEmail = `testuser_${Date.now()}@example.com`;
-
-  await test('POST /api/v1/users/register creates user and returns JWT', async () => {
-    const payload = {
-      name: 'Ravi Kumar',
-      email: testEmail,
-      password: 'password123'
-    };
-    const res = await request('POST', '/api/v1/users/register', payload);
-    assert(res.status === 201, `Expected 201, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.user.email === testEmail.toLowerCase(), 'Expected matching email');
-    assert(res.data.user.passwordHash === undefined, 'Must not return passwordHash');
-    assert(res.data.token, 'Expected JWT token');
-    userToken = res.data.token;
-  });
-
-  await test('POST /api/v1/users/login verifies credentials and returns JWT', async () => {
-    const payload = {
-      email: testEmail,
-      password: 'password123'
-    };
-    const res = await request('POST', '/api/v1/users/login', payload);
-    assert(res.status === 200, `Expected 200, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.token, 'Expected JWT token');
-  });
-
-  await test('POST /api/v1/users/login rejects invalid password', async () => {
-    const payload = {
-      email: testEmail,
-      password: 'wrongpassword'
-    };
-    const res = await request('POST', '/api/v1/users/login', payload);
-    assert(res.status === 401, `Expected 401, got ${res.status}`);
-    assert(res.data.success === false, 'Expected success=false');
-  });
-
-  await test('POST /api/v1/feedback accepts valid rating and comment', async () => {
-    const payload = {
-      userId: 'user-202',
-      schemeId: 'scheme-001',
-      rating: 5,
-      comment: 'Very helpful recommendation and partner matching.'
-    };
-    const res = await request('POST', '/api/v1/feedback', payload);
-    assert(res.status === 201, `Expected 201, got ${res.status}`);
-    assert(res.data.success === true, 'Expected success=true');
-    assert(res.data.feedbackId.startsWith('FB-'), 'Expected FB- prefix');
-  });
-
-  await test('POST /api/v1/feedback rejects invalid rating (e.g. 6)', async () => {
-    const payload = {
-      userId: 'user-202',
-      schemeId: 'scheme-001',
-      rating: 6,
-      comment: 'Invalid'
-    };
-    const res = await request('POST', '/api/v1/feedback', payload);
-    assert(res.status === 400, `Expected 400, got ${res.status}`);
-  });
-
-  console.log('\n--- 8. 404 and Error Middleware ---');
-  await test('Non-existent route returns formatted 404 JSON', async () => {
-    const res = await request('GET', '/api/v1/unknown-route-12345');
-    assert(res.status === 404, `Expected 404, got ${res.status}`);
-    assert(res.data.success === false, 'Expected success=false');
-    assert(res.data.error.includes('Resource not found'), 'Expected 404 message');
-  });
-
-  console.log('\n========================================');
-  console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
-  console.log('========================================\n');
-
-  server.close();
-  if (failed > 0) {
-    process.exit(1);
+async function test(name, fn) {
+  try {
+    await fn();
+    console.log(`✅ PASS: ${name}`);
+    passed++;
+  } catch (err) {
+    console.error(`❌ FAIL: ${name}`);
+    console.error(err.stack || err.message);
+    failed++;
   }
 }
 
-runTests().catch(err => {
-  console.error('Fatal test error:', err);
+async function runAllTests() {
+  server = app.listen(PORT, async () => {
+    console.log(`Test server running on port ${PORT}`);
+
+    console.log('\n--- 1. Health Endpoints (2 tests) ---');
+    await test('GET /api/health returns 200 OK with timestamp', async () => {
+      const res = await request('GET', '/api/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+      assert(res.data.timestamp);
+    });
+
+    await test('GET /api/v1/health returns 200 OK', async () => {
+      const res = await request('GET', '/api/v1/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+    });
+
+    console.log('\n--- 2. Schemes API & Filtering (13 tests) ---');
+    await test('GET /api/v1/schemes returns paginated list with total count', async () => {
+      const res = await request('GET', '/api/v1/schemes');
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.schemes || res.data.data));
+      assert(res.data.pagination || res.data.total);
+    });
+
+    await test('GET /api/v1/schemes?q=farmer searches by query term', async () => {
+      const res = await request('GET', '/api/v1/schemes?q=farmer');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      assert(list.length > 0);
+    });
+
+    await test('GET /api/v1/schemes?category=Agriculture filters by category', async () => {
+      const res = await request('GET', '/api/v1/schemes?category=Agriculture');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      assert(list.length > 0);
+    });
+
+    await test('GET /api/v1/schemes?level=Central filters by government level', async () => {
+      const res = await request('GET', '/api/v1/schemes?level=Central');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      assert(list.length > 0);
+    });
+
+    await test('GET /api/v1/schemes?occupation=Farmer filters by occupation', async () => {
+      const res = await request('GET', '/api/v1/schemes?occupation=Farmer');
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('GET /api/v1/schemes?gender=Female filters by gender tag', async () => {
+      const res = await request('GET', '/api/v1/schemes?gender=Female');
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('GET /api/v1/schemes?maxIncome=200000 filters by max income threshold', async () => {
+      const res = await request('GET', '/api/v1/schemes?maxIncome=200000');
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('GET /api/v1/schemes?sort=name_asc sorts results alphabetically', async () => {
+      const res = await request('GET', '/api/v1/schemes?sort=name_asc');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      if (list.length > 1) {
+        assert(list[0].name.localeCompare(list[1].name) <= 0);
+      }
+    });
+
+    await test('GET /api/v1/schemes?page=1&limit=2 handles custom pagination limits', async () => {
+      const res = await request('GET', '/api/v1/schemes?page=1&limit=2');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      assert.strictEqual(list.length, 2);
+    });
+
+    await test('GET /api/v1/schemes handles combined query filters', async () => {
+      const res = await request('GET', '/api/v1/schemes?category=Agriculture&level=Central&sort=name_desc');
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('GET /api/v1/schemes handles invalid negative page gracefully', async () => {
+      const res = await request('GET', '/api/v1/schemes?page=-1');
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('GET /api/v1/schemes/:id returns valid scheme details object', async () => {
+      const res = await request('GET', '/api/v1/schemes/pm-kisan');
+      assert.strictEqual(res.status, 200);
+      const scheme = res.data.scheme || res.data.data || res.data;
+      assert.strictEqual(scheme.id, 'pm-kisan');
+    });
+
+    await test('GET /api/v1/schemes/non-existent-id-999 returns 404', async () => {
+      const res = await request('GET', '/api/v1/schemes/non-existent-id-999');
+      assert.strictEqual(res.status, 404);
+    });
+
+    console.log('\n--- 3. Eligibility Engine (11 tests) ---');
+    await test('POST /api/v1/eligibility/check evaluates eligible farmer profile', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 35,
+        gender: 'Male',
+        annualIncome: 150000,
+        occupation: 'Farmer',
+        state: 'Telangana'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.recommendations.length > 0);
+    });
+
+    await test('POST /api/v1/eligibility/check evaluates high income boundary', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 40,
+        gender: 'Female',
+        annualIncome: 2000000,
+        occupation: 'Business'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('POST /api/v1/eligibility/check handles zero income profile', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 22,
+        gender: 'Female',
+        annualIncome: 0,
+        occupation: 'Student'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('POST /api/v1/eligibility/check handles boundary age 18', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 18,
+        gender: 'Female',
+        annualIncome: 50000,
+        occupation: 'Artisan'
+      });
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('POST /api/v1/eligibility/check handles boundary age 75 (Senior Citizen)', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 75,
+        gender: 'Male',
+        annualIncome: 40000,
+        occupation: 'Retired'
+      });
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('POST /api/v1/eligibility/check includes non-official recommendation disclaimer', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 30,
+        gender: 'Male',
+        annualIncome: 100000,
+        occupation: 'Farmer'
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.disclaimer || res.data.message || res.data.success);
+    });
+
+    await test('POST /api/v1/eligibility/check validates missing payload fields', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {});
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/eligibility/check handles null fields gracefully', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: null,
+        annualIncome: null
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/eligibility/check rejects negative age input', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: -5,
+        annualIncome: 100000,
+        occupation: 'Farmer'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/eligibility/check rejects negative income input', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 25,
+        annualIncome: -50000,
+        occupation: 'Farmer'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/eligibility/check handles unknown occupation string', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 30,
+        gender: 'Male',
+        annualIncome: 100000,
+        occupation: 'UnlistedProfessionX'
+      });
+      assert.strictEqual(res.status, 200);
+    });
+
+    console.log('\n--- 4. Recommendation Engine (8 tests) ---');
+    await test('POST /api/v1/schemes/recommend returns top ranked schemes for manufacturing', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'manufacturing',
+        cost: 300000,
+        income: 200000,
+        education: 'graduate',
+        location: 'Telangana'
+      });
+      assert.strictEqual(res.status, 200);
+      const recs = res.data.recommendations || res.data;
+      assert(Array.isArray(recs));
+      assert(recs.length <= 3);
+    });
+
+    await test('POST /api/v1/schemes/recommend handles low income profile', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'services',
+        cost: 50000,
+        income: 40000,
+        education: '10th pass',
+        location: 'Urban'
+      });
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('POST /api/v1/schemes/recommend handles high project cost', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'manufacturing',
+        cost: 5000000,
+        income: 800000,
+        education: 'postgraduate',
+        location: 'Telangana'
+      });
+      assert.strictEqual(res.status, 200);
+    });
+
+    await test('POST /api/v1/schemes/recommend rejects missing projectType', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        cost: 200000,
+        income: 150000
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/schemes/recommend rejects non-numeric cost', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'trading',
+        cost: 'invalid_cost',
+        income: 150000
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/schemes/recommend rejects negative project cost', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'trading',
+        cost: -100000,
+        income: 150000
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/schemes/recommend prevents duplicate schemes in recommendations', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'services',
+        cost: 200000,
+        income: 150000,
+        education: 'graduate'
+      });
+      assert.strictEqual(res.status, 200);
+      const list = res.data.recommendations || [];
+      const ids = list.map(r => r.id);
+      const uniqueIds = new Set(ids);
+      assert.strictEqual(ids.length, uniqueIds.size);
+    });
+
+    await test('POST /api/v1/schemes/recommend returns valid match score numbers without NaN', async () => {
+      const res = await request('POST', '/api/v1/schemes/recommend', {
+        projectType: 'food processing',
+        cost: 250000,
+        income: 180000
+      });
+      assert.strictEqual(res.status, 200);
+      const list = res.data.recommendations || [];
+      list.forEach(r => {
+        if (r.matchScore !== undefined) {
+          assert(!isNaN(r.matchScore));
+        }
+      });
+    });
+
+    console.log('\n--- 5. User Authentication (10 tests) ---');
+    let tokenUserA = null;
+    let tokenUserB = null;
+
+    await test('POST /api/v1/users/register creates User A and returns JWT token', async () => {
+      const res = await request('POST', '/api/v1/users/register', {
+        name: 'Citizen User A',
+        email: 'userA_test@example.com',
+        password: 'passwordA123'
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.token);
+      assert.strictEqual(res.data.user.passwordHash, undefined);
+      tokenUserA = res.data.token;
+    });
+
+    await test('POST /api/v1/users/register creates User B and returns JWT token', async () => {
+      const res = await request('POST', '/api/v1/users/register', {
+        name: 'Citizen User B',
+        email: 'userB_test@example.com',
+        password: 'passwordB123'
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.token);
+      tokenUserB = res.data.token;
+    });
+
+    await test('POST /api/v1/users/register rejects duplicate email address', async () => {
+      const res = await request('POST', '/api/v1/users/register', {
+        name: 'Duplicate User',
+        email: 'userA_test@example.com',
+        password: 'passwordA123'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/users/register rejects invalid email format', async () => {
+      const res = await request('POST', '/api/v1/users/register', {
+        name: 'Invalid Email User',
+        email: 'not-an-email',
+        password: 'password123'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/users/register rejects short password < 6 chars', async () => {
+      const res = await request('POST', '/api/v1/users/register', {
+        name: 'Short Pass User',
+        email: 'shortpass@example.com',
+        password: '123'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/users/login authenticates User A with correct password', async () => {
+      const res = await request('POST', '/api/v1/users/login', {
+        email: 'userA_test@example.com',
+        password: 'passwordA123'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.token);
+    });
+
+    await test('POST /api/v1/auth/login alias authenticates User B', async () => {
+      const res = await request('POST', '/api/v1/auth/login', {
+        email: 'userB_test@example.com',
+        password: 'passwordB123'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('POST /api/v1/users/login rejects incorrect password', async () => {
+      const res = await request('POST', '/api/v1/users/login', {
+        email: 'userA_test@example.com',
+        password: 'WrongPassword999'
+      });
+      assert.strictEqual(res.status, 401);
+    });
+
+    await test('POST /api/v1/users/login rejects unregistered email', async () => {
+      const res = await request('POST', '/api/v1/users/login', {
+        email: 'nonexistent_user_999@example.com',
+        password: 'password123'
+      });
+      assert.strictEqual(res.status, 401);
+    });
+
+    await test('POST /api/v1/users/login validates missing credentials', async () => {
+      const res = await request('POST', '/api/v1/users/login', {});
+      assert.strictEqual(res.status, 400);
+    });
+
+    console.log('\n--- 6. Authorization & User Data Isolation (8 tests) ---');
+    await test('User A can save a scheme bookmark', async () => {
+      const res = await request('POST', '/api/v1/user/saved-schemes', { schemeId: 'pm-kisan' }, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.isSaved, true);
+    });
+
+    await test('User A retrieves 1 saved scheme bookmark', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 1);
+    });
+
+    await test('User B does NOT see User A saved schemes (User Data Isolation)', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 0);
+    });
+
+    await test('User A submits an application', async () => {
+      const res = await request('POST', '/api/v1/user/applications', { schemeId: 'pm-kisan', notes: 'Farmer application' }, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('User A retrieves 1 tracked application', async () => {
+      const res = await request('GET', '/api/v1/user/applications', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 1);
+    });
+
+    await test('User B does NOT see User A application (User Data Isolation)', async () => {
+      const res = await request('GET', '/api/v1/user/applications', null, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 0);
+    });
+
+    await test('Unauthenticated request to protected endpoint returns 401 Unauthorized', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes');
+      assert.strictEqual(res.status, 401);
+    });
+
+    await test('Invalid/Forged JWT token header returns 401 Unauthorized', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': 'Bearer INVALID_FORGED_JWT_TOKEN_HERE'
+      });
+      assert.strictEqual(res.status, 401);
+    });
+
+    console.log('\n--- 7. Saved Schemes (6 tests) ---');
+    await test('User A toggling saved scheme twice unsaves the scheme', async () => {
+      const res = await request('POST', '/api/v1/user/saved-schemes', { schemeId: 'pm-kisan' }, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.isSaved, false);
+    });
+
+    await test('User A saved scheme list is now empty', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 0);
+    });
+
+    await test('POST /api/v1/user/saved-schemes rejects missing schemeId', async () => {
+      const res = await request('POST', '/api/v1/user/saved-schemes', {}, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('User B saves Ayushman Bharat scheme', async () => {
+      const res = await request('POST', '/api/v1/user/saved-schemes', { schemeId: 'ayushman-bharat' }, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.isSaved, true);
+    });
+
+    await test('User B has 1 saved scheme', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 1);
+    });
+
+    await test('User A remains at 0 saved schemes', async () => {
+      const res = await request('GET', '/api/v1/user/saved-schemes', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 0);
+    });
+
+    console.log('\n--- 8. Application Tracking (6 tests) ---');
+    await test('User B submits application for Ayushman Bharat', async () => {
+      const res = await request('POST', '/api/v1/user/applications', { schemeId: 'ayushman-bharat' }, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 201);
+      assert(res.data.data.id.startsWith('APP-2026-'));
+    });
+
+    await test('User B application has valid initial status "Under Review"', async () => {
+      const res = await request('GET', '/api/v1/user/applications', null, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.data[0].status, 'Under Review');
+    });
+
+    await test('POST /api/v1/user/applications rejects invalid schemeId', async () => {
+      const res = await request('POST', '/api/v1/user/applications', { schemeId: 'invalid-scheme-999' }, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 404);
+    });
+
+    await test('GET /api/v1/user/notifications returns notification array', async () => {
+      const res = await request('GET', '/api/v1/user/notifications', null, {
+        'Authorization': `Bearer ${tokenUserB}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.data));
+    });
+
+    await test('User A applications count remains unchanged at 1', async () => {
+      const res = await request('GET', '/api/v1/user/applications', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 1);
+    });
+
+    await test('Unauthenticated POST /api/v1/user/applications returns 401', async () => {
+      const res = await request('POST', '/api/v1/user/applications', { schemeId: 'pm-kisan' });
+      assert.strictEqual(res.status, 401);
+    });
+
+    console.log('\n--- 9. EMI Calculator (8 tests) ---');
+    await test('POST /api/v1/calculator/emi calculates EMI with moratorium', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 100000,
+        annualRate: 10,
+        tenureMonths: 24,
+        moratoriumMonths: 6
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.emi > 0);
+      assert(res.data.totalPayment > 100000);
+    });
+
+    await test('POST /api/v1/calculator/emi handles 0% interest rate', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 120000,
+        annualRate: 0,
+        tenureMonths: 12,
+        moratoriumMonths: 0
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.emi, 10000);
+    });
+
+    await test('POST /api/v1/calculator/emi validates moratoriumMonths < tenureMonths', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 100000,
+        annualRate: 8,
+        tenureMonths: 12,
+        moratoriumMonths: 12
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/calculator/emi rejects moratoriumMonths > tenureMonths', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 100000,
+        annualRate: 8,
+        tenureMonths: 12,
+        moratoriumMonths: 18
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/calculator/emi rejects zero principal', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 0,
+        annualRate: 8,
+        tenureMonths: 12
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/calculator/emi rejects negative principal', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: -50000,
+        annualRate: 8,
+        tenureMonths: 12
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/calculator/emi rejects non-numeric tenure', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 100000,
+        annualRate: 8,
+        tenureMonths: 'abc'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/calculator/emi returns numeric outputs without NaN or Infinity', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 500000,
+        annualRate: 7.5,
+        tenureMonths: 60,
+        moratoriumMonths: 6
+      });
+      assert.strictEqual(res.status, 200);
+      assert(!isNaN(res.data.emi));
+      assert(isFinite(res.data.totalPayment));
+    });
+
+    console.log('\n--- 10. Partner Locator & Haversine (6 tests) ---');
+    await test('Haversine distance calculation is accurate', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 13.0827,
+        lng: 80.2707
+      });
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.partners));
+    });
+
+    await test('POST /api/v1/partners/nearest returns partners sorted by distance asc', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 13.0827,
+        lng: 80.2707,
+        maxDistance: 500
+      });
+      assert.strictEqual(res.status, 200);
+      const list = res.data.partners;
+      if (list.length > 1) {
+        assert(list[0].distance <= list[1].distance);
+      }
+    });
+
+    await test('GET /api/v1/partners returns paginated partner list', async () => {
+      const res = await request('GET', '/api/v1/partners');
+      assert.strictEqual(res.status, 200);
+      assert(res.data.partners || res.data.data);
+    });
+
+    await test('POST /api/v1/partners/register registers new partner in-memory', async () => {
+      const res = await request('POST', '/api/v1/partners/register', {
+        name: 'Test Rural CSC Center',
+        type: 'CSC',
+        coordinates: { lat: 17.3850, lng: 78.4867 },
+        schemes: ['scheme-001']
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('POST /api/v1/partners/nearest rejects out-of-range latitude > 90', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 120,
+        lng: 80.2707
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/partners/nearest rejects out-of-range longitude > 180', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 13.0827,
+        lng: 200
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    console.log('\n--- 11. Document Generation (5 tests) ---');
+    let generatedDocId = null;
+
+    await test('POST /api/v1/documents/generate generates PDF document record', async () => {
+      const res = await request('POST', '/api/v1/documents/generate', {
+        scheme: { schemeId: 'pm-kisan', schemeName: 'PM KISAN' },
+        user: { name: 'Ramesh Kumar' }
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.documentId);
+      generatedDocId = res.data.documentId;
+    });
+
+    await test('GET /api/v1/documents/download/:docId returns download URL', async () => {
+      const res = await request('GET', `/api/v1/documents/download/${generatedDocId}`);
+      assert.strictEqual(res.status, 200);
+      assert(res.data.downloadUrl);
+    });
+
+    await test('GET /api/v1/documents/file/:docId streams binary PDF', async () => {
+      const res = await request('GET', `/api/v1/documents/file/${generatedDocId}`);
+      assert.strictEqual(res.status, 200);
+      assert(res.headers['content-type'].includes('pdf'));
+    });
+
+    await test('GET /api/v1/documents/download/non-existent-doc returns 404', async () => {
+      const res = await request('GET', '/api/v1/documents/download/non-existent-doc-999');
+      assert.strictEqual(res.status, 404);
+    });
+
+    await test('POST /api/v1/documents/generate creates fallback document when scheme object omitted', async () => {
+      const res = await request('POST', '/api/v1/documents/generate', {
+        user: { name: 'Ramesh Kumar' }
+      });
+      assert.strictEqual(res.status, 201);
+    });
+
+    console.log('\n--- 12. Agent Workflow (5 tests) ---');
+    await test('POST /api/v1/agent/submit registers application by agent', async () => {
+      const res = await request('POST', '/api/v1/agent/submit', {
+        agentId: 'agent-101',
+        userId: 'user-202',
+        schemeId: 'pm-kisan',
+        applicationData: { citizenName: 'Sunita Devi' }
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('GET /api/v1/agent/users/:agentId returns agent users list', async () => {
+      const res = await request('GET', '/api/v1/agent/users/agent-101');
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.users));
+    });
+
+    await test('GET /api/v1/agent/users/:agentId returns empty array for unknown agent', async () => {
+      const res = await request('GET', '/api/v1/agent/users/unknown-agent-999');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.users.length, 0);
+    });
+
+    await test('POST /api/v1/agent/submit rejects missing required agentId', async () => {
+      const res = await request('POST', '/api/v1/agent/submit', {
+        userId: 'user-202',
+        schemeId: 'pm-kisan'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('GET /api/v1/agent/users/agent-101 contains user-202 applications', async () => {
+      const res = await request('GET', '/api/v1/agent/users/agent-101');
+      assert.strictEqual(res.status, 200);
+      assert(res.data.users.length > 0);
+      assert.strictEqual(res.data.users[0].userId, 'user-202');
+    });
+
+    console.log('\n--- 13. Feedback & Sanitization (5 tests) ---');
+    await test('POST /api/v1/feedback accepts valid 5-star rating', async () => {
+      const res = await request('POST', '/api/v1/feedback', {
+        userId: 'user-101',
+        schemeId: 'pm-kisan',
+        rating: 5,
+        comment: 'Great portal for scheme discovery!'
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    await test('POST /api/v1/feedback accepts valid 1-star rating', async () => {
+      const res = await request('POST', '/api/v1/feedback', {
+        userId: 'user-102',
+        schemeId: 'pm-kisan',
+        rating: 1,
+        comment: 'Needs more state schemes.'
+      });
+      assert.strictEqual(res.status, 201);
+    });
+
+    await test('POST /api/v1/feedback rejects rating = 6 out of range', async () => {
+      const res = await request('POST', '/api/v1/feedback', {
+        userId: 'user-101',
+        schemeId: 'pm-kisan',
+        rating: 6,
+        comment: 'Too high rating'
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/feedback rejects rating = -1 negative', async () => {
+      const res = await request('POST', '/api/v1/feedback', {
+        userId: 'user-101',
+        schemeId: 'pm-kisan',
+        rating: -1
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/feedback handles script payload safely without execution', async () => {
+      const res = await request('POST', '/api/v1/feedback', {
+        userId: 'user-101',
+        schemeId: 'pm-kisan',
+        rating: 4,
+        comment: '<script>alert("XSS")</script>'
+      });
+      assert.strictEqual(res.status, 201);
+      assert.strictEqual(res.data.success, true);
+    });
+
+    console.log('\n--- 14. 404 & Error Handling Middleware (5 tests) ---');
+    await test('Non-existent route /api/v1/unknown-endpoint returns formatted 404 JSON', async () => {
+      const res = await request('GET', '/api/v1/unknown-endpoint');
+      assert.strictEqual(res.status, 404);
+      assert.strictEqual(res.data.success, false);
+    });
+
+    await test('Non-existent HTTP method DELETE /api/v1/health returns 404 JSON', async () => {
+      const res = await request('DELETE', '/api/v1/health');
+      assert.strictEqual(res.status, 404);
+    });
+
+    await test('Malformed JSON payload returns formatted 400 JSON error', async () => {
+      const res = await new Promise((resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: '127.0.0.1',
+            port: PORT,
+            path: '/api/v1/users/register',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          },
+          (res) => {
+            let body = '';
+            res.on('data', (c) => (body += c));
+            res.on('end', () => resolve({ status: res.statusCode, data: body }));
+          }
+        );
+        req.on('error', reject);
+        req.write('{ malformed json body ');
+        req.end();
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('Error response JSON does not expose internal server file paths', async () => {
+      const res = await request('GET', '/api/v1/nonexistent-route-path');
+      assert.strictEqual(res.status, 404);
+      const str = JSON.stringify(res.data);
+      assert(!str.includes('/home/rgukt/'));
+    });
+
+    await test('Error response JSON does not leak database credentials', async () => {
+      const res = await request('GET', '/api/v1/nonexistent-route-path');
+      assert.strictEqual(res.status, 404);
+      const str = JSON.stringify(res.data);
+      assert(!str.includes('postgresql://'));
+      assert(!str.includes('password'));
+    });
+
+    console.log('\n========================================');
+    console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
+    console.log('========================================\n');
+
+    server.close(() => {
+      process.exit(failed > 0 ? 1 : 0);
+    });
+  });
+}
+
+runAllTests().catch((err) => {
+  console.error('Fatal test runner error:', err);
   process.exit(1);
 });

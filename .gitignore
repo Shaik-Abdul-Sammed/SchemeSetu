@@ -1,41 +1,55 @@
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
-SchemeSetu_token
-*token*
-*.token
-
 # Dependencies
 node_modules/
-package-lock.json
+.pnpm-store/
 
-# Logs
+# Build and Distribution outputs
+dist/
+build/
+out/
+.next/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Logs and debug output
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# OS and IDE Files
+# Testing & Coverage
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Generated runtime documents & cache
+documents/generated/
+documents/*.pdf
+uploads/
+cache/
+*.tmp
+*.temp
+
+# OS & Editor files
 .DS_Store
-.vscode/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
-*.iml
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Gradle & Build files
-.gradle/
-build/
-local.properties
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
-*.jks
-*.keystore
-google-services.json
-*.hprof
+*.swp
+*.swo

@@ -16,9 +16,8 @@ function calculateMatchScore(scheme, criteria) {
   // 1. Income match: 20 points max
   const maxIncome = scheme.eligibility && scheme.eligibility.maxIncome ? scheme.eligibility.maxIncome : 500000;
   if (userIncome <= maxIncome) {
-    // Entrepreneurs with lower income get higher priority / assistance
     const incomeRatio = maxIncome > 0 ? (maxIncome - userIncome) / maxIncome : 1;
-    score += Math.round(15 + (incomeRatio * 5)); // 15 - 20 points
+    score += Math.round(15 + (incomeRatio * 5));
   } else {
     score += 5;
   }
@@ -27,10 +26,9 @@ function calculateMatchScore(scheme, criteria) {
   const minL = Number(scheme.minLoan) || 0;
   const maxL = Number(scheme.maxLoan) || 1000000;
   if (userCost >= minL && userCost <= maxL) {
-    // Ideal sweet spot within loan bracket
     const midPoint = (minL + maxL) / 2;
     const distanceRatio = maxL > minL ? 1 - (Math.abs(userCost - midPoint) / (maxL - minL)) : 1;
-    score += Math.round(20 + (distanceRatio * 5)); // 20 - 25 points
+    score += Math.round(20 + (distanceRatio * 5));
   } else {
     score += 5;
   }
@@ -40,11 +38,11 @@ function calculateMatchScore(scheme, criteria) {
     ? scheme.eligibility.education
     : [];
   if (schemeEdu.length === 0 || schemeEdu.includes('any') || schemeEdu.includes('all') || schemeEdu.includes('none')) {
-    score += 20; // Unrestricted
+    score += 20;
   } else if (schemeEdu.some(e => e.includes(userEdu) || userEdu.includes(e))) {
-    score += 20; // Exact match
+    score += 20;
   } else {
-    score += 10; // Partial fallback
+    score += 10;
   }
 
   // 4. Project Type match: 20 points max
@@ -72,17 +70,10 @@ function calculateMatchScore(scheme, criteria) {
   return Math.min(100, Math.max(0, score));
 }
 
-/**
- * Checks if a scheme meets rule-based eligibility for the user criteria.
- */
 function isSchemeEligible(scheme, criteria) {
   const userIncome = Number(criteria.income);
   const userCost = Number(criteria.cost);
-  const userEdu = String(criteria.education || '').toLowerCase().trim();
-  const userProjectType = String(criteria.projectType || '').toLowerCase().trim();
-  const userLocation = String(criteria.location || '').toLowerCase().trim();
 
-  // 1. Income condition
   const maxIncome = scheme.eligibility && typeof scheme.eligibility.maxIncome === 'number'
     ? scheme.eligibility.maxIncome
     : 500000;
@@ -90,44 +81,10 @@ function isSchemeEligible(scheme, criteria) {
     return false;
   }
 
-  // 2. Loan cost range condition
   const minL = Number(scheme.minLoan) || 0;
   const maxL = Number(scheme.maxLoan) || Infinity;
   if (userCost < minL || userCost > maxL) {
     return false;
-  }
-
-  // 3. Education condition (match if specified or if unrestricted)
-  const schemeEdu = (scheme.eligibility && Array.isArray(scheme.eligibility.education))
-    ? scheme.eligibility.education.map(e => e.toLowerCase())
-    : [];
-  if (schemeEdu.length > 0 && !schemeEdu.includes('any') && !schemeEdu.includes('all') && !schemeEdu.includes('none')) {
-    const matchesEdu = schemeEdu.some(e => e.includes(userEdu) || userEdu.includes(e));
-    if (!matchesEdu) {
-      return false;
-    }
-  }
-
-  // 4. Project type condition
-  const schemeProjectTypes = Array.isArray(scheme.projectTypes)
-    ? scheme.projectTypes.map(p => p.toLowerCase())
-    : [];
-  if (schemeProjectTypes.length > 0 && !schemeProjectTypes.includes('all') && !schemeProjectTypes.includes('any')) {
-    const matchesProject = schemeProjectTypes.some(pt => pt.includes(userProjectType) || userProjectType.includes(pt));
-    if (!matchesProject) {
-      return false;
-    }
-  }
-
-  // 5. Location condition
-  const schemeLocations = (scheme.eligibility && Array.isArray(scheme.eligibility.locations))
-    ? scheme.eligibility.locations.map(l => l.toLowerCase())
-    : ['all india'];
-  if (schemeLocations.length > 0 && !schemeLocations.includes('all india') && !schemeLocations.includes('national')) {
-    const matchesLocation = schemeLocations.some(l => l.includes(userLocation) || userLocation.includes(l));
-    if (!matchesLocation) {
-      return false;
-    }
   }
 
   return true;
@@ -140,7 +97,6 @@ async function recommendSchemes(req, res, next) {
   try {
     const { projectType, cost, income, education, location } = req.body || {};
 
-    // Validation
     if (!isNonEmptyString(projectType)) {
       return res.status(400).json({ success: false, error: 'Validation failed: projectType is required and must be a non-empty string.' });
     }
@@ -150,25 +106,16 @@ async function recommendSchemes(req, res, next) {
     if (!isNonNegativeNumber(income)) {
       return res.status(400).json({ success: false, error: 'Validation failed: income is required and must be a non-negative number.' });
     }
-    if (!isNonEmptyString(education)) {
-      return res.status(400).json({ success: false, error: 'Validation failed: education is required and must be a non-empty string.' });
-    }
-    if (!isNonEmptyString(location)) {
-      return res.status(400).json({ success: false, error: 'Validation failed: location is required and must be a non-empty string.' });
-    }
 
     const userInput = {
-      projectType: projectType.trim(),
+      projectType: String(projectType).trim(),
       cost: Number(cost),
       income: Number(income),
-      education: education.trim(),
-      location: location.trim()
+      education: String(education || 'graduate').trim(),
+      location: String(location || 'Telangana').trim()
     };
 
-    // STEP 1: Load all schemes
     const allSchemes = dataService.getSchemes();
-
-    // STEP 2: Filter schemes using rule-based eligibility
     const eligibleSchemes = allSchemes.filter(scheme => isSchemeEligible(scheme, userInput));
 
     if (eligibleSchemes.length === 0) {
@@ -179,16 +126,12 @@ async function recommendSchemes(req, res, next) {
       });
     }
 
-    // STEP 3: Calculate match score for each eligible scheme
     const scoredSchemes = eligibleSchemes.map(scheme => ({
       ...scheme,
       matchScore: calculateMatchScore(scheme, userInput)
     }));
 
-    // STEP 4: ML Ranking (with deterministic fallback)
     const rankedSchemes = await mlService.rankSchemes(scoredSchemes, userInput);
-
-    // STEP 5: Return top 3 recommendations
     const top3 = rankedSchemes.slice(0, 3);
 
     return res.status(200).json({
@@ -215,12 +158,12 @@ function getSchemes(req, res, next) {
       minLoan,
       maxLoan,
       education,
-      search
+      search,
+      sort
     } = req.query;
 
     let schemes = dataService.getSchemes();
 
-    // Filters
     if (category) {
       const catLower = String(category).toLowerCase();
       schemes = schemes.filter(s => s.category && s.category.toLowerCase().includes(catLower));
@@ -251,14 +194,6 @@ function getSchemes(req, res, next) {
       schemes = schemes.filter(s => s.minLoan <= maxL);
     }
 
-    if (education) {
-      const eduLower = String(education).toLowerCase();
-      schemes = schemes.filter(s =>
-        !s.eligibility || !s.eligibility.education || s.eligibility.education.length === 0 ||
-        s.eligibility.education.some(e => e.toLowerCase().includes(eduLower) || e.toLowerCase() === 'any')
-      );
-    }
-
     if (search) {
       const searchLower = String(search).toLowerCase();
       schemes = schemes.filter(s =>
@@ -266,6 +201,12 @@ function getSchemes(req, res, next) {
         (s.description && s.description.toLowerCase().includes(searchLower)) ||
         (s.category && s.category.toLowerCase().includes(searchLower))
       );
+    }
+
+    if (sort === 'name_asc') {
+      schemes.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === 'name_desc') {
+      schemes.sort((a, b) => b.name.localeCompare(a.name));
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);

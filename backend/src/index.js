@@ -1,0 +1,114 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+const schemesRouter = require('./routes/v1/schemes');
+const calculatorRouter = require('./routes/v1/calculator');
+const partnersRouter = require('./routes/v1/partners');
+const agentRouter = require('./routes/v1/agent');
+const documentsRouter = require('./routes/v1/documents');
+const usersRouter = require('./routes/v1/users');
+const feedbackRouter = require('./routes/v1/feedback');
+
+const notFound = require('./middleware/notFound');
+const errorHandler = require('./middleware/errorHandler');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// CORS configuration for frontend integration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, Postman) or dev origins
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(null, true); // Dev-friendly permissive CORS
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Body Parsers
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health Check Handler
+function healthCheckHandler(req, res) {
+  return res.status(200).json({
+    status: 'OK',
+    message: 'SchemeSetu Backend is running',
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Health Endpoints
+app.get('/api/health', healthCheckHandler);
+app.get('/api/v1/health', healthCheckHandler);
+
+// Root informational endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'SchemeSetu Backend API',
+    version: '1.0.0',
+    description: 'AI-driven government scheme matching platform for marginalized entrepreneurs (SIH 2026)',
+    status: 'RUNNING',
+    health: '/api/v1/health',
+    endpoints: {
+      schemes: '/api/v1/schemes',
+      recommend: '/api/v1/schemes/recommend',
+      calculator: '/api/v1/calculator/emi',
+      partners: '/api/v1/partners',
+      nearestPartners: '/api/v1/partners/nearest',
+      agent: '/api/v1/agent',
+      documents: '/api/v1/documents',
+      users: '/api/v1/users',
+      feedback: '/api/v1/feedback'
+    }
+  });
+});
+
+// API Routes
+app.use('/api/v1/schemes', schemesRouter);
+app.use('/api/v1/calculator', calculatorRouter);
+app.use('/api/v1/partners', partnersRouter);
+app.use('/api/v1/agent', agentRouter);
+app.use('/api/v1/documents', documentsRouter);
+app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/feedback', feedbackRouter);
+
+// 404 Catch-All Middleware
+app.use(notFound);
+
+// Centralized Error Handling Middleware
+app.use(errorHandler);
+
+// Start Server
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🚀 SchemeSetu Backend Server running successfully!`);
+    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`🩺 Health: http://localhost:${PORT}/api/health`);
+    console.log(`🩺 V1 Health: http://localhost:${PORT}/api/v1/health`);
+    console.log(`🤖 ML Service URL: ${process.env.ML_SERVICE_URL || 'Fallback deterministic ranker active'}`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = app;

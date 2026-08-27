@@ -1,0 +1,114 @@
+[
+  {
+    "id": "partner-001",
+    "name": "State Bank of India - MSME Development Branch",
+    "type": "Public Sector Bank",
+    "coordinates": {
+      "lat": 13.0827,
+      "lng": 80.2707
+    },
+    "schemes": ["scheme-001", "scheme-002", "scheme-003", "scheme-004", "scheme-005", "scheme-006"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "No. 22, Rajaji Salai, George Town, Chennai, Tamil Nadu 600001",
+    "phone": "+91-44-25300000"
+  },
+  {
+    "id": "partner-002",
+    "name": "Canara Bank - Micro & SME Center",
+    "type": "Public Sector Bank",
+    "coordinates": {
+      "lat": 13.0569,
+      "lng": 80.2425
+    },
+    "schemes": ["scheme-001", "scheme-002", "scheme-003", "scheme-005"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "563, Anna Salai, Teynampet, Chennai, Tamil Nadu 600018",
+    "phone": "+91-44-24340022"
+  },
+  {
+    "id": "partner-003",
+    "name": "Indian Bank - Entrepreneurship Support Hub",
+    "type": "Public Sector Bank",
+    "coordinates": {
+      "lat": 13.0418,
+      "lng": 80.2341
+    },
+    "schemes": ["scheme-002", "scheme-003", "scheme-004", "scheme-005"],
+    "fundAvailable": true,
+    "npaStatus": "medium",
+    "address": "254, Avvai Shanmugam Salai, Royapettah, Chennai, Tamil Nadu 600014",
+    "phone": "+91-44-28134567"
+  },
+  {
+    "id": "partner-004",
+    "name": "SIDBI Financial Services Hub",
+    "type": "Development Financial Institution",
+    "coordinates": {
+      "lat": 13.0112,
+      "lng": 80.2220
+    },
+    "schemes": ["scheme-001", "scheme-004", "scheme-006"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "Guindy Industrial Estate, Chennai, Tamil Nadu 600032",
+    "phone": "+91-44-22501234"
+  },
+  {
+    "id": "partner-005",
+    "name": "NABARD District Development Office - Vijayawada",
+    "type": "Rural Development Institution",
+    "coordinates": {
+      "lat": 16.5062,
+      "lng": 80.6480
+    },
+    "schemes": ["scheme-001", "scheme-002", "scheme-003", "scheme-004", "scheme-005"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "MG Road, Governorpet, Vijayawada, Andhra Pradesh 520002",
+    "phone": "+91-866-2578901"
+  },
+  {
+    "id": "partner-006",
+    "name": "Bank of Baroda MSME Center - Bengaluru",
+    "type": "Public Sector Bank",
+    "coordinates": {
+      "lat": 12.9716,
+      "lng": 77.5946
+    },
+    "schemes": ["scheme-001", "scheme-002", "scheme-003", "scheme-004", "scheme-006"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "MG Road, Bengaluru, Karnataka 560001",
+    "phone": "+91-80-25581234"
+  },
+  {
+    "id": "partner-007",
+    "name": "Grameen Microfinance Institution (High NPA - Ineligible)",
+    "type": "NBFC-MFI",
+    "coordinates": {
+      "lat": 13.0800,
+      "lng": 80.2600
+    },
+    "schemes": ["scheme-001", "scheme-002", "scheme-003"],
+    "fundAvailable": true,
+    "npaStatus": "high",
+    "address": "Chennai, Tamil Nadu 600001",
+    "phone": "+91-44-99999999"
+  },
+  {
+    "id": "partner-008",
+    "name": "Unfunded Credit Cooperative (Ineligible)",
+    "type": "Credit Society",
+    "coordinates": {
+      "lat": 13.0810,
+      "lng": 80.2650
+    },
+    "schemes": ["scheme-001", "scheme-002"],
+    "fundAvailable": false,
+    "npaStatus": "low",
+    "address": "Chennai, Tamil Nadu 600001",
+    "phone": "+91-44-88888888"
+  }
+]

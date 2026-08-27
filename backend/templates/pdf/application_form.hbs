@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>SchemeSetu Application Form - {{applicationId}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+    .header { text-align: center; border-bottom: 2px solid #003366; padding-bottom: 10px; margin-bottom: 20px; }
+    .header h1 { color: #003366; margin: 0; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 16px; font-weight: bold; background-color: #f0f4f8; padding: 8px; border-left: 4px solid #003366; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f9f9f9; }
+    .footer { margin-top: 40px; font-size: 12px; text-align: center; color: #777; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>SchemeSetu - Government Scheme Application</h1>
+    <p>Smart India Hackathon 2026 | National Entrepreneurship Portal</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Application Summary</div>
+    <table>
+      <tr><th>Application ID</th><td>{{applicationId}}</td></tr>
+      <tr><th>Submission Date</th><td>{{submissionDate}}</td></tr>
+      <tr><th>Scheme ID</th><td>{{scheme.id}}</td></tr>
+      <tr><th>Scheme Name</th><td>{{scheme.name}}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Applicant Details</div>
+    <table>
+      <tr><th>Full Name</th><td>{{user.name}}</td></tr>
+      <tr><th>Phone</th><td>{{user.phone}}</td></tr>
+      <tr><th>Address</th><td>{{user.address}}</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p>Generated automatically via SchemeSetu Intelligent Backend Portal.</p>
+  </div>
+</body>
+</html>

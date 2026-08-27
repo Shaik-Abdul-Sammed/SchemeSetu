@@ -77,12 +77,19 @@ async function runAllTests() {
       assert.strictEqual(res.data.status, 'OK');
     });
 
-    console.log('\n--- 2. Schemes API & Filtering (13 tests) ---');
+    console.log('\n--- 2. Schemes API & Filtering (14 tests) ---');
     await test('GET /api/v1/schemes returns paginated list with total count', async () => {
       const res = await request('GET', '/api/v1/schemes');
       assert.strictEqual(res.status, 200);
       assert(Array.isArray(res.data.schemes || res.data.data));
       assert(res.data.pagination || res.data.total);
+    });
+
+    await test('GET /api/v1/schemes?sector=Agriculture filters by sector', async () => {
+      const res = await request('GET', '/api/v1/schemes?sector=Agriculture');
+      assert.strictEqual(res.status, 200);
+      const list = res.data.schemes || res.data.data;
+      assert(list.length > 0);
     });
 
     await test('GET /api/v1/schemes?q=farmer searches by query term', async () => {
@@ -359,7 +366,7 @@ async function runAllTests() {
       });
     });
 
-    console.log('\n--- 5. User Authentication (10 tests) ---');
+    console.log('\n--- 5. User Authentication (11 tests) ---');
     let tokenUserA = null;
     let tokenUserB = null;
 
@@ -386,6 +393,14 @@ async function runAllTests() {
       assert.strictEqual(res.data.success, true);
       assert(res.data.token);
       tokenUserB = res.data.token;
+    });
+
+    await test('GET /api/v1/users/me with valid Bearer token returns profile', async () => {
+      const res = await request('GET', '/api/v1/users/me', null, {
+        'Authorization': `Bearer ${tokenUserA}`
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.user.name, 'Citizen User A');
     });
 
     await test('POST /api/v1/users/register rejects duplicate email address', async () => {
@@ -609,7 +624,7 @@ async function runAllTests() {
       assert.strictEqual(res.status, 401);
     });
 
-    console.log('\n--- 9. EMI Calculator (8 tests) ---');
+    console.log('\n--- 9. EMI Calculator (9 tests) ---');
     await test('POST /api/v1/calculator/emi calculates EMI with moratorium', async () => {
       const res = await request('POST', '/api/v1/calculator/emi', {
         principal: 100000,
@@ -653,6 +668,15 @@ async function runAllTests() {
       assert.strictEqual(res.status, 400);
     });
 
+    await test('POST /api/v1/calculator/emi rejects zero tenureMonths', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 100000,
+        annualRate: 8,
+        tenureMonths: 0
+      });
+      assert.strictEqual(res.status, 400);
+    });
+
     await test('POST /api/v1/calculator/emi rejects zero principal', async () => {
       const res = await request('POST', '/api/v1/calculator/emi', {
         principal: 0,
@@ -692,7 +716,7 @@ async function runAllTests() {
       assert(isFinite(res.data.totalPayment));
     });
 
-    console.log('\n--- 10. Partner Locator & Haversine (6 tests) ---');
+    console.log('\n--- 10. Partner Locator & Haversine (8 tests) ---');
     await test('Haversine distance calculation is accurate', async () => {
       const res = await request('POST', '/api/v1/partners/nearest', {
         lat: 13.0827,
@@ -700,6 +724,17 @@ async function runAllTests() {
       });
       assert.strictEqual(res.status, 200);
       assert(Array.isArray(res.data.partners));
+    });
+
+    await test('GET /api/v1/partners/partner-001 returns partner by ID', async () => {
+      const res = await request('GET', '/api/v1/partners/partner-001');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.id, 'partner-001');
+    });
+
+    await test('GET /api/v1/partners/non-existent-999 returns 404', async () => {
+      const res = await request('GET', '/api/v1/partners/non-existent-999');
+      assert.strictEqual(res.status, 404);
     });
 
     await test('POST /api/v1/partners/nearest returns partners sorted by distance asc', async () => {

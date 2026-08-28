@@ -62,7 +62,7 @@ export default function Navbar() {
               {t('home')}
             </NavLink>
             <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Mic size={16} /> Voice Assistant
+              <Mic size={16} /> {t('voiceAssistant')}
             </NavLink>
             <NavLink to="/schemes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
               <Building2 size={16} /> {t('exploreSchemes')}
@@ -73,15 +73,15 @@ export default function Navbar() {
             </NavLink>
 
             <NavLink to="/community" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <MessageSquare size={16} /> Community
+              <MessageSquare size={16} /> {t('community')}
             </NavLink>
 
             <NavLink to="/vle" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Users size={16} /> VLE
+              <Users size={16} /> {t('vle')}
             </NavLink>
 
             <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Settings size={16} /> Admin
+              <Settings size={16} /> {t('admin')}
             </NavLink>
 
             {/* Location Setup Badge */}

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { LogIn, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ export default function Login() {
     setError('');
 
     if (!email || !password) {
-      setError('Please enter both email address and password.');
+      setError(t('loginSubtitle', 'Please enter both email address and password.'));
       return;
     }
 
@@ -39,8 +41,8 @@ export default function Login() {
             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#1D4ED8', marginBottom: '0.75rem' }}>
               <ShieldCheck size={28} />
             </div>
-            <h1 style={{ fontSize: '1.6rem', color: '#0B192C', marginBottom: '0.25rem' }}>Citizen Portal Login</h1>
-            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Access saved schemes and tracked applications</p>
+            <h1 style={{ fontSize: '1.6rem', color: '#0B192C', marginBottom: '0.25rem' }}>{t('loginTitle')}</h1>
+            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>{t('loginSubtitle')}</p>
           </div>
 
           {error && (
@@ -51,7 +53,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label">{t('emailAddress')}</label>
               <input
                 type="email"
                 className="form-control"
@@ -63,7 +65,7 @@ export default function Login() {
             </div>
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Password</label>
+              <label className="form-label">{t('passwordLabel')}</label>
               <input
                 type="password"
                 className="form-control"
@@ -75,16 +77,16 @@ export default function Login() {
             </div>
 
             <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-              {loading ? 'Logging in...' : <><LogIn size={16} /> Sign In</>}
+              {loading ? t('signingIn') : <><LogIn size={16} /> {t('signIn')}</>}
             </button>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #E2E8F0', fontSize: '0.9rem', color: '#64748B' }}>
-            Don't have an account? <Link to="/register" style={{ color: '#D97706', fontWeight: 600 }}>Register as Citizen</Link>
+            {t('noAccount')} <Link to="/register" style={{ color: '#D97706', fontWeight: 600 }}>{t('registerLink')}</Link>
           </div>
 
           <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '6px', fontSize: '0.8rem', color: '#475569' }}>
-            💡 Demo Credentials:<br />
+            {t('demoCreds')}<br />
             Email: <strong>ramesh@example.com</strong> | Password: <strong>password123</strong>
           </div>
         </div>

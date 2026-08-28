@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, RotateCcw } from 'lucide-react';
+import { Search, RotateCcw, Scale } from 'lucide-react';
 import { schemeService } from '../services/schemeService';
 import SchemeCard from '../components/scheme/SchemeCard';
 import SchemeFilters from '../components/scheme/SchemeFilters';
@@ -10,8 +10,10 @@ import EmptyState from '../components/common/EmptyState';
 import SearchAutocomplete from '../components/common/SearchAutocomplete';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
 import SchemeCompareModal from '../components/scheme/SchemeCompareModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Schemes() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [filters, setFilters] = useState({
@@ -19,7 +21,6 @@ export default function Schemes() {
     category: searchParams.get('category') || 'All',
     level: searchParams.get('level') || 'All',
     occupation: searchParams.get('occupation') || 'All',
-    gender: searchParams.get('gender') || 'All',
     sort: searchParams.get('sort') || 'name_asc',
     page: 1
   });
@@ -39,11 +40,11 @@ export default function Schemes() {
         ...filters,
         limit: 9
       });
-      setSchemes(res.data || []);
-      setTotal(res.total || 0);
-      setTotalPages(res.totalPages || 1);
+      setSchemes(res.schemes || res.data || []);
+      setTotal(res.total || res.count || (res.schemes ? res.schemes.length : 0));
+      setTotalPages(res.totalPages || Math.ceil((res.total || res.schemes?.length || 1) / 9) || 1);
     } catch (err) {
-      setError(err.message || 'Failed to connect to schemes API endpoint.');
+      setError(err.message || 'Failed to load schemes.');
     } finally {
       setLoading(false);
     }
@@ -68,7 +69,6 @@ export default function Schemes() {
       category: 'All',
       level: 'All',
       occupation: 'All',
-      gender: 'All',
       sort: 'name_asc',
       page: 1
     };
@@ -76,35 +76,43 @@ export default function Schemes() {
     setSearchParams({});
   };
 
+  const handleVoiceSearchResult = (transcript) => {
+    handleFilterChange('q', transcript);
+  };
+
   return (
     <div className="container" style={{ padding: '2.5rem 1.25rem' }}>
+      {/* Page Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.2rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-          Explore Government Schemes
+          {t('exploreSchemes', 'Explore Government Schemes')}
         </h1>
-        <p style={{ color: '#64748B', fontSize: '1.05rem' }}>
-          Search and filter verified Central and State Government welfare programs.
+        <p style={{ color: '#64748B', fontSize: '1.05rem', margin: 0 }}>
+          {t('heroSubtitle', 'Search and filter verified Central and State Government welfare and business loan programs.')}
         </p>
       </div>
 
-      {/* Search Input Bar & Compare Action */}
+      {/* Prominent Search Bar & Voice Search Control */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex-1 w-full">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ flexGrow: 1, minWidth: '240px' }}>
             <SearchAutocomplete
               value={filters.q}
               onChange={(val) => handleFilterChange('q', val)}
               onSelect={(s) => handleFilterChange('q', s.name)}
-              placeholder="Search schemes by name, keyword, department, or benefits..."
+              placeholder={t('searchPlaceholder', 'Search schemes, business types, categories, departments...')}
             />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <VoiceSearchButton onResult={(text) => handleFilterChange('q', text)} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            <VoiceSearchButton onResult={handleVoiceSearchResult} />
+            
             <button
               onClick={() => setIsCompareOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+              className="btn btn-primary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', height: '42px' }}
             >
-              Compare Schemes ({schemes.slice(0, 3).length})
+              <Scale size={16} /> {t('compareSchemes', 'Compare Schemes')} ({Math.min(3, schemes.length)})
             </button>
           </div>
         </div>
@@ -127,7 +135,7 @@ export default function Schemes() {
         <EmptyState onClear={handleClearFilters} />
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
             {schemes.map(scheme => (
               <SchemeCard key={scheme.id} scheme={scheme} />
             ))}

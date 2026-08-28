@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, Tag } from 'lucide-react';
+import { Search, ArrowRight, Tag, X } from 'lucide-react';
 import { schemeService } from '../../services/schemeService';
+import { useLanguage } from '../../context/LanguageContext';
 
-export default function SearchAutocomplete({ value, onChange, onSelect, placeholder = 'Search by name, sector or keyword...' }) {
+export default function SearchAutocomplete({ value, onChange, onSelect, placeholder }) {
+  const { t } = useLanguage();
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
+
+  const effectivePlaceholder = placeholder || t('searchPlaceholder', 'Search schemes, business types, categories, departments...');
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -38,22 +42,82 @@ export default function SearchAutocomplete({ value, onChange, onSelect, placehol
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleClear = () => {
+    onChange('');
+    setSuggestions([]);
+    setIsOpen(false);
+  };
+
   return (
-    <div ref={wrapperRef} className="relative w-full">
-      <div className="relative">
-        <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+        <Search 
+          size={18} 
+          style={{ position: 'absolute', left: '1rem', color: '#64748B', pointerEvents: 'none' }} 
+        />
+        
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => value && suggestions.length > 0 && setIsOpen(true)}
-          placeholder={placeholder}
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition"
+          placeholder={effectivePlaceholder}
+          aria-label={effectivePlaceholder}
+          className="form-control"
+          style={{
+            paddingLeft: '2.75rem',
+            paddingRight: value ? '2.5rem' : '1rem',
+            height: '46px',
+            fontSize: '0.95rem',
+            borderRadius: '10px'
+          }}
         />
+
+        {value && (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label={t('clearSearch', 'Clear Search')}
+            title={t('clearSearch', 'Clear Search')}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              background: '#E2E8F0',
+              border: 'none',
+              borderRadius: '50%',
+              width: '22px',
+              height: '22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              cursor: 'pointer',
+              padding: 0
+            }}
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-800/60">
+        <div 
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: '4px',
+            zIndex: 100,
+            backgroundColor: '#FFFFFF',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            border: '1px solid #E2E8F0',
+            overflow: 'hidden',
+            maxHeight: '320px',
+            overflowY: 'auto'
+          }}
+        >
           {suggestions.map((scheme) => (
             <button
               key={scheme.id}
@@ -62,21 +126,38 @@ export default function SearchAutocomplete({ value, onChange, onSelect, placehol
                 setIsOpen(false);
                 if (onSelect) onSelect(scheme);
               }}
-              className="w-full p-3 text-left hover:bg-slate-800/80 transition flex items-center justify-between gap-3 group"
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                textAlign: 'left',
+                background: 'none',
+                border: 'none',
+                borderBottom: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-200 group-hover:text-amber-400 transition">
+              <div style={{ flexGrow: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {scheme.name}
-                </p>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-emerald-400" /> {scheme.category || 'Welfare'}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#64748B', marginTop: '0.15rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#059669', fontWeight: 500 }}>
+                    <Tag size={12} /> {scheme.category || 'Welfare'}
                   </span>
                   <span>•</span>
                   <span>{scheme.level || 'Central'}</span>
+                  <span>•</span>
+                  <span>{scheme.department}</span>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition shrink-0" />
+              <ArrowRight size={15} style={{ color: '#94A3B8', flexShrink: 0 }} />
             </button>
           ))}
         </div>

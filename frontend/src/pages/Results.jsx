@@ -4,6 +4,8 @@ import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark,
 import { api } from '../services/api';
 import { safeOpenExternalUrl } from '../utils/capacitor';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
+import EMIChart from '../components/EMIChart';
+import Map from '../components/Map';
 
 export default function Results() {
   const location = useLocation();
@@ -37,7 +39,6 @@ export default function Results() {
     landRecord: false
   });
 
-  // Selected Partner Details Modal
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [pdfDownloading, setPdfDownloading] = useState(false);
@@ -53,14 +54,11 @@ export default function Results() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-
-      // 1. Fetch recommended schemes if not passed
       if (schemes.length === 0) {
         const schemeRes = await api.post('/schemes/recommend', passedCriteria);
         setSchemes(schemeRes.schemes || []);
       }
 
-      // 2. Fetch nearest partners
       const partnerRes = await api.post('/partners/nearest', { lat: 28.6139, lng: 77.2090 });
       setPartners(partnerRes.partners || []);
     } catch (err) {
@@ -113,11 +111,12 @@ export default function Results() {
     const activeScheme = schemes[selectedSchemeIndex] || {};
     const savedList = JSON.parse(localStorage.getItem('schemesetu_applications') || '[]');
     savedList.push({
-      id: `app-${Date.now()}`,
-      schemeId: activeScheme.id,
-      schemeName: activeScheme.name,
+      id: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      schemeId: activeScheme.id || 'scheme-001',
+      schemeName: activeScheme.name || 'Government Assistance Scheme',
       status: 'Under Review',
-      date: new Date().toLocaleDateString('en-IN')
+      date: new Date().toISOString().split('T')[0],
+      loanAmount: emiPrincipal
     });
     localStorage.setItem('schemesetu_applications', JSON.stringify(savedList));
     setSavedSuccess(true);
@@ -133,12 +132,7 @@ export default function Results() {
     maxLoan: 500000,
     tenureMonths: 60,
     moratoriumMonths: 6,
-    benefits: 'Up to ₹5 Lakh collateral-free loan with 6-month moratorium.',
-    matchReasons: [
-      'Your family income fits within eligible thresholds.',
-      'Your required project cost fits within the loan limit.',
-      'Your education level satisfies the scheme criteria.'
-    ]
+    benefits: 'Up to ₹5 Lakh collateral-free loan with 6-month moratorium.'
   };
 
   return (
@@ -155,7 +149,7 @@ export default function Results() {
         </button>
       </div>
 
-      {/* Scheme Selection Tabs if multiple schemes */}
+      {/* Scheme Selection Tabs */}
       {schemes.length > 1 && (
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
           {schemes.map((s, idx) => (
@@ -171,7 +165,7 @@ export default function Results() {
         </div>
       )}
 
-      {/* PAGE 3 SPECIFICATION 1: Prominent Gradient Scheme Card (Green to Blue) */}
+      {/* Prominent Gradient Scheme Card */}
       <div
         style={{
           background: 'linear-gradient(135deg, #059669 0%, #1E3E62 100%)',
@@ -234,7 +228,7 @@ export default function Results() {
         </div>
       </div>
 
-      {/* PAGE 3 SPECIFICATION 2: Explainable AI Eligibility Checkmarks */}
+      {/* Explainable AI Eligibility Checkmarks */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.3rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ShieldCheck style={{ color: '#059669' }} size={24} /> Why You Are Eligible (Explainable AI Breakdown)
@@ -271,7 +265,7 @@ export default function Results() {
         </div>
       </div>
 
-      {/* PAGE 3 SPECIFICATION 3: Collapsible "Other Things" Section */}
+      {/* Collapsible "Other Things & Interactive Tools" */}
       <div style={{ marginBottom: '2rem' }}>
         <button
           onClick={() => setShowOtherThings(!showOtherThings)}
@@ -300,7 +294,7 @@ export default function Results() {
         {showOtherThings && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.25rem' }}>
             
-            {/* Tool 1: Interactive EMI Calculator */}
+            {/* Tool 1: Interactive EMI Calculator with EMIChart */}
             <div className="card">
               <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Calculator size={20} style={{ color: '#0284C7' }} /> Interactive EMI Calculator
@@ -355,60 +349,28 @@ export default function Results() {
                   </div>
                 </div>
               </div>
+
+              {/* Task 7: Visual EMI Chart Component */}
+              <EMIChart
+                principal={emiPrincipal}
+                totalInterest={calculatedEmi.totalInterest}
+                tenureMonths={emiTenure}
+              />
             </div>
 
-            {/* Tool 2: Partner Locator List & Google Maps Navigation */}
+            {/* Tool 2: Task 6 Interactive Partner Map Component */}
             <div className="card">
               <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MapPin size={20} style={{ color: '#059669' }} /> Nearby Eligible Partner Bank Branches & CSC Centers
+                <MapPin size={20} style={{ color: '#059669' }} /> Interactive Partner Bank & CSC Locator Map
               </h3>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                {partners.map((partner) => (
-                  <div
-                    key={partner.id}
-                    onClick={() => setSelectedPartner(partner)}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: '10px',
-                      border: '1px solid #E2E8F0',
-                      background: '#FFFFFF',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>{partner.name}</strong>
-                      <span className={`badge ${partner.fundAvailable ? 'badge-state' : 'badge-cat'}`}>
-                        {partner.fundAvailable ? 'Funds Available' : 'Limited Funds'}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '0.75rem' }}>
-                      {partner.address}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#0284C7', fontWeight: 600 }}>
-                        📍 {partner.distanceKm || 1.8} km away
-                      </span>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          safeOpenExternalUrl(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(partner.address)}`);
-                        }}
-                        className="btn btn-outline btn-sm"
-                      >
-                        <Navigation size={14} /> Navigate
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Map
+                partners={partners}
+                selectedPartner={selectedPartner}
+                onSelectPartner={(partner) => setSelectedPartner(partner)}
+              />
             </div>
 
-            {/* Tool 3: Document Checklist with Checkboxes */}
+            {/* Tool 3: Document Checklist */}
             <div className="card">
               <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FileCheck size={20} style={{ color: '#D97706' }} /> Required Document Checklist
@@ -449,7 +411,7 @@ export default function Results() {
               </div>
             </div>
 
-            {/* Tool 4: Download Pre-Filled PDF Application Slip */}
+            {/* Tool 4: Download Pre-Filled Application Form */}
             <div className="card" style={{ textAlign: 'center', background: '#F8FAFC' }}>
               <h3 style={{ fontSize: '1.2rem', color: '#0B192C', marginBottom: '0.5rem' }}>
                 Download Official Application Form
@@ -466,7 +428,6 @@ export default function Results() {
         )}
       </div>
 
-      {/* Selected Partner Details Modal */}
       {selectedPartner && (
         <PartnerDetailsModal partner={selectedPartner} onClose={() => setSelectedPartner(null)} />
       )}

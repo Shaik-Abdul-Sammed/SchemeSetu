@@ -4,6 +4,7 @@ import { ArrowLeft, Mic, MicOff, Type, FileText, Send, Sparkles, User, ToggleLef
 import { api } from '../services/api';
 import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
+import AgentReportModal from '../components/agent/AgentReportModal';
 
 export default function InputHub() {
   const navigate = useNavigate();
@@ -21,10 +22,11 @@ export default function InputHub() {
     }
   ]);
 
-  const [inputMode, setInputMode] = useState('voice'); // 'voice', 'text', 'scan'
+  const [inputMode, setInputMode] = useState('voice');
   const [textInput, setTextInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [agentReportOpen, setAgentReportOpen] = useState(false);
 
   // User Profile Input Criteria Collected
   const [criteria, setCriteria] = useState({
@@ -64,13 +66,8 @@ export default function InputHub() {
         handleUserMessage(transcript);
       };
 
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
+      recognitionRef.current.onerror = () => setIsListening(false);
+      recognitionRef.current.onend = () => setIsListening(false);
     }
   }, []);
 
@@ -101,12 +98,10 @@ export default function InputHub() {
   const handleUserMessage = async (text) => {
     if (!text.trim()) return;
 
-    // Add user message to chat
     const updatedMessages = [...messages, { sender: 'user', text }];
     setMessages(updatedMessages);
     setTextInput('');
 
-    // Determine missing field and prompt next question
     const lower = text.toLowerCase();
     let updatedCriteria = { ...criteria };
 
@@ -137,8 +132,6 @@ export default function InputHub() {
       updatedCriteria.education = text;
       setCriteria(updatedCriteria);
       setMessages([...updatedMessages, { sender: 'bot', text: `Thank you! Evaluating eligible schemes for you now...` }]);
-
-      // Trigger recommendation API and navigate to results
       await submitRecommendation(updatedCriteria);
     }
   };
@@ -157,8 +150,6 @@ export default function InputHub() {
       const schemes = res.schemes || res.data || [];
       navigate('/results', { state: { schemes, criteria: finalCriteria } });
     } catch (err) {
-      console.error("Recommendation submission error:", err);
-      // Fallback redirect with default criteria
       navigate('/results', { state: { criteria: finalCriteria } });
     } finally {
       setIsLoading(false);
@@ -170,17 +161,11 @@ export default function InputHub() {
     setIsLoading(true);
     try {
       await api.post('/agent/submit', { ...agentForm, agentId: 'agent-101' });
-      await submitRecommendation({
-        projectType: agentForm.projectType,
-        cost: agentForm.cost,
-        income: agentForm.income,
-        education: agentForm.education,
-        occupation: agentForm.occupation
-      });
-    } catch (err) {
-      navigate('/results', { state: { criteria: agentForm } });
-    } finally {
       setIsLoading(false);
+      setAgentReportOpen(true);
+    } catch (err) {
+      setIsLoading(false);
+      setAgentReportOpen(true);
     }
   };
 
@@ -225,14 +210,13 @@ export default function InputHub() {
       {/* USER MODE: Conversational Chat UI */}
       {mode === 'user' && (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-          {/* Messages Scroll Area */}
           <div style={{ flexGrow: 1, padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '380px', maxHeight: '500px' }}>
             {messages.map((msg, index) => (
               <div
                 key={index}
                 style={{
                   display: 'flex',
-                  justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  justify: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                   gap: '0.65rem'
                 }}
               >
@@ -281,7 +265,6 @@ export default function InputHub() {
           {/* Input Bar */}
           <div style={{ padding: '1rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', marginBottom: '0.75rem' }}>
-              {/* Giant Pulsating Voice Button */}
               <button
                 onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
                 className="btn btn-primary"
@@ -299,7 +282,6 @@ export default function InputHub() {
                 {isListening ? <MicOff size={32} /> : <Mic size={32} />}
               </button>
 
-              {/* Mode Selectors */}
               <button
                 onClick={() => setInputMode('text')}
                 className={`btn btn-sm ${inputMode === 'text' ? 'btn-primary' : 'btn-outline'}`}
@@ -315,7 +297,6 @@ export default function InputHub() {
               </button>
             </div>
 
-            {/* Text Input Option */}
             {inputMode === 'text' && (
               <form onSubmit={(e) => { e.preventDefault(); handleUserMessage(textInput); }} style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
@@ -332,7 +313,6 @@ export default function InputHub() {
               </form>
             )}
 
-            {/* Document Scan Option */}
             {inputMode === 'scan' && (
               <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '8px', border: '1px dashed #CBD5E1', textAlign: 'center' }}>
                 <input type="file" accept="image/*,.pdf" onChange={(e) => { if (e.target.files[0]) handleUserMessage("Uploaded document: " + e.target.files[0].name); }} />
@@ -447,6 +427,17 @@ export default function InputHub() {
           </button>
         </form>
       )}
+
+      {/* Task 1: Agent Report Summary Modal */}
+      <AgentReportModal
+        isOpen={agentReportOpen}
+        onClose={() => {
+          setAgentReportOpen(false);
+          submitRecommendation(agentForm);
+        }}
+        agentData={agentForm}
+        recommendedScheme={{ name: 'Pradhan Mantri Mudra Yojana (PMMY) - Kishore' }}
+      />
     </div>
   );
 }

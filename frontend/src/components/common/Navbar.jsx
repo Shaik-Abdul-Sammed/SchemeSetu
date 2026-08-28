@@ -13,8 +13,9 @@ import {
   X, 
   LayoutDashboard,
   Globe,
-  MapPin,
-  Radio
+  Radio,
+  FileCheck,
+  Mic
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -57,14 +58,18 @@ export default function Navbar() {
             <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
               {t('home')}
             </NavLink>
+            <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <Mic size={16} /> Voice Assistant
+            </NavLink>
             <NavLink to="/schemes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
               <Building2 size={16} /> {t('exploreSchemes')}
             </NavLink>
-            <NavLink to="/eligibility" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Sparkles size={16} /> {t('checkEligibility')}
+
+            <NavLink to="/applications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <FileCheck size={16} /> {t('applications')}
             </NavLink>
 
-            {/* Snapchat Location Setup Quick Badge */}
+            {/* Location Setup Badge */}
             <button
               onClick={() => setLocationModalOpen(true)}
               className="btn btn-secondary btn-sm"
@@ -76,7 +81,7 @@ export default function Navbar() {
                 alignItems: 'center',
                 gap: '0.4rem'
               }}
-              title="Open Snapchat Location Setup & Partner Radar"
+              title="Open Location Radar & Partner Map"
             >
               <Radio size={14} style={{ color: '#38BDF8' }} />
               <span style={{ fontSize: '0.82rem' }}>
@@ -84,7 +89,7 @@ export default function Navbar() {
               </span>
             </button>
 
-            {/* Multi-Lingual Language Switcher */}
+            {/* All 8 Languages Selector */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
               <Globe size={15} style={{ color: '#F59E0B' }} />
               <select
@@ -108,6 +113,8 @@ export default function Navbar() {
                      l === 'TE' ? 'తెలుగు (TE)' :
                      l === 'TA' ? 'தமிழ் (TA)' :
                      l === 'KN' ? 'ಕನ್ನಡ (KN)' :
+                     l === 'ML' ? 'മലയാളം (ML)' :
+                     l === 'BN' ? 'বাংলা (BN)' :
                      'मराठी (MR)'}
                   </option>
                 ))}
@@ -140,7 +147,6 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Snapchat Location Setup Modal */}
       <SnapchatLocationPicker
         isOpen={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}

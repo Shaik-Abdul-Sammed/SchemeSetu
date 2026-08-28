@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, ShieldCheck, Phone, CheckCircle, Globe, Award, HeartHandshake } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Phone, CheckCircle, Globe, Award, HeartHandshake, Zap } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +17,18 @@ export default function Onboarding() {
   const handleGuestAccess = () => {
     localStorage.setItem('schemesetu_is_guest', 'true');
     navigate('/input');
+  };
+
+  // TASK 11: One-Click Quick Demo for SIH 2026 Presentation
+  const handleQuickDemo = () => {
+    const demoCriteria = {
+      income: 240000,
+      cost: 350000,
+      education: '10th pass',
+      projectType: 'business',
+      occupation: 'Farmer'
+    };
+    navigate('/results', { state: { criteria: demoCriteria } });
   };
 
   const handleSendOtp = (e) => {
@@ -51,7 +63,7 @@ export default function Onboarding() {
         </div>
 
         {/* Global Language Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.3rem 0.7.5rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
           <Globe size={16} style={{ color: '#0284C7' }} />
           <select
             value={lang}
@@ -84,12 +96,24 @@ export default function Onboarding() {
           </p>
         </div>
 
+        {/* Task 11: One-Click Quick Demo Button (SIH 2026 Showcase) */}
+        <div style={{ marginBottom: '1rem' }}>
+          <button
+            onClick={handleQuickDemo}
+            className="btn btn-green btn-lg"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '0.95rem' }}
+          >
+            <Zap size={22} style={{ color: '#F59E0B' }} />
+            <span>⚡ Quick Demo Showcase (SIH 2026)</span>
+          </button>
+        </div>
+
         {/* Action 1: Continue as Guest (Primary) */}
         <div style={{ marginBottom: '2rem' }}>
           <button
             onClick={handleGuestAccess}
             className="btn btn-primary btn-lg"
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '1rem' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '0.95rem' }}
           >
             <span>Continue as Guest</span>
             <ArrowRight size={20} />
@@ -148,22 +172,6 @@ export default function Onboarding() {
             </div>
           </form>
         )}
-
-        {/* Trust Badges */}
-        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
-          <div>
-            <CheckCircle size={18} style={{ color: '#059669', margin: '0 auto 0.25rem' }} />
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>Voice Assistance</div>
-          </div>
-          <div>
-            <CheckCircle size={18} style={{ color: '#059669', margin: '0 auto 0.25rem' }} />
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>Multilingual</div>
-          </div>
-          <div>
-            <CheckCircle size={18} style={{ color: '#059669', margin: '0 auto 0.25rem' }} />
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>Offline Capable</div>
-          </div>
-        </div>
       </div>
     </div>
   );

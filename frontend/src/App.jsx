@@ -10,6 +10,9 @@ import Onboarding from './pages/Onboarding';
 import InputHub from './pages/InputHub';
 import Results from './pages/Results';
 import MyApplications from './pages/MyApplications';
+import Community from './pages/Community';
+import VLEDashboard from './pages/VLEDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Home from './pages/Home';
 import Schemes from './pages/Schemes';
 import SchemeDetails from './pages/SchemeDetails';
@@ -33,6 +36,9 @@ export default function App() {
             <Route path="/input" element={<InputHub />} />
             <Route path="/results" element={<Results />} />
             <Route path="/applications" element={<MyApplications />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/vle" element={<VLEDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/home" element={<Home />} />
             <Route path="/schemes" element={<Schemes />} />
             <Route path="/schemes/:id" element={<SchemeDetails />} />

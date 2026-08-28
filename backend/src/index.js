@@ -18,6 +18,12 @@ const feedbackRouter = require('./routes/v1/feedback');
 const eligibilityRouter = require('./routes/eligibility');
 const userRouter = require('./routes/user');
 
+const uliRouter = require('./routes/v1/uliRoutes');
+const communityRouter = require('./routes/v1/communityRoutes');
+const microloanRouter = require('./routes/v1/microloanRoutes');
+const vleRouter = require('./routes/v1/vleRoutes');
+const adminRouter = require('./routes/v1/adminRoutes');
+
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -82,7 +88,12 @@ app.get('/', (req, res) => {
       users: '/api/v1/users',
       auth: '/api/v1/auth',
       userDashboard: '/api/v1/user',
-      feedback: '/api/v1/feedback'
+      feedback: '/api/v1/feedback',
+      uli: '/api/v1/uli',
+      community: '/api/v1/community',
+      microloan: '/api/v1/microloan',
+      vle: '/api/v1/vle',
+      admin: '/api/v1/admin'
     }
   });
 });
@@ -98,6 +109,11 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/auth', usersRouter); // Alias for auth
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/feedback', feedbackRouter);
+app.use('/api/v1/uli', uliRouter);
+app.use('/api/v1/community', communityRouter);
+app.use('/api/v1/microloan', microloanRouter);
+app.use('/api/v1/vle', vleRouter);
+app.use('/api/v1/admin', adminRouter);
 
 // 404 Catch-All Middleware
 app.use(notFound);

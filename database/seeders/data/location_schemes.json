@@ -1,0 +1,22 @@
+{
+  "districts": [
+    {
+      "id": "dist-001",
+      "name": "Warangal",
+      "state": "Telangana",
+      "schemes": ["pmmy-kishore", "pm-kisan", "telangana-dalit-bandhu"]
+    },
+    {
+      "id": "dist-002",
+      "name": "Chennai",
+      "state": "Tamil Nadu",
+      "schemes": ["pmmy-kishore", "stand-up-india", "tn-uaye-scheme"]
+    },
+    {
+      "id": "dist-003",
+      "name": "Pune",
+      "state": "Maharashtra",
+      "schemes": ["pmmy-kishore", "stand-up-india", "maharashtra-vle-loan"]
+    }
+  ]
+}

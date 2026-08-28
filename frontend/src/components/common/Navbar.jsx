@@ -15,7 +15,10 @@ import {
   Globe,
   Radio,
   FileCheck,
-  Mic
+  Mic,
+  Users,
+  MessageSquare,
+  Settings
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -67,6 +70,18 @@ export default function Navbar() {
 
             <NavLink to="/applications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
               <FileCheck size={16} /> {t('applications')}
+            </NavLink>
+
+            <NavLink to="/community" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <MessageSquare size={16} /> Community
+            </NavLink>
+
+            <NavLink to="/vle" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <Users size={16} /> VLE
+            </NavLink>
+
+            <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <Settings size={16} /> Admin
             </NavLink>
 
             {/* Location Setup Badge */}

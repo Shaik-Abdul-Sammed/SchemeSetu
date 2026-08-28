@@ -973,6 +973,40 @@ async function runAllTests() {
       assert(!str.includes('password'));
     });
 
+    console.log('\n--- 15. Localization & 100% Translation Key Coverage (10 tests) ---');
+    const fs = require('fs');
+    const path = require('path');
+    const langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    const langFileContent = fs.readFileSync(langFilePath, 'utf8');
+    const langMatch = langFileContent.match(/const translations = ({[\s\S]*?});\n\nconst LanguageContext/);
+    const transObj = eval('(' + langMatch[1] + ')');
+    const enKeys = Object.keys(transObj.EN);
+    const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'];
+
+    await test('All 8 supported languages (EN, HI, TE, TA, KN, ML, BN, MR) exist in dictionary', async () => {
+      const langs = Object.keys(transObj);
+      assert.strictEqual(langs.length, 8);
+      assert(langs.includes('EN') && langs.includes('HI') && langs.includes('TE') && langs.includes('BN'));
+    });
+
+    for (const lang of targetLangs) {
+      await test(`${lang} translation coverage is 100% (0 missing keys)`, async () => {
+        const langKeys = Object.keys(transObj[lang] || {});
+        const missing = enKeys.filter(k => !langKeys.includes(k) || !transObj[lang][k]);
+        assert.strictEqual(missing.length, 0, `Missing keys in ${lang}: ${missing.join(', ')}`);
+      });
+    }
+
+    await test('Translation fallback function returns English value for unknown language', async () => {
+      const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
+      assert.strictEqual(t('UNKNOWN', 'brandTitle'), 'SANGASETU');
+    });
+
+    await test('Translation fallback function returns key string for completely non-existent key', async () => {
+      const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
+      assert.strictEqual(t('EN', 'nonExistentKey123'), 'nonExistentKey123');
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

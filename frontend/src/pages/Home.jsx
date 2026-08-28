@@ -17,6 +17,9 @@ import { useLocation } from '../context/LocationContext';
 import SnapchatLocationPicker from '../components/location/SnapchatLocationPicker';
 import SchemeCard from '../components/scheme/SchemeCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import SearchAutocomplete from '../components/common/SearchAutocomplete';
+import VoiceSearchButton from '../components/common/VoiceSearchButton';
+import RecentlyViewed from '../components/common/RecentlyViewed';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -103,27 +106,19 @@ export default function Home() {
               </button>
             </div>
 
-            {/* SEARCH FORM */}
-            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '640px', margin: '0 auto 2rem', position: 'relative' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: '#FFFFFF', padding: '0.5rem', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, paddingLeft: '0.75rem', gap: '0.5rem', color: '#64748B' }}>
-                  <Search size={20} />
-                  <input
-                    type="text"
+            {/* SEARCH FORM WITH AUTOCOMPLETE & VOICE */}
+            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '680px', margin: '0 auto 2rem', position: 'relative' }}>
+              <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-2xl">
+                <div className="flex-1">
+                  <SearchAutocomplete
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(val) => setSearchTerm(val)}
+                    onSelect={(scheme) => navigate(`/schemes/${scheme.id}`)}
                     placeholder={t('searchPlaceholder')}
-                    aria-label="Search government schemes"
-                    style={{
-                      width: '100%',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: '1rem',
-                      color: '#0F172A'
-                    }}
                   />
                 </div>
-                <button type="submit" className="btn btn-primary btn-lg">
+                <VoiceSearchButton onResult={(text) => setSearchTerm(text)} />
+                <button type="submit" className="btn btn-primary font-bold px-5 py-3 rounded-xl shrink-0">
                   Search
                 </button>
               </div>
@@ -215,6 +210,11 @@ export default function Home() {
               ))}
             </div>
           )}
+
+          {/* Recently Viewed Schemes History */}
+          <div style={{ marginTop: '3rem' }}>
+            <RecentlyViewed />
+          </div>
         </div>
       </section>
 

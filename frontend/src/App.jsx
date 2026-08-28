@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import InstallAppBanner from './components/common/InstallAppBanner';
+import OfflineIndicator from './components/common/OfflineIndicator';
+import MobileQuickNav from './components/common/MobileQuickNav';
 import Home from './pages/Home';
 import Schemes from './pages/Schemes';
 import SchemeDetails from './pages/SchemeDetails';
@@ -13,7 +16,9 @@ import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }} className="pb-14 md:pb-0">
+      <InstallAppBanner />
+      <OfflineIndicator />
       <Navbar />
       <main style={{ flexGrow: 1 }}>
         <Routes>
@@ -28,6 +33,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <MobileQuickNav />
     </div>
   );
 }

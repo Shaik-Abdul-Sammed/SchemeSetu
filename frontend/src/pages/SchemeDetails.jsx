@@ -18,6 +18,11 @@ import { schemeService } from '../services/schemeService';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 
+import AudioReaderButton from '../components/common/AudioReaderButton';
+import ShareSchemeButton from '../components/common/ShareSchemeButton';
+import BenefitEstimator from '../components/scheme/BenefitEstimator';
+import SchemeFAQ from '../components/scheme/SchemeFAQ';
+
 export default function SchemeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,7 +36,21 @@ export default function SchemeDetails() {
     setError(null);
     try {
       const res = await schemeService.getSchemeById(id);
-      setScheme(res.data);
+      const data = res.data;
+      setScheme(data);
+
+      // Save to recently viewed schemes in localStorage
+      if (data && data.id) {
+        try {
+          const stored = localStorage.getItem('schemesetu_recently_viewed');
+          let list = stored ? JSON.parse(stored) : [];
+          list = list.filter(item => item.id !== data.id);
+          list.unshift({ id: data.id, name: data.name, category: data.category, summary: data.summary });
+          localStorage.setItem('schemesetu_recently_viewed', JSON.stringify(list.slice(0, 8)));
+        } catch (e) {
+          console.error('Failed to save to recently viewed:', e);
+        }
+      }
     } catch (err) {
       setError(err.message || `Scheme with ID '${id}' could not be loaded.`);
     } finally {
@@ -94,7 +113,7 @@ export default function SchemeDetails() {
         </p>
 
         {/* Action CTAs */}
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={() => navigate('/eligibility')} className="btn btn-primary btn-lg">
             <Sparkles size={18} /> Check My Eligibility
           </button>
@@ -107,6 +126,9 @@ export default function SchemeDetails() {
           >
             Apply on Official Portal <ExternalLink size={18} />
           </a>
+
+          <AudioReaderButton textToRead={`${scheme.name}. ${scheme.summary}. ${scheme.benefits}`} label="Read Aloud" />
+          <ShareSchemeButton scheme={scheme} />
         </div>
       </div>
 
@@ -230,7 +252,7 @@ export default function SchemeDetails() {
                         color: '#0F172A',
                         cursor: 'pointer',
                         display: 'flex',
-                        justify: 'space-between',
+                        justifyContent: 'space-between',
                         alignItems: 'center'
                       }}
                     >
@@ -248,6 +270,16 @@ export default function SchemeDetails() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Interactive Subsidy Benefit Estimator */}
+      <div style={{ marginTop: '2rem' }}>
+        <BenefitEstimator scheme={scheme} />
+      </div>
+
+      {/* Bilingual Scheme FAQs */}
+      <div style={{ marginTop: '2rem' }}>
+        <SchemeFAQ schemeName={scheme.name} faqs={scheme.faqs} />
       </div>
     </div>
   );

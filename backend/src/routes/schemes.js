@@ -169,6 +169,25 @@ router.post('/recommend', (req, res) => {
   }
 });
 
+// GET /api/v1/schemes/compare - Compare multiple schemes by IDs
+router.get('/compare', (req, res) => {
+  try {
+    const { ids } = req.query;
+    if (!ids) {
+      return res.status(400).json({ success: false, error: 'Query parameter "ids" comma-separated list is required.' });
+    }
+    const idList = ids.split(',').map(i => i.trim().toLowerCase());
+    const matched = schemesData.filter(s => idList.includes(String(s.id).toLowerCase()));
+    return res.status(200).json({
+      success: true,
+      count: matched.length,
+      schemes: matched
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/schemes/:id - Single scheme details
 router.get('/:id', (req, res) => {
   try {
@@ -193,3 +212,4 @@ router.get('/:id', (req, res) => {
 });
 
 module.exports = router;
+

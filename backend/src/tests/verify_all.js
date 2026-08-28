@@ -106,6 +106,17 @@ async function runAllTests() {
       assert(list.length > 0);
     });
 
+    await test('GET /api/v1/schemes/compare returns side-by-side scheme comparison list', async () => {
+      const res = await request('GET', '/api/v1/schemes/compare?ids=pm-kisan,ayushman-bharat');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.count, 2);
+    });
+
+    await test('GET /api/v1/schemes/compare rejects missing ids query parameter', async () => {
+      const res = await request('GET', '/api/v1/schemes/compare');
+      assert.strictEqual(res.status, 400);
+    });
+
     await test('GET /api/v1/schemes?level=Central filters by government level', async () => {
       const res = await request('GET', '/api/v1/schemes?level=Central');
       assert.strictEqual(res.status, 200);

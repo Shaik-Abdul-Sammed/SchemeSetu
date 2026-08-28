@@ -7,6 +7,9 @@ import SchemeFilters from '../components/scheme/SchemeFilters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import SearchAutocomplete from '../components/common/SearchAutocomplete';
+import VoiceSearchButton from '../components/common/VoiceSearchButton';
+import SchemeCompareModal from '../components/scheme/SchemeCompareModal';
 
 export default function Schemes() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +29,7 @@ export default function Schemes() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   const fetchSchemes = async () => {
     setLoading(true);
@@ -83,27 +87,26 @@ export default function Schemes() {
         </p>
       </div>
 
-      {/* Search Input Bar */}
+      {/* Search Input Bar & Compare Action */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <Search size={20} style={{ color: '#64748B' }} />
-          <input
-            type="text"
-            className="form-control"
-            style={{ border: 'none', fontSize: '1.05rem', boxShadow: 'none', padding: 0 }}
-            placeholder="Search schemes by name, keyword, department, or benefits..."
-            value={filters.q}
-            onChange={(e) => handleFilterChange('q', e.target.value)}
-          />
-          {filters.q && (
-            <button 
-              onClick={() => handleFilterChange('q', '')}
-              className="btn btn-secondary btn-sm"
-              style={{ color: '#64748B' }}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex-1 w-full">
+            <SearchAutocomplete
+              value={filters.q}
+              onChange={(val) => handleFilterChange('q', val)}
+              onSelect={(s) => handleFilterChange('q', s.name)}
+              placeholder="Search schemes by name, keyword, department, or benefits..."
+            />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <VoiceSearchButton onResult={(text) => handleFilterChange('q', text)} />
+            <button
+              onClick={() => setIsCompareOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition shadow-md"
             >
-              Clear
+              Compare Schemes ({schemes.slice(0, 3).length})
             </button>
-          )}
+          </div>
         </div>
       </div>
 
@@ -153,6 +156,14 @@ export default function Schemes() {
             </div>
           )}
         </>
+      )}
+
+      {/* Side-by-Side Scheme Comparison Modal */}
+      {isCompareOpen && (
+        <SchemeCompareModal
+          schemes={schemes.slice(0, 3)}
+          onClose={() => setIsCompareOpen(false)}
+        />
       )}
     </div>
   );

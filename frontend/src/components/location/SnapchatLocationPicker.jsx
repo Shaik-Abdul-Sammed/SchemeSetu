@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from '../../context/LocationContext';
 import { api } from '../../services/api';
 import { MapPin, Navigation, Building2, Phone, ShieldCheck, RefreshCw, X, Radio } from 'lucide-react';
+import PartnerDetailsModal from './PartnerDetailsModal';
 
 export default function SnapchatLocationPicker({ isOpen, onClose }) {
   const { location, updateLocation, setNearbyPartners } = useLocation();
@@ -10,6 +11,7 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
   const [fetchingPartners, setFetchingPartners] = useState(false);
   const [selectedState, setSelectedState] = useState(location.state || 'Telangana');
   const [selectedDistrict, setSelectedDistrict] = useState(location.district || 'Hyderabad');
+  const [activePartner, setActivePartner] = useState(null);
 
   const statesList = [
     { state: 'Telangana', district: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
@@ -330,30 +332,36 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {partners.map(p => (
-                  <div key={p.id} style={{
-                    padding: '1rem',
-                    backgroundColor: '#1E293B',
-                    borderRadius: '8px',
-                    border: '1px solid #334155',
-                    display: 'flex',
-                    justify: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem'
-                  }}>
-                    <div>
-                      <div style={{ display: 'flex', items: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <span className="badge badge-central">{p.type}</span>
-                        {p.fundAvailable && (
-                          <span className="badge badge-eligible">
-                            <ShieldCheck size={12} /> Fund Sanction Available
-                          </span>
-                        )}
+                  <div 
+                    key={p.id}
+                    onClick={() => setActivePartner(p)}
+                    className="cursor-pointer hover:border-amber-400/50 transition"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '0.85rem 1rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        backgroundColor: p.type === 'Bank Branch' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(217, 119, 6, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: p.type === 'Bank Branch' ? '#10B981' : '#F59E0B'
+                      }}>
+                        <Building2 size={18} />
                       </div>
-                      <h4 style={{ fontSize: '1rem', color: '#FFFFFF', margin: 0 }}>{p.name}</h4>
-                      <p style={{ fontSize: '0.82rem', color: '#94A3B8', margin: '0.2rem 0' }}>{p.address}</p>
-                      <div style={{ fontSize: '0.78rem', color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Phone size={12} /> {p.phone}
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>{p.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{p.type} • Click for directions</div>
                       </div>
                     </div>
 
@@ -370,6 +378,13 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
           </div>
         </div>
       </div>
+
+      {activePartner && (
+        <PartnerDetailsModal
+          partner={activePartner}
+          onClose={() => setActivePartner(null)}
+        />
+      )}
     </div>
   );
-}
+};

@@ -5,18 +5,24 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { LocationProvider } from './context/LocationContext';
+import { ThemeProvider } from './context/ThemeContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <LanguageProvider>
-        <LocationProvider>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </LocationProvider>
-      </LanguageProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <LanguageProvider>
+            <LocationProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </LocationProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );

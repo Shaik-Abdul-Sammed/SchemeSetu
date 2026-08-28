@@ -1,0 +1,55 @@
+import kagglehub
+
+# Download latest version
+path = kagglehub.competition_download('the-uncharted-data-challenge')
+
+print("Path to competition files:", path)
+
+
+
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("ksabishek/massive-bank-dataset-1-million-rows")
+
+print("Path to dataset files:", path)
+
+
+import pandas as pd
+import kagglehub
+
+# --- Option 1: Load "Indian Government Welfare Schemes (4702 Records)" ---
+# This dataset contains 4,702 records with columns for scheme name, category,
+# issuing authority, eligibility, benefits, and required documents[citation:2].
+
+path_1 = kagglehub.dataset_download("premsargara/indian-government-beneficiary-schemes")
+file_path_1 = f"{path_1}/indian_government_schemes.csv"
+df_schemes_4702 = pd.read_csv(file_path_1)
+print("Loaded 'Indian Government Welfare Schemes' shape:", df_schemes_4702.shape)
+print(df_schemes_4702.head())
+
+# --- Option 2: Load "MyScheme India: 4670 Govt Welfare Schemes" ---
+# This dataset contains 4,670 schemes with details like level (Central/State),
+# department, target beneficiaries, application process, and FAQs[citation:4].
+
+path_2 = kagglehub.dataset_download("elchemist/myscheme-india-govt-welfare-schemes")
+file_path_2 = f"{path_2}/schemes.csv"
+df_schemes_4670 = pd.read_csv(file_path_2)
+print("\nLoaded 'MyScheme India' shape:", df_schemes_4670.shape)
+print(df_schemes_4670.head())
+
+# --- Option 3: Load "Government Schemes" Q&A Dataset ---
+# This dataset contains over 3500 bilingual (English/Hindi) Q&A pairs on
+> 50 central and state schemes, including scheme name, category, and target beneficiary[citation:6].
+
+path_3 = kagglehub.dataset_download("zakerrazvi/indian-government-schemes-dataset-english-and-hindi")
+# Note: The specific CSV filename might differ; you may need to explore the downloaded path.
+# This is likely a Q&A file, not a scheme master file.
+file_path_3 = f"{path_3}/government_schemes_dataset.csv" # Example file name
+try:
+    df_qa = pd.read_csv(file_path_3)
+    print("\nLoaded Bilingual QA Dataset shape:", df_qa.shape)
+    print(df_qa.head())
+except FileNotFoundError:
+    print("\nFile not found in 'zakerrazvi' dataset. Please check the Kaggle page for the exact file name.")
+

@@ -251,8 +251,34 @@ function getSchemeById(req, res, next) {
   }
 }
 
+function compareSchemes(req, res, next) {
+  try {
+    const { ids } = req.query;
+    if (!ids || !ids.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Query parameter "ids" comma-separated list is required.'
+      });
+    }
+
+    const idList = ids.split(',').map(i => i.trim().toLowerCase());
+    const allResult = dataService.getSchemes();
+    const list = Array.isArray(allResult) ? allResult : (allResult.schemes || allResult.data || []);
+    const matched = list.filter(s => idList.includes(String(s.id).toLowerCase()));
+
+    return res.status(200).json({
+      success: true,
+      count: matched.length,
+      schemes: matched
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   recommendSchemes,
   getSchemes,
-  getSchemeById
+  getSchemeById,
+  compareSchemes
 };

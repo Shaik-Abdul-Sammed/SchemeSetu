@@ -1,0 +1,16 @@
+{
+  "appId": "in.gov.schemesetu.app",
+  "appName": "SchemeSetu",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0A2540",
+      "showSpinner": true
+    }
+  }
+}

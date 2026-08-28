@@ -5,6 +5,10 @@ import Footer from './components/common/Footer';
 import InstallAppBanner from './components/common/InstallAppBanner';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import MobileQuickNav from './components/common/MobileQuickNav';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import Onboarding from './pages/Onboarding';
+import InputHub from './pages/InputHub';
+import Results from './pages/Results';
 import Home from './pages/Home';
 import Schemes from './pages/Schemes';
 import SchemeDetails from './pages/SchemeDetails';
@@ -16,24 +20,30 @@ import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }} className="pb-14 md:pb-0">
-      <InstallAppBanner />
-      <OfflineIndicator />
-      <Navbar />
-      <main style={{ flexGrow: 1 }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/schemes" element={<Schemes />} />
-          <Route path="/schemes/:id" element={<SchemeDetails />} />
-          <Route path="/eligibility" element={<Eligibility />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      <Footer />
-      <MobileQuickNav />
-    </div>
+    <ErrorBoundary>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <InstallAppBanner />
+        <OfflineIndicator />
+        <Navbar />
+        <main style={{ flexGrow: 1 }}>
+          <Routes>
+            <Route path="/" element={<Onboarding />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/input" element={<InputHub />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/schemes" element={<Schemes />} />
+            <Route path="/schemes/:id" element={<SchemeDetails />} />
+            <Route path="/eligibility" element={<Eligibility />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+        <MobileQuickNav />
+      </div>
+    </ErrorBoundary>
   );
 }

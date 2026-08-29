@@ -218,6 +218,80 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── MOBILE APP DOWNLOAD SECTION ─────────────────────────────────── */}
+      <section className="app-download-section">
+        <div className="container">
+          <div className="app-download-card">
+            {/* Left: Text content */}
+            <div className="app-download-text">
+              <div className="app-download-badge">{t('mobileAppBadge', 'Now Available on Mobile')}</div>
+              <h2 className="app-download-heading">
+                {t('mobileAppHeading', 'Take SchemeSetu Everywhere')}
+              </h2>
+              <p className="app-download-sub">
+                {t('mobileAppSub', 'Access 500+ government schemes, track applications, and get AI-powered guidance — right from your phone. Available in 8 Indian languages.')}
+              </p>
+              <div className="app-download-buttons">
+                <a
+                  href="#"
+                  className="app-store-btn"
+                  aria-label="Download on Google Play"
+                  onClick={e => e.preventDefault()}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M3.18 23.76c.37.21.8.22 1.18.03l12.64-7.04-2.79-2.79-11.03 9.8zm-1.05-20.4A1.5 1.5 0 0 0 2 4.5v15c0 .48.23.9.6 1.17l.08.06 8.4-8.4v-.2L2.13 3.36zm18.12 8.38-2.72-1.52-3.08 3.08 3.08 3.09 2.74-1.53a1.54 1.54 0 0 0 0-2.62v-.5zm-16.4-9.4L15.21 9.8l-2.79 2.79L.37 2.24C.74.96 1.87.25 3.85 2.34z"/>
+                  </svg>
+                  <div className="app-store-btn-text">
+                    <span className="app-store-label">{t('getItOn', 'GET IT ON')}</span>
+                    <span className="app-store-name">Google Play</span>
+                  </div>
+                </a>
+
+                <a
+                  href="#"
+                  className="app-store-btn"
+                  aria-label="Download on App Store"
+                  onClick={e => e.preventDefault()}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.15-2.19 1.28-2.17 3.82.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.36 2.76M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                  </svg>
+                  <div className="app-store-btn-text">
+                    <span className="app-store-label">{t('downloadOn', 'DOWNLOAD ON THE')}</span>
+                    <span className="app-store-name">App Store</span>
+                  </div>
+                </a>
+              </div>
+              <p className="app-download-note">
+                🔒 {t('mobileAppNote', 'Free forever · No ads · Works offline · All 8 Indian languages')}
+              </p>
+            </div>
+
+            {/* Right: Phone mockup illustration */}
+            <div className="app-download-visual" aria-hidden="true">
+              <div className="phone-mockup">
+                <div className="phone-screen">
+                  <div className="phone-screen-header">
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#fff', opacity: 0.9 }}>SchemeSetu</span>
+                  </div>
+                  <div style={{ padding: '0.5rem' }}>
+                    {['PM Mudra Yojana', 'Stand Up India', 'PMEGP Scheme'].map((s, i) => (
+                      <div key={i} className="phone-scheme-item">
+                        <div className="phone-scheme-dot" />
+                        <span style={{ fontSize: '0.55rem', color: '#1e3e62', fontWeight: 600 }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="phone-cta-bar">
+                    <span style={{ fontSize: '0.5rem', fontWeight: 700, color: '#fff' }}>Check Eligibility →</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Snapchat Location Setup Modal */}
       <SnapchatLocationPicker
         isOpen={locationModalOpen}

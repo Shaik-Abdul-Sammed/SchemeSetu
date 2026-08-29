@@ -38,7 +38,7 @@ export default function Navbar() {
     <>
       <div className="gov-tricolor-bar" />
       <header className="navbar">
-        <div className="container navbar-inner">
+        <div className="navbar-inner">
           <Link to="/" className="brand-logo" aria-label="SchemeSetu Home">
             <div className="brand-emblem">
               <span>से</span>

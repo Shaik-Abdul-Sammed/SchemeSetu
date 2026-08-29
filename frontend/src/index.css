@@ -348,6 +348,11 @@ button, input, select, a.btn {
   justify-content: space-between;
   height: 72px;
   width: 100%;
+  max-width: 100%;
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .brand-logo {
@@ -690,3 +695,237 @@ button, input, select, a.btn {
     display: flex;
   }
 }
+
+/* ==========================================================================
+   MOBILE APP DOWNLOAD SECTION
+   ========================================================================== */
+.app-download-section {
+  padding: 4rem 0;
+  background: linear-gradient(135deg, #0B192C 0%, #1E3E62 60%, #0B192C 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.app-download-section::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(217,119,6,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.app-download-card {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  width: 100%;
+}
+
+.app-download-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-download-badge {
+  display: inline-block;
+  background: rgba(217, 119, 6, 0.2);
+  border: 1px solid rgba(217, 119, 6, 0.5);
+  color: #F59E0B;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.9rem;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.app-download-heading {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.app-download-sub {
+  font-size: 1rem;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 480px;
+}
+
+.app-download-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.app-store-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #FFFFFF;
+  color: #0B192C;
+  border-radius: 12px;
+  padding: 0.75rem 1.4rem;
+  text-decoration: none;
+  font-family: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  min-width: 160px;
+  max-width: 100%;
+  border: 2px solid transparent;
+}
+
+.app-store-btn:hover,
+.app-store-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  border-color: #D97706;
+  outline: none;
+}
+
+.app-store-btn svg {
+  flex-shrink: 0;
+  color: #0B192C;
+}
+
+.app-store-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.app-store-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.app-store-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0B192C;
+}
+
+.app-download-note {
+  font-size: 0.82rem;
+  color: #64748B;
+  margin: 0;
+}
+
+/* Phone mockup */
+.app-download-visual {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.phone-mockup {
+  width: 120px;
+  background: #0B192C;
+  border-radius: 18px;
+  border: 3px solid #1E3E62;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.phone-screen {
+  background: #F8FAFC;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-screen-header {
+  background: linear-gradient(90deg, #0B192C, #1E3E62);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-scheme-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.3rem;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.phone-scheme-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #D97706;
+  flex-shrink: 0;
+}
+
+.phone-cta-bar {
+  margin-top: auto;
+  background: linear-gradient(90deg, #D97706, #F59E0B);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Responsive overrides ── */
+@media (max-width: 768px) {
+  .app-download-card {
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .app-download-sub {
+    max-width: 100%;
+  }
+
+  .app-download-buttons {
+    justify-content: center;
+  }
+
+  .app-store-btn {
+    flex: 1 1 140px;
+    justify-content: center;
+    min-width: 140px;
+  }
+
+  .app-download-visual {
+    order: -1;
+  }
+
+  .phone-mockup {
+    width: 90px;
+  }
+
+  .phone-screen {
+    min-height: 150px;
+  }
+}
+
+@media (max-width: 400px) {
+  .app-download-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-store-btn {
+    width: 100%;
+    justify-content: center;
+    min-width: unset;
+  }
+}
+

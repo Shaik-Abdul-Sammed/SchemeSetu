@@ -29,7 +29,7 @@ export default function SchemeFilters({ filters, onChange, onClear, totalResults
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <SlidersHorizontal size={18} style={{ color: '#D97706' }} />
-          <h3 style={{ fontSize: '1.1rem', margin: 0, color: '#0B192C' }}>{t('searchCriteria', 'Filter Government Schemes')}</h3>
+          <h3 style={{ fontSize: '1.1rem', margin: 0, color: '#0B192C' }}>{t('filterTitle', 'Filter Government Schemes')}</h3>
           {totalResults !== undefined && (
             <span style={{ fontSize: '0.85rem', color: '#64748B', backgroundColor: '#F1F5F9', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 600 }}>
               {totalResults} {t('resultsCount', 'Schemes Found')}
@@ -82,7 +82,7 @@ export default function SchemeFilters({ filters, onChange, onClear, totalResults
           >
             {occupations.map(o => (
               <option key={o} value={o}>
-                {o === 'All' ? 'All Occupations' : o}
+                {o === 'All' ? t('allOccupations', 'All Occupations') : o === 'Farmer' ? t('farmerOcc', 'Farmer') : o === 'Artisan' ? t('artisanOcc', 'Artisan') : o === 'Student' ? t('studentOcc', 'Student') : o === 'Vendor' ? t('vendorOcc', 'Vendor') : o === 'Business' ? t('businessOcc', 'Business') : o === 'Senior Citizen' ? t('seniorCitizenOcc', 'Senior Citizen') : o}
               </option>
             ))}
           </select>
@@ -95,10 +95,10 @@ export default function SchemeFilters({ filters, onChange, onClear, totalResults
             onChange={(e) => onChange('sort', e.target.value)}
             className="form-select"
           >
-            <option value="name_asc">Scheme Name (A - Z)</option>
-            <option value="name_desc">Scheme Name (Z - A)</option>
-            <option value="income_asc">Income Limit (Lowest First)</option>
-            <option value="income_desc">Income Limit (Highest First)</option>
+            <option value="name_asc">{t('sortNameAsc', 'Scheme Name (A - Z)')}</option>
+            <option value="name_desc">{t('sortNameDesc', 'Scheme Name (Z - A)')}</option>
+            <option value="income_asc">{t('sortIncomeAsc', 'Income Limit (Lowest First)')}</option>
+            <option value="income_desc">{t('sortIncomeDesc', 'Income Limit (Highest First)')}</option>
           </select>
         </div>
       </div>

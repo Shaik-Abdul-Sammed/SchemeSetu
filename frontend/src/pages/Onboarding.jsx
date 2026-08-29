@@ -19,7 +19,7 @@ export default function Onboarding() {
     navigate('/input');
   };
 
-  // TASK 11: One-Click Quick Demo for SIH 2026 Presentation
+  // One-Click Quick Demo for SIH 2026 Presentation
   const handleQuickDemo = () => {
     const demoCriteria = {
       income: 240000,
@@ -54,11 +54,11 @@ export default function Onboarding() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <Award style={{ color: '#D97706' }} size={20} />
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Govt of India</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('govtOfIndia', 'Govt of India')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <HeartHandshake style={{ color: '#059669' }} size={20} />
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>MoSJE Initiative</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('mosjeInitiative', 'MoSJE Initiative')}</span>
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export default function Onboarding() {
           >
             {availableLanguages.map((code) => (
               <option key={code} value={code}>
-                {code === 'EN' ? 'English' : code === 'HI' ? 'हिंदी (Hindi)' : code === 'TE' ? 'తెలుగు (Telugu)' : code === 'TA' ? 'தமிழ் (Tamil)' : code === 'KN' ? 'ಕನ್ನಡ (Kannada)' : code === 'ML' ? 'മലയാളം (Malayalam)' : code === 'BN' ? 'বাংলা (Bengali)' : 'मराठी (Marathi)'}
+                {code === 'EN' ? 'English (EN)' : code === 'HI' ? 'हिंदी (HI)' : code === 'TE' ? 'తెలుగు (TE)' : code === 'TA' ? 'தமிழ் (TA)' : code === 'KN' ? 'ಕನ್ನಡ (KN)' : code === 'ML' ? 'മലയാളം (ML)' : code === 'BN' ? 'বাংলা (BN)' : 'मराठी (MR)'}
               </option>
             ))}
           </select>
@@ -89,14 +89,14 @@ export default function Onboarding() {
           </div>
 
           <h1 style={{ fontSize: '1.8rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-            Namaste! I am SchemeSakhi
+            {t('namasteTitle', 'Namaste! I am SchemeSakhi')}
           </h1>
           <p style={{ color: '#475569', fontSize: '1.05rem', maxWidth: '480px', margin: '0 auto' }}>
-            Your personal AI guide to discover government loan & welfare schemes tailored for you. Free and confidential.
+            {t('onboardingSubtitle', 'Your personal AI guide to discover government loan & welfare schemes tailored for you. Free and confidential.')}
           </p>
         </div>
 
-        {/* Task 11: One-Click Quick Demo Button (SIH 2026 Showcase) */}
+        {/* One-Click Quick Demo Button (SIH 2026 Showcase) */}
         <div style={{ marginBottom: '1rem' }}>
           <button
             onClick={handleQuickDemo}
@@ -104,7 +104,7 @@ export default function Onboarding() {
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '0.95rem' }}
           >
             <Zap size={22} style={{ color: '#F59E0B' }} />
-            <span>⚡ Quick Demo Showcase (SIH 2026)</span>
+            <span>{t('quickDemo', '⚡ Quick Demo Showcase (SIH 2026)')}</span>
           </button>
         </div>
 
@@ -115,18 +115,18 @@ export default function Onboarding() {
             className="btn btn-primary btn-lg"
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '0.95rem' }}
           >
-            <span>Continue as Guest</span>
+            <span>{t('continueGuest', 'Continue as Guest')}</span>
             <ArrowRight size={20} />
           </button>
           <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-            <ShieldCheck size={14} style={{ color: '#059669' }} /> No registration required to explore schemes
+            <ShieldCheck size={14} style={{ color: '#059669' }} /> {t('noRegRequired', 'No registration required to explore schemes')}
           </div>
         </div>
 
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', color: '#94A3B8', fontSize: '0.85rem' }}>
           <div style={{ flexGrow: 1, height: '1px', background: '#E2E8F0' }}></div>
-          <span style={{ padding: '0 0.85rem', fontWeight: 600 }}>OR LOGIN WITH MOBILE</span>
+          <span style={{ padding: '0 0.85rem', fontWeight: 600 }}>{t('orLoginMobile', 'OR LOGIN WITH MOBILE')}</span>
           <div style={{ flexGrow: 1, height: '1px', background: '#E2E8F0' }}></div>
         </div>
 
@@ -139,7 +139,7 @@ export default function Onboarding() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="Enter 10-digit mobile number"
+                placeholder={t('enterMobilePlaceholder', 'Enter 10-digit mobile number')}
                 className="form-control"
                 style={{ paddingLeft: '2.5rem' }}
                 maxLength={10}
@@ -147,13 +147,13 @@ export default function Onboarding() {
               />
             </div>
             <button type="submit" className="btn btn-secondary">
-              Get OTP
+              {t('getOtp', 'Get OTP')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ fontSize: '0.9rem', color: '#0F172A', fontWeight: 600 }}>
-              Enter 4-digit OTP sent to +91 {phone}:
+              {t('enterOtpMsg', 'Enter 4-digit OTP sent to +91')} {phone}:
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <input
@@ -167,7 +167,7 @@ export default function Onboarding() {
                 autoFocus
               />
               <button type="submit" className="btn btn-green" disabled={loading}>
-                {loading ? 'Verifying...' : 'Login & Continue'}
+                {loading ? t('signingIn', 'Verifying...') : t('loginAndContinue', 'Login & Continue')}
               </button>
             </div>
           </form>

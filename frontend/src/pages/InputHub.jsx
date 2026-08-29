@@ -8,7 +8,7 @@ import AgentReportModal from '../components/agent/AgentReportModal';
 
 export default function InputHub() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const chatEndRef = useRef(null);
 
   // Mode Toggle: 'user' (Chat) vs 'agent' (Fast-Fill Form)
@@ -18,7 +18,7 @@ export default function InputHub() {
   const [messages, setMessages] = useState([
     {
       sender: 'bot',
-      text: 'Namaste! I am SchemeSakhi. What kind of help do you need today? (e.g., business loan, agriculture, education)'
+      text: t('botWelcome', 'Namaste! I am SchemeSakhi. What kind of help do you need today? (e.g., business loan, agriculture, education)')
     }
   ]);
 
@@ -52,13 +52,27 @@ export default function InputHub() {
   // Web Speech API Voice Recognition
   const recognitionRef = useRef(null);
 
+  const getLanguageLocale = () => {
+    switch (lang) {
+      case 'HI': return 'hi-IN';
+      case 'TE': return 'te-IN';
+      case 'TA': return 'ta-IN';
+      case 'KN': return 'kn-IN';
+      case 'ML': return 'ml-IN';
+      case 'BN': return 'bn-IN';
+      case 'MR': return 'mr-IN';
+      case 'EN':
+      default: return 'en-IN';
+    }
+  };
+
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-IN';
+      recognitionRef.current.lang = getLanguageLocale();
 
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
@@ -69,7 +83,7 @@ export default function InputHub() {
       recognitionRef.current.onerror = () => setIsListening(false);
       recognitionRef.current.onend = () => setIsListening(false);
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,18 +93,21 @@ export default function InputHub() {
     if (recognitionRef.current) {
       setIsListening(true);
       try {
+        recognitionRef.current.lang = getLanguageLocale();
         recognitionRef.current.start();
       } catch (e) {
         setIsListening(false);
       }
     } else {
-      alert("Voice recognition is not supported in this browser. Please use text input.");
+      alert(t('voiceUnsupported', 'Voice recognition is not supported in this browser. Please use text input.'));
     }
   };
 
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
       setIsListening(false);
     }
   };
@@ -131,7 +148,7 @@ export default function InputHub() {
     if (!updatedCriteria.education) {
       updatedCriteria.education = text;
       setCriteria(updatedCriteria);
-      setMessages([...updatedMessages, { sender: 'bot', text: `Thank you! Evaluating eligible schemes for you now...` }]);
+      setMessages([...updatedMessages, { sender: 'bot', text: t('calculating', 'Thank you! Evaluating eligible schemes for you now...') }]);
       await submitRecommendation(updatedCriteria);
     }
   };
@@ -183,8 +200,8 @@ export default function InputHub() {
             <ArrowLeft size={22} />
           </button>
           <div>
-            <h2 style={{ fontSize: '1.15rem', color: '#FFFFFF', margin: 0 }}>Tell Us About Your Need</h2>
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{mode === 'user' ? 'Conversational AI Assistant' : 'Fast-Fill Agent Portal'}</span>
+            <h2 style={{ fontSize: '1.15rem', color: '#FFFFFF', margin: 0 }}>{t('tellUsNeed', 'Tell Us About Your Need')}</h2>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{mode === 'user' ? t('convAssistant', 'Conversational AI Assistant') : t('fastFillAgent', 'Fast-Fill Agent Portal')}</span>
           </div>
         </div>
 
@@ -194,7 +211,7 @@ export default function InputHub() {
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.4rem 0.85rem', borderRadius: '20px', color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
         >
           {mode === 'user' ? <ToggleLeft size={22} style={{ color: '#F59E0B' }} /> : <ToggleRight size={22} style={{ color: '#059669' }} />}
-          <span>{mode === 'user' ? 'User Mode' : 'Agent Mode'}</span>
+          <span>{mode === 'user' ? t('userMode', 'User Mode') : t('agentMode', 'Agent Mode')}</span>
         </button>
       </div>
 
@@ -202,8 +219,8 @@ export default function InputHub() {
       {isLoading && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11, 25, 44, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, color: '#FFFFFF' }}>
           <Loader2 size={48} className="animate-spin" style={{ color: '#F59E0B', marginBottom: '1rem' }} />
-          <h3 style={{ fontSize: '1.3rem', color: '#FFFFFF' }}>Finding the best scheme for you...</h3>
-          <p style={{ color: '#CBD5E1', fontSize: '0.95rem' }}>Analyzing income thresholds, loan margins, and eligibility criteria</p>
+          <h3 style={{ fontSize: '1.3rem', color: '#FFFFFF' }}>{t('findingBestScheme', 'Finding the best scheme for you...')}</h3>
+          <p style={{ color: '#CBD5E1', fontSize: '0.95rem' }}>{t('analyzingThresholds', 'Analyzing income thresholds, loan margins, and eligibility criteria')}</p>
         </div>
       )}
 
@@ -256,9 +273,9 @@ export default function InputHub() {
             <div style={{ padding: '0.85rem', background: '#FEF3C7', borderTop: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#92400E' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
                 <span className="animate-pulse" style={{ width: '12px', height: '12px', background: '#DC2626', borderRadius: '50%' }}></span>
-                Listening to your voice... Speak now!
+                {t('listeningSpeakNow', 'Listening to your voice... Speak now!')}
               </div>
-              <button onClick={stopVoiceRecognition} className="btn btn-sm btn-outline">Cancel</button>
+              <button onClick={stopVoiceRecognition} className="btn btn-sm btn-outline">{t('cancel', 'Cancel')}</button>
             </div>
           )}
 
@@ -276,8 +293,8 @@ export default function InputHub() {
                   boxShadow: isListening ? '0 0 0 10px rgba(217, 119, 6, 0.3)' : '0 4px 16px rgba(217, 119, 6, 0.4)',
                   transition: 'all 0.2s ease'
                 }}
-                title="Speak using Voice Input"
-                aria-label="Speak using Voice Input"
+                title={t('voiceSearch', 'Speak using Voice Input')}
+                aria-label={t('voiceSearch', 'Speak using Voice Input')}
               >
                 {isListening ? <MicOff size={32} /> : <Mic size={32} />}
               </button>
@@ -286,14 +303,14 @@ export default function InputHub() {
                 onClick={() => setInputMode('text')}
                 className={`btn btn-sm ${inputMode === 'text' ? 'btn-primary' : 'btn-outline'}`}
               >
-                <Type size={16} /> Type
+                <Type size={16} /> {t('typeMode', 'Type')}
               </button>
 
               <button
                 onClick={() => setInputMode('scan')}
                 className={`btn btn-sm ${inputMode === 'scan' ? 'btn-primary' : 'btn-outline'}`}
               >
-                <FileText size={16} /> Scan Doc
+                <FileText size={16} /> {t('scanDocMode', 'Scan Doc')}
               </button>
             </div>
 
@@ -303,140 +320,114 @@ export default function InputHub() {
                   type="text"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Type your response..."
+                  placeholder={t('typeReplyPlaceholder', 'Type your reply...')}
                   className="form-control"
-                  autoFocus
+                  style={{ borderRadius: '24px' }}
                 />
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-primary" style={{ borderRadius: '24px', padding: '0 1.25rem' }}>
                   <Send size={18} />
                 </button>
               </form>
-            )}
-
-            {inputMode === 'scan' && (
-              <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '8px', border: '1px dashed #CBD5E1', textAlign: 'center' }}>
-                <input type="file" accept="image/*,.pdf" onChange={(e) => { if (e.target.files[0]) handleUserMessage("Uploaded document: " + e.target.files[0].name); }} />
-                <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '0.35rem' }}>Upload Aadhaar, Ration Card, or Caste Certificate</div>
-              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* AGENT MODE: Fast-Fill Form UI */}
+      {/* AGENT MODE: Fast-Fill Intake Form */}
       {mode === 'agent' && (
-        <form onSubmit={handleAgentSubmit} className="card glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.85rem' }}>
-            <h3 style={{ fontSize: '1.25rem', color: '#0B192C', margin: 0 }}>Agent Assisted Beneficiary Registration</h3>
-            <span className="badge badge-central">Agent ID: AG-101</span>
-          </div>
+        <div className="card" style={{ flexGrow: 1 }}>
+          <form onSubmit={handleAgentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '0.5rem' }}>
+              CSC / VLE Agent Beneficiary Intake Form
+            </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Beneficiary Full Name</label>
-              <input
-                type="text"
-                value={agentForm.name}
-                onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
-                className="form-control"
-                required
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">{t('fullName', 'Beneficiary Full Name')}</label>
+                <input
+                  type="text"
+                  value={agentForm.name}
+                  onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('ageInYears', 'Age')}</label>
+                <input
+                  type="number"
+                  value={agentForm.age}
+                  onChange={(e) => setAgentForm({ ...agentForm, age: Number(e.target.value) })}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('annualIncomeLabel', 'Annual Household Income (₹)')}</label>
+                <input
+                  type="number"
+                  value={agentForm.income}
+                  onChange={(e) => setAgentForm({ ...agentForm, income: Number(e.target.value) })}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('projectCostLabel', 'Project / Loan Cost (₹)')}</label>
+                <input
+                  type="number"
+                  value={agentForm.cost}
+                  onChange={(e) => setAgentForm({ ...agentForm, cost: Number(e.target.value) })}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('primaryOccupation', 'Primary Occupation')}</label>
+                <select
+                  value={agentForm.occupation}
+                  onChange={(e) => setAgentForm({ ...agentForm, occupation: e.target.value })}
+                  className="form-select"
+                >
+                  <option value="Farmer">Farmer / Agriculture</option>
+                  <option value="Artisan">Traditional Artisan</option>
+                  <option value="Vendor">Street Vendor</option>
+                  <option value="Business">Small Business</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">GPS Location</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={agentForm.location}
+                    readOnly
+                    className="form-control"
+                  />
+                  <button type="button" onClick={handleGpsDetect} className="btn btn-secondary btn-sm" title="Detect GPS">
+                    <MapPin size={16} />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Age (Years)</label>
-              <input
-                type="number"
-                value={agentForm.age}
-                onChange={(e) => setAgentForm({ ...agentForm, age: parseInt(e.target.value) })}
-                className="form-control"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Annual Household Income (₹)</label>
-              <input
-                type="number"
-                value={agentForm.income}
-                onChange={(e) => setAgentForm({ ...agentForm, income: parseInt(e.target.value) })}
-                className="form-control"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Project Type / Enterprise Category</label>
-              <select
-                value={agentForm.projectType}
-                onChange={(e) => setAgentForm({ ...agentForm, projectType: e.target.value })}
-                className="form-select"
-              >
-                <option value="manufacturing">Manufacturing / Small Industry</option>
-                <option value="agriculture">Agriculture & Allied</option>
-                <option value="trading">Retail & Trading</option>
-                <option value="services">Service Sector</option>
-                <option value="education">Higher Education</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Required Loan Amount (₹)</label>
-              <input
-                type="number"
-                value={agentForm.cost}
-                onChange={(e) => setAgentForm({ ...agentForm, cost: parseInt(e.target.value) })}
-                className="form-control"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Education Qualification</label>
-              <select
-                value={agentForm.education}
-                onChange={(e) => setAgentForm({ ...agentForm, education: e.target.value })}
-                className="form-select"
-              >
-                <option value="8th pass">8th Pass</option>
-                <option value="10th pass">10th Pass</option>
-                <option value="12th pass">12th Pass</option>
-                <option value="graduate">Graduate / Diploma</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Current GPS Location</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={agentForm.location}
-                onChange={(e) => setAgentForm({ ...agentForm, location: e.target.value })}
-                className="form-control"
-                required
-              />
-              <button type="button" onClick={handleGpsDetect} className="btn btn-outline" style={{ flexShrink: 0 }}>
-                <MapPin size={18} /> GPS Detect
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-green btn-lg" style={{ width: '100%', marginTop: '0.5rem' }}>
-            <CheckCircle size={20} /> Generate Summary Report & Recommend Schemes
-          </button>
-        </form>
+            <button type="submit" className="btn btn-green btn-lg" style={{ marginTop: '1rem', width: '100%', justifyContent: 'center' }}>
+              <CheckCircle size={20} /> Generate Official Beneficiary Recommendation Dossier
+            </button>
+          </form>
+        </div>
       )}
 
-      {/* Task 1: Agent Report Summary Modal */}
+      {/* Agent Report Modal */}
       <AgentReportModal
         isOpen={agentReportOpen}
-        onClose={() => {
-          setAgentReportOpen(false);
-          submitRecommendation(agentForm);
-        }}
-        agentData={agentForm}
-        recommendedScheme={{ name: 'Pradhan Mantri Mudra Yojana (PMMY) - Kishore' }}
+        onClose={() => setAgentReportOpen(false)}
+        formData={agentForm}
       />
     </div>
   );

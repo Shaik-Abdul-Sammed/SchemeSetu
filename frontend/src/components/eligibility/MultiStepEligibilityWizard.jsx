@@ -15,10 +15,12 @@ import {
   Award
 } from 'lucide-react';
 import { eligibilityService } from '../../services/eligibilityService';
+import { useLanguage } from '../../context/LanguageContext';
 import ErrorMessage from '../common/ErrorMessage';
 
 export default function MultiStepEligibilityWizard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const totalSteps = 6;
 
@@ -51,13 +53,13 @@ export default function MultiStepEligibilityWizard() {
   const validateCurrentStep = () => {
     if (step === 1) {
       if (!formData.age || Number(formData.age) < 0 || Number(formData.age) > 110) {
-        setValidationError('Please enter a valid age between 0 and 110.');
+        setValidationError(t('ageValidationError', 'Please enter a valid age between 0 and 110.'));
         return false;
       }
     }
     if (step === 3) {
       if (formData.annualIncome === undefined || Number(formData.annualIncome) < 0) {
-        setValidationError('Please enter a valid annual family income.');
+        setValidationError(t('incomeValidationError', 'Please enter a valid annual family income.'));
         return false;
       }
     }
@@ -107,18 +109,18 @@ export default function MultiStepEligibilityWizard() {
             <CheckCircle2 size={36} />
           </div>
           <h2 style={{ color: '#14532D', fontSize: '1.75rem', marginBottom: '0.5rem' }}>
-            Eligibility Assessment Complete
+            {t('assessmentComplete', 'Eligibility Assessment Complete')}
           </h2>
           <p style={{ color: '#166534', fontSize: '1.05rem', maxWidth: '640px', margin: '0 auto' }}>
-            Based on the information provided, you may be eligible for <strong>{eligibleCount} government scheme{eligibleCount === 1 ? '' : 's'}</strong> out of {results.totalEvaluated} evaluated.
+            {t('assessmentSummary', 'Based on the information provided, you may be eligible for')} <strong>{eligibleCount} {t('exploreSchemes', 'government scheme')}{eligibleCount === 1 ? '' : 's'}</strong> out of {results.totalEvaluated} {t('welfareStat', 'evaluated')}.
           </p>
           <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#15803D', fontStyle: 'italic' }}>
-            * Disclaimer: SchemeSetu recommendations are based on standard government eligibility criteria. Official verification is subject to document validation.
+            * {t('disclaimer', 'SchemeSetu recommendations are based on standard government eligibility criteria. Official verification is subject to document validation.')}
           </div>
         </div>
 
         <h3 style={{ fontSize: '1.35rem', marginBottom: '1.25rem', color: '#0B192C' }}>
-          Recommended Schemes for You
+          {t('recommendedForYou', 'Recommended Schemes for You')}
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2.5rem' }}>
@@ -128,9 +130,9 @@ export default function MultiStepEligibilityWizard() {
                 <div>
                   <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem' }}>
                     <span className={`badge ${isEligible ? 'badge-eligible' : 'badge-cat'}`}>
-                      {matchScore}% Match Score
+                      {matchScore}% {t('matchScore', 'Match Score')}
                     </span>
-                    <span className="badge badge-central">{scheme.level}</span>
+                    <span className="badge badge-central">{scheme.level === 'Central' ? t('centralLevel', 'Central') : t('stateLevel', 'State')}</span>
                     <span className="badge badge-cat">{scheme.category}</span>
                   </div>
                   <h3 style={{ fontSize: '1.3rem', color: '#0B192C', margin: 0 }}>{scheme.name}</h3>
@@ -148,21 +150,21 @@ export default function MultiStepEligibilityWizard() {
 
               <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
                 <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
-                  <Award size={16} /> Key Benefit
+                  <Award size={16} /> {t('keyBenefits', 'Key Benefit')}
                 </div>
                 <div style={{ fontSize: '0.92rem', color: '#0F172A' }}>{scheme.benefits}</div>
               </div>
 
               {/* Match Criteria Breakdown */}
               <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#1E293B', marginBottom: '0.5rem' }}>Why this matches your profile:</h4>
+                <h4 style={{ fontSize: '0.9rem', color: '#1E293B', marginBottom: '0.5rem' }}>{t('whyEligible', 'Why You Are Eligible (Explainable AI Breakdown)')}:</h4>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  {matchReasons.map((reason, idx) => (
+                  {(matchReasons || []).map((reason, idx) => (
                     <li key={idx} style={{ fontSize: '0.88rem', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <CheckCircle2 size={15} style={{ shrink: 0 }} /> {reason}
                     </li>
                   ))}
-                  {disqualifyReasons.map((reason, idx) => (
+                  {(disqualifyReasons || []).map((reason, idx) => (
                     <li key={idx} style={{ fontSize: '0.88rem', color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <AlertCircle size={15} style={{ shrink: 0 }} /> {reason}
                     </li>
@@ -175,7 +177,7 @@ export default function MultiStepEligibilityWizard() {
                   onClick={() => navigate(`/schemes/${scheme.id}`)}
                   className="btn btn-outline btn-sm"
                 >
-                  View Details & Required Documents
+                  {t('viewDetails', 'View Details & Required Documents')}
                 </button>
 
                 <a 
@@ -184,7 +186,7 @@ export default function MultiStepEligibilityWizard() {
                   rel="noopener noreferrer" 
                   className="btn btn-primary btn-sm"
                 >
-                  Apply on Official Portal <ExternalLink size={14} />
+                  {t('officialPortal', 'Apply on Official Portal')} <ExternalLink size={14} />
                 </a>
               </div>
             </div>
@@ -193,7 +195,7 @@ export default function MultiStepEligibilityWizard() {
 
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <button onClick={() => setStep(1)} className="btn btn-secondary">
-            Re-evaluate Eligibility with Different Profile
+            {t('reEvaluateDifferent', 'Re-evaluate Eligibility with Different Profile')}
           </button>
         </div>
       </div>
@@ -205,7 +207,7 @@ export default function MultiStepEligibilityWizard() {
       {/* Multi-step progress indicator */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: 600, color: '#475569' }}>
-          <span>Step {step} of {totalSteps}</span>
+          <span>{t('step', 'Step')} {step} of {totalSteps}</span>
           <span>{Math.round((step / totalSteps) * 100)}% Completed</span>
         </div>
         <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
@@ -229,7 +231,7 @@ export default function MultiStepEligibilityWizard() {
 
         {apiError && (
           <ErrorMessage 
-            title="Eligibility Evaluation Error" 
+            title={t('unableToLoad', 'Eligibility Evaluation Error')} 
             message={apiError} 
             onRetry={handleSubmit} 
           />
@@ -239,14 +241,14 @@ export default function MultiStepEligibilityWizard() {
         {step === 1 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User style={{ color: '#D97706' }} size={22} /> Step 1: Basic Information
+              <User style={{ color: '#D97706' }} size={22} /> {t('step1Title', 'Step 1: Basic Information')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Enter your basic details to check eligibility rules.
+              {t('step1Sub', 'Enter your basic details to check eligibility rules.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">Full Name (Optional)</label>
+              <label className="form-label">{t('fullNameOptional', 'Full Name (Optional)')}</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -257,7 +259,7 @@ export default function MultiStepEligibilityWizard() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Age (in Years) *</label>
+              <label className="form-label">{t('ageInYears', 'Age (in Years) *')}</label>
               <input 
                 type="number" 
                 className="form-control" 
@@ -269,15 +271,15 @@ export default function MultiStepEligibilityWizard() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Gender *</label>
+              <label className="form-label">{t('genderLabel', 'Gender *')}</label>
               <select 
                 className="form-select"
                 value={formData.gender}
                 onChange={e => handleChange('gender', e.target.value)}
               >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Transgender">Transgender</option>
+                <option value="Male">{t('male', 'Male')}</option>
+                <option value="Female">{t('female', 'Female')}</option>
+                <option value="Transgender">{t('transgender', 'Transgender')}</option>
               </select>
             </div>
           </div>
@@ -287,50 +289,50 @@ export default function MultiStepEligibilityWizard() {
         {step === 2 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FileCheck style={{ color: '#D97706' }} size={22} /> Step 2: Demographics
+              <FileCheck style={{ color: '#D97706' }} size={22} /> {t('step2Title', 'Step 2: Demographics')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Social category and demographic status help match target reservation schemes.
+              {t('step2Sub', 'Social category and demographic status help match target reservation schemes.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">Social Category / Caste Group</label>
+              <label className="form-label">{t('socialCategory', 'Social Category / Caste Group')}</label>
               <select 
                 className="form-select"
                 value={formData.casteCategory}
                 onChange={e => handleChange('casteCategory', e.target.value)}
               >
-                <option value="General">General</option>
-                <option value="OBC">OBC (Other Backward Classes)</option>
-                <option value="SC">SC (Scheduled Caste)</option>
-                <option value="ST">ST (Scheduled Tribe)</option>
-                <option value="Minority">Minority Community</option>
+                <option value="General">{t('generalCategory', 'General')}</option>
+                <option value="OBC">{t('obcCategory', 'OBC (Other Backward Classes)')}</option>
+                <option value="SC">{t('scCategory', 'SC (Scheduled Caste)')}</option>
+                <option value="ST">{t('stCategory', 'ST (Scheduled Tribe)')}</option>
+                <option value="Minority">{t('minorityCategory', 'Minority Community')}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Persons with Disability (PwD)?</label>
+              <label className="form-label">{t('pwdQuestion', 'Persons with Disability (PwD)?')}</label>
               <select 
                 className="form-select"
                 value={formData.disability}
                 onChange={e => handleChange('disability', e.target.value)}
               >
-                <option value="No">No</option>
-                <option value="Yes">Yes (40% or more disability)</option>
+                <option value="No">{t('pwdNo', 'No')}</option>
+                <option value="Yes">{t('pwdYes', 'Yes (40% or more disability)')}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Marital Status</label>
+              <label className="form-label">{t('maritalStatusLabel', 'Marital Status')}</label>
               <select 
                 className="form-select"
                 value={formData.maritalStatus}
                 onChange={e => handleChange('maritalStatus', e.target.value)}
               >
-                <option value="Single">Single / Unmarried</option>
-                <option value="Married">Married</option>
-                <option value="Widowed">Widowed</option>
-                <option value="Divorced">Divorced / Separated</option>
+                <option value="Single">{t('single', 'Single / Unmarried')}</option>
+                <option value="Married">{t('married', 'Married')}</option>
+                <option value="Widowed">{t('widowed', 'Widowed')}</option>
+                <option value="Divorced">{t('divorced', 'Divorced / Separated')}</option>
               </select>
             </div>
           </div>
@@ -340,14 +342,14 @@ export default function MultiStepEligibilityWizard() {
         {step === 3 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <IndianRupee style={{ color: '#D97706' }} size={22} /> Step 3: Income & Poverty Details
+              <IndianRupee style={{ color: '#D97706' }} size={22} /> {t('step3Title', 'Step 3: Income & Poverty Details')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Income ceilings determine eligibility for subsidies, free healthcare, and grants.
+              {t('step3Sub', 'Income ceilings determine eligibility for subsidies, free healthcare, and grants.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">Annual Family Income (in ₹) *</label>
+              <label className="form-label">{t('annualFamilyIncome', 'Annual Family Income (in ₹) *')}</label>
               <input 
                 type="number" 
                 className="form-control" 
@@ -359,14 +361,14 @@ export default function MultiStepEligibilityWizard() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Below Poverty Line (BPL) Card Holder?</label>
+              <label className="form-label">{t('bplQuestion', 'Below Poverty Line (BPL) Card Holder?')}</label>
               <select 
                 className="form-select"
                 value={formData.bplStatus}
                 onChange={e => handleChange('bplStatus', e.target.value)}
               >
-                <option value="Yes">Yes (Holds BPL / Ration Card)</option>
-                <option value="No">No (Above Poverty Line / APL)</option>
+                <option value="Yes">{t('bplYes', 'Yes (Holds BPL / Ration Card)')}</option>
+                <option value="No">{t('bplNo', 'No (Above Poverty Line / APL)')}</option>
               </select>
             </div>
           </div>
@@ -376,26 +378,26 @@ export default function MultiStepEligibilityWizard() {
         {step === 4 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Briefcase style={{ color: '#D97706' }} size={22} /> Step 4: Occupation & Vocation
+              <Briefcase style={{ color: '#D97706' }} size={22} /> {t('step4Title', 'Step 4: Occupation & Vocation')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Select primary occupation to find sector-specific schemes.
+              {t('step4Sub', 'Select primary occupation to find sector-specific schemes.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">Primary Occupation</label>
+              <label className="form-label">{t('primaryOccupation', 'Primary Occupation')}</label>
               <select 
                 className="form-select"
                 value={formData.occupation}
                 onChange={e => handleChange('occupation', e.target.value)}
               >
-                <option value="Farmer">Farmer / Agriculture</option>
-                <option value="Artisan">Traditional Artisan / Craftsman</option>
-                <option value="Student">Student (School / College)</option>
-                <option value="Vendor">Street Vendor / Small Hawker</option>
-                <option value="Business">Small Business Owner / Entrepreneur</option>
-                <option value="Unemployed">Unemployed / Job Seeker</option>
-                <option value="Senior Citizen">Senior Citizen (Retired)</option>
+                <option value="Farmer">{t('farmerOcc', 'Farmer / Agriculture')}</option>
+                <option value="Artisan">{t('artisanOcc', 'Traditional Artisan / Craftsman')}</option>
+                <option value="Student">{t('studentOcc', 'Student (School / College)')}</option>
+                <option value="Vendor">{t('vendorOcc', 'Street Vendor / Small Hawker')}</option>
+                <option value="Business">{t('businessOcc', 'Small Business Owner / Entrepreneur')}</option>
+                <option value="Unemployed">{t('unemployedOcc', 'Unemployed / Job Seeker')}</option>
+                <option value="Senior Citizen">{t('seniorCitizenOcc', 'Senior Citizen (Retired)')}</option>
               </select>
             </div>
           </div>
@@ -405,20 +407,20 @@ export default function MultiStepEligibilityWizard() {
         {step === 5 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MapPin style={{ color: '#D97706' }} size={22} /> Step 5: Location Details
+              <MapPin style={{ color: '#D97706' }} size={22} /> {t('step5Title', 'Step 5: Location Details')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Location determines Central vs State-level scheme availability.
+              {t('step5Sub', 'Location determines Central vs State-level scheme availability.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">State / Union Territory</label>
+              <label className="form-label">{t('stateUt', 'State / Union Territory')}</label>
               <select 
                 className="form-select"
                 value={formData.state}
                 onChange={e => handleChange('state', e.target.value)}
               >
-                <option value="Pan-India">Pan-India (All States)</option>
+                <option value="Pan-India">{t('panIndia', 'Pan-India (All States)')}</option>
                 <option value="Telangana">Telangana</option>
                 <option value="Andhra Pradesh">Andhra Pradesh</option>
                 <option value="Uttar Pradesh">Uttar Pradesh</option>
@@ -429,14 +431,14 @@ export default function MultiStepEligibilityWizard() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Area Type</label>
+              <label className="form-label">{t('areaTypeLabel', 'Area Type')}</label>
               <select 
                 className="form-select"
                 value={formData.areaType}
                 onChange={e => handleChange('areaType', e.target.value)}
               >
-                <option value="Rural">Rural (Village / Gram Panchayat)</option>
-                <option value="Urban">Urban (City / Municipality)</option>
+                <option value="Rural">{t('ruralArea', 'Rural (Village / Gram Panchayat)')}</option>
+                <option value="Urban">{t('urbanArea', 'Urban (City / Municipality)')}</option>
               </select>
             </div>
           </div>
@@ -446,36 +448,36 @@ export default function MultiStepEligibilityWizard() {
         {step === 6 && (
           <div>
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.4rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles style={{ color: '#D97706' }} size={22} /> Step 6: Ownership & Education
+              <Sparkles style={{ color: '#D97706' }} size={22} /> {t('step6Title', 'Step 6: Ownership & Education')}
             </h3>
             <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Final step for land asset ownership and qualification criteria.
+              {t('step6Sub', 'Final step for land asset ownership and qualification criteria.')}
             </p>
 
             <div className="form-group">
-              <label className="form-label">Do you own cultivable agricultural land?</label>
+              <label className="form-label">{t('landOwnerQuestion', 'Do you own cultivable agricultural land?')}</label>
               <select 
                 className="form-select"
                 value={formData.landOwner}
                 onChange={e => handleChange('landOwner', e.target.value)}
               >
-                <option value="Yes">Yes (Land registered in applicant/family name)</option>
-                <option value="No">No (Landless / Tenant Farmer / Non-Farmer)</option>
+                <option value="Yes">{t('landOwnerYes', 'Yes (Land registered in applicant/family name)')}</option>
+                <option value="No">{t('landOwnerNo', 'No (Landless / Tenant Farmer / Non-Farmer)')}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Highest Education Level</label>
+              <label className="form-label">{t('highestEducation', 'Highest Education Level')}</label>
               <select 
                 className="form-select"
                 value={formData.education}
                 onChange={e => handleChange('education', e.target.value)}
               >
-                <option value="Primary">Primary School (Up to Class 8)</option>
-                <option value="Secondary">Secondary / 10th Standard</option>
-                <option value="Higher Secondary">12th Standard / Pre-University</option>
-                <option value="Graduate">Graduate / Diploma</option>
-                <option value="Post Graduate">Post Graduate / Ph.D.</option>
+                <option value="Primary">{t('primaryEdu', 'Primary School (Up to Class 8)')}</option>
+                <option value="Secondary">{t('secondaryEdu', 'Secondary / 10th Standard')}</option>
+                <option value="Higher Secondary">{t('higherSecondaryEdu', '12th Standard / Pre-University')}</option>
+                <option value="Graduate">{t('graduateEdu', 'Graduate / Diploma')}</option>
+                <option value="Post Graduate">{t('postGraduateEdu', 'Post Graduate / Ph.D.')}</option>
               </select>
             </div>
           </div>
@@ -485,7 +487,7 @@ export default function MultiStepEligibilityWizard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '2rem', paddingTop: '1.25rem', borderTop: '1px solid #E2E8F0' }}>
           {step > 1 ? (
             <button onClick={handleBack} disabled={loading} className="btn btn-secondary">
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={16} /> {t('back', 'Back')}
             </button>
           ) : (
             <div />
@@ -493,11 +495,11 @@ export default function MultiStepEligibilityWizard() {
 
           <button onClick={handleNext} disabled={loading} className="btn btn-primary">
             {loading ? (
-              <span>Calculating Eligibility...</span>
+              <span>{t('calculating', 'Calculating Eligibility...')}</span>
             ) : step === totalSteps ? (
-              <span>Check My Eligibility <Sparkles size={16} /></span>
+              <span>{t('checkMyEligibility', 'Check My Eligibility')} <Sparkles size={16} /></span>
             ) : (
-              <span>Next Step <ArrowRight size={16} /></span>
+              <span>{t('nextStep', 'Next Step')} <ArrowRight size={16} /></span>
             )}
           </button>
         </div>

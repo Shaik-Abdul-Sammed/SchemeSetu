@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Calculator, DollarSign, Sparkles } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function BenefitEstimator({ scheme }) {
+  const { t } = useLanguage();
   const [landAcres, setLandAcres] = useState(2);
   const [projectCost, setProjectCost] = useState(100000);
   const [annualIncome, setAnnualIncome] = useState(150000);
@@ -29,12 +31,12 @@ export default function BenefitEstimator({ scheme }) {
     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
       <div className="flex items-center gap-2">
         <Calculator className="w-5 h-5 text-emerald-400" />
-        <h3 className="text-lg font-bold text-white">Interactive Subsidy & Benefit Estimator</h3>
+        <h3 className="text-lg font-bold text-white">{t('estimatorTitle', 'Interactive Subsidy & Benefit Estimator')}</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
         <div className="space-y-1">
-          <label className="text-slate-400 font-medium">Land Holding (Acres)</label>
+          <label className="text-slate-400 font-medium">{t('landHolding', 'Land Holding (Acres)')}</label>
           <input
             type="number"
             value={landAcres}
@@ -45,7 +47,7 @@ export default function BenefitEstimator({ scheme }) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-slate-400 font-medium">Annual Household Income (₹)</label>
+          <label className="text-slate-400 font-medium">{t('annualIncomeLabel', 'Annual Household Income (₹)')}</label>
           <input
             type="number"
             value={annualIncome}
@@ -56,7 +58,7 @@ export default function BenefitEstimator({ scheme }) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-slate-400 font-medium">Proposed Project/Loan Cost (₹)</label>
+          <label className="text-slate-400 font-medium">{t('projectCostLabel', 'Proposed Project/Loan Cost (₹)')}</label>
           <input
             type="number"
             value={projectCost}
@@ -71,7 +73,7 @@ export default function BenefitEstimator({ scheme }) {
         <div className="space-y-1 text-center sm:text-left">
           <div className="flex items-center gap-1.5 justify-center sm:justify-start">
             <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span className="text-xs font-semibold text-emerald-300">Estimated Government Financial Assistance</span>
+            <span className="text-xs font-semibold text-emerald-300">{t('estFinancialAssistance', 'Estimated Government Financial Assistance')}</span>
           </div>
           <p className="text-xs text-slate-300">{calculationNote}</p>
         </div>
@@ -79,7 +81,7 @@ export default function BenefitEstimator({ scheme }) {
           <span className="text-2xl font-extrabold text-amber-400">
             ₹{Math.round(estimatedPayout).toLocaleString('en-IN')}
           </span>
-          <span className="text-[10px] text-slate-400 block">Est. Annual Value</span>
+          <span className="text-[10px] text-slate-400 block">{t('estAnnualValue', 'Est. Annual Value')}</span>
         </div>
       </div>
     </div>

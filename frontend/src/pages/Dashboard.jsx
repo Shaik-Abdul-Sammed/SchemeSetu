@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { userService } from '../services/userService';
 import SchemeCard from '../components/scheme/SchemeCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
@@ -19,6 +20,7 @@ import {
 
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [savedSchemes, setSavedSchemes] = useState([]);
@@ -68,22 +70,22 @@ export default function Dashboard() {
       <div className="card" style={{ backgroundColor: '#0B192C', color: '#FFFFFF', padding: '2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'rgba(217, 119, 6, 0.2)', color: '#F59E0B', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-            Verified Citizen Account
+            {t('verifiedCitizen', 'Verified Citizen Account')}
           </div>
           <h1 style={{ fontSize: '1.8rem', color: '#FFFFFF', margin: 0 }}>
-            Welcome back, {user?.name || 'Citizen'}
+            {t('welcomeBack', 'Welcome back')}, {user?.name || 'Citizen'}
           </h1>
           <p style={{ color: '#94A3B8', fontSize: '0.92rem', marginTop: '0.25rem' }}>
-            State: {user?.state || 'Telangana'} | Mobile: {user?.mobile || 'Registered'}
+            {t('stateLabel', 'State:')} {user?.state || 'Telangana'} | {t('emailLabel', 'Email:')} {user?.email || 'Registered'}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link to="/eligibility" className="btn btn-primary btn-sm">
-            <Sparkles size={16} /> Re-evaluate Eligibility
+            <Sparkles size={16} /> {t('reEvaluate', 'Re-evaluate Eligibility')}
           </Link>
           <Link to="/schemes" className="btn btn-secondary btn-sm">
-            <Building2 size={16} /> Explore Schemes
+            <Building2 size={16} /> {t('exploreSchemes', 'Explore Schemes')}
           </Link>
         </div>
       </div>
@@ -98,13 +100,13 @@ export default function Dashboard() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E2E8F0' }}>
               <h2 style={{ fontSize: '1.25rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                <FileCheck2 style={{ color: '#059669' }} size={22} /> Tracked Applications
+                <FileCheck2 style={{ color: '#059669' }} size={22} /> {t('trackedApplications', 'Tracked Applications')}
               </h2>
-              <span className="badge badge-eligible">{applications.length} Active</span>
+              <span className="badge badge-eligible">{applications.length} {t('active', 'Active')}</span>
             </div>
 
             {applications.length === 0 ? (
-              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>No applications tracked yet. Use scheme details to track your application guidance.</p>
+              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>{t('noTrackedApps', 'No applications tracked yet. Use scheme details to track your application guidance.')}</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {applications.map(app => (
@@ -119,7 +121,7 @@ export default function Dashboard() {
                     </div>
                     <h4 style={{ fontSize: '1rem', color: '#0F172A', marginBottom: '0.35rem' }}>{app.schemeName}</h4>
                     <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                      <Clock size={14} style={{ color: '#0284C7' }} /> Current Stage: <strong>{app.step}</strong>
+                      <Clock size={14} style={{ color: '#0284C7' }} /> {t('currentStage', 'Current Stage:')} <strong>{app.step || 'Document Verification'}</strong>
                     </div>
                     <p style={{ fontSize: '0.82rem', color: '#64748B', margin: 0 }}>{app.remarks}</p>
                   </div>
@@ -132,13 +134,13 @@ export default function Dashboard() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E2E8F0' }}>
               <h2 style={{ fontSize: '1.25rem', color: '#0B192C', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                <Bookmark style={{ color: '#D97706' }} size={22} /> Bookmarked Schemes
+                <Bookmark style={{ color: '#D97706' }} size={22} /> {t('bookmarkedSchemes', 'Bookmarked Schemes')}
               </h2>
-              <span className="badge badge-cat">{savedSchemes.length} Saved</span>
+              <span className="badge badge-cat">{savedSchemes.length} {t('saved', 'Saved')}</span>
             </div>
 
             {savedSchemes.length === 0 ? (
-              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>You haven't bookmarked any schemes yet. Click the bookmark icon on any scheme card to save it here.</p>
+              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>{t('noBookmarks', 'You haven\'t bookmarked any schemes yet. Click the bookmark icon on any scheme card to save it here.')}</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                 {savedSchemes.map(scheme => (
@@ -154,7 +156,7 @@ export default function Dashboard() {
           {/* Notifications Feed */}
           <div className="card">
             <h2 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Bell style={{ color: '#1D4ED8' }} size={22} /> Portal Notifications
+              <Bell style={{ color: '#1D4ED8' }} size={22} /> {t('portalNotifications', 'Portal Notifications')}
             </h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -173,23 +175,23 @@ export default function Dashboard() {
           {/* Profile Card */}
           <div className="card" style={{ backgroundColor: '#F8FAFC' }}>
             <h3 style={{ fontSize: '1.1rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={18} style={{ color: '#D97706' }} /> Profile Information
+              <User size={18} style={{ color: '#D97706' }} /> {t('profileInfo', 'Profile Information')}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748B' }}>Full Name:</span>
+                <span style={{ color: '#64748B' }}>{t('fullNameLabel', 'Full Name:')}</span>
                 <strong>{user?.name}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748B' }}>Email:</span>
+                <span style={{ color: '#64748B' }}>{t('emailLabel', 'Email:')}</span>
                 <strong>{user?.email}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748B' }}>Role:</span>
+                <span style={{ color: '#64748B' }}>{t('roleLabel', 'Role:')}</span>
                 <strong style={{ textTransform: 'capitalize' }}>{user?.role || 'Citizen'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748B' }}>State:</span>
+                <span style={{ color: '#64748B' }}>{t('stateLabel', 'State:')}</span>
                 <strong>{user?.state || 'Telangana'}</strong>
               </div>
             </div>

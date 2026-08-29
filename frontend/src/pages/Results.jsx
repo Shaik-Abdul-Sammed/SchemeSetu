@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark, ChevronDown, ChevronUp, Navigation, FileCheck, Share2, Sparkles, ExternalLink, ShieldCheck, Zap, HelpCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import { safeOpenExternalUrl } from '../utils/capacitor';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
 import EMIChart from '../components/EMIChart';
@@ -15,6 +16,7 @@ import DocumentVerification from '../components/DocumentVerification';
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const passedCriteria = location.state?.criteria || {
     income: 240000,
@@ -165,12 +167,16 @@ export default function Results() {
       {/* Top Banner & Scheme Selector */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.6rem', color: '#0B192C', margin: 0 }}>Recommended Schemes For You</h1>
-          <span style={{ fontSize: '0.88rem', color: '#64748B' }}>Based on AI match evaluation of your profile</span>
+          <h1 style={{ fontSize: '1.6rem', color: '#0B192C', margin: 0 }}>
+            {t('resultsTitle', 'Recommended Schemes For You')}
+          </h1>
+          <span style={{ fontSize: '0.88rem', color: '#64748B' }}>
+            {t('resultsSubtitle', 'Based on AI match evaluation of your profile')}
+          </span>
         </div>
 
         <button onClick={() => navigate('/input')} className="btn btn-outline btn-sm">
-          Edit Search Input
+          {t('editSearchInput', 'Edit Search Input')}
         </button>
       </div>
 
@@ -188,15 +194,14 @@ export default function Results() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
           <span style={{ background: 'rgba(255,255,255,0.2)', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>
-            {activeScheme.level || 'Central'} Government Welfare Scheme
+            {activeScheme.level === 'Central' ? t('centralLevel', 'Central') : t('stateLevel', 'State')} {t('govtWelfareScheme', 'Government Welfare Scheme')}
           </span>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {/* Task 9: Text-To-Speech audio reader button */}
             <TextToSpeech text={`${activeScheme.name}. Interest rate ${activeScheme.interestRate || 7.5} percent per annum.`} />
 
             <div style={{ background: '#F59E0B', color: '#FFFFFF', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.88rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Sparkles size={16} /> Match Score: {activeScheme.matchScore || 96}%
+              <Sparkles size={16} /> {t('matchScore', 'Match Score')}: {activeScheme.matchScore || 96}%
             </div>
           </div>
         </div>
@@ -212,33 +217,32 @@ export default function Results() {
         {/* Badges */}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
           <div style={{ background: 'rgba(255,255,255,0.15)', padding: '0.6rem 1rem', borderRadius: '10px', backdropFilter: 'blur(8px)' }}>
-            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>Interest Rate</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>{t('interestRate', 'Interest Rate')}</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{activeScheme.interestRate || 7.5}% p.a.</div>
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.15)', padding: '0.6rem 1rem', borderRadius: '10px', backdropFilter: 'blur(8px)' }}>
-            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>Max Loan Amount</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>{t('maxLoanLimit', 'Max Loan Amount')}</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>₹{(activeScheme.maxLoan || 500000).toLocaleString('en-IN')}</div>
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.15)', padding: '0.6rem 1rem', borderRadius: '10px', backdropFilter: 'blur(8px)' }}>
-            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>Max Tenure</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{activeScheme.tenureMonths || 60} Months</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>{t('repaymentTenure', 'Max Tenure')}</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{activeScheme.tenureMonths || 60} {t('tenure', 'Months')}</div>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <button onClick={handleSaveTrack} className="btn btn-primary" style={{ background: '#F59E0B', color: '#FFFFFF' }}>
-            <Bookmark size={18} /> {savedSuccess ? 'Application Saved!' : 'Save & Track Application'}
+            <Bookmark size={18} /> {savedSuccess ? t('applicationSaved', 'Application Saved!') : t('saveAndTrack', 'Save & Track Application')}
           </button>
 
-          {/* Task 10: Unified Lending Interface (ULI) Instant Credit Button */}
           <button onClick={handleUliApply} className="btn btn-green" style={{ background: '#0284C7' }}>
-            <Zap size={18} /> Apply via RBI ULI (Paperless)
+            <Zap size={18} /> {t('applyUli', 'Apply via RBI ULI (Paperless)')}
           </button>
 
           <a href="https://myscheme.gov.in" target="_blank" rel="noreferrer" className="btn btn-secondary">
-            Apply on Official Portal <ExternalLink size={16} />
+            {t('officialPortal', 'Apply on Official Portal')} <ExternalLink size={16} />
           </a>
         </div>
 
@@ -249,18 +253,20 @@ export default function Results() {
         )}
       </div>
 
-      {/* Task 16: Instant Micro-Loan Approval Showcase */}
+      {/* Instant Micro-Loan Approval Showcase */}
       <div className="card" style={{ marginBottom: '2rem', background: '#FFFBEB', border: '1px solid #FCD34D' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', color: '#92400E', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Zap style={{ color: '#D97706' }} size={22} /> Instant Emergency Micro-Loan (₹5,000 - ₹15,000)
+              <Zap style={{ color: '#D97706' }} size={22} /> {t('instantMicroLoan', 'Instant Emergency Micro-Loan (₹5,000 - ₹15,000)')}
             </h3>
-            <p style={{ fontSize: '0.88rem', color: '#B45309', margin: '0.25rem 0 0' }}>Pre-approved Instant Liquidity for Working Capital Needs</p>
+            <p style={{ fontSize: '0.88rem', color: '#B45309', margin: '0.25rem 0 0' }}>
+              {t('instantMicroLoanSub', 'Pre-approved Instant Liquidity for Working Capital Needs')}
+            </p>
           </div>
 
           <button onClick={handleMicroloanApprove} className="btn btn-primary btn-sm" style={{ background: '#D97706' }}>
-            Approve ₹15,000 Micro-Loan
+            {t('approveMicroLoan', 'Approve ₹15,000 Micro-Loan')}
           </button>
         </div>
 
@@ -274,7 +280,7 @@ export default function Results() {
       {/* Explainable AI Eligibility Checkmarks */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.3rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <ShieldCheck style={{ color: '#059669' }} size={24} /> Why You Are Eligible (Explainable AI Breakdown)
+          <ShieldCheck style={{ color: '#059669' }} size={24} /> {t('whyEligible', 'Why You Are Eligible (Explainable AI Breakdown)')}
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -301,24 +307,26 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Task 11: Gamification & Badges Section */}
+      {/* Gamification & Badges Section */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#0B192C', margin: 0 }}>Gamified Learning & Badges</h3>
+          <h3 style={{ fontSize: '1.2rem', color: '#0B192C', margin: 0 }}>
+            {t('gamifiedTitle', 'Gamified Learning & Badges')}
+          </h3>
           <button onClick={() => setQuizOpen(true)} className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <HelpCircle size={16} /> Take Financial Quiz
+            <HelpCircle size={16} /> {t('takeQuiz', 'Take Financial Quiz')}
           </button>
         </div>
         <BadgeCard />
       </div>
 
-      {/* Task 20: Blockchain Document Verification */}
+      {/* Blockchain Document Verification */}
       <DocumentVerification docId="APP-2026-8891" />
 
-      {/* Task 17: UPI Payment Component */}
+      {/* UPI Payment Component */}
       <UPIPayment amount={25} serviceName="Express Application Verification Slip" />
 
-      {/* Collapsible "Other Things & Interactive Tools" */}
+      {/* Collapsible Tools & Partner Map */}
       <div style={{ marginBottom: '2rem', marginTop: '2rem' }}>
         <button
           onClick={() => setShowOtherThings(!showOtherThings)}
@@ -339,7 +347,7 @@ export default function Results() {
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calculator size={22} style={{ color: '#F59E0B' }} /> Interactive Tools & Partner Map
+            <Calculator size={22} style={{ color: '#F59E0B' }} /> {t('toolsAndMap', 'Interactive Tools & Partner Map')}
           </span>
           {showOtherThings ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
         </button>
@@ -350,13 +358,13 @@ export default function Results() {
             {/* Interactive EMI Calculator with EMIChart */}
             <div className="card">
               <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Calculator size={20} style={{ color: '#0284C7' }} /> Interactive EMI Calculator
+                <Calculator size={20} style={{ color: '#0284C7' }} /> {t('emiTitle', 'Interactive Loan & EMI Calculator')}
               </h3>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                 <div>
                   <div className="form-group">
-                    <label className="form-label">Loan Principal (₹)</label>
+                    <label className="form-label">{t('loanPrincipal', 'Loan Principal (₹)')}</label>
                     <input
                       type="number"
                       value={emiPrincipal}
@@ -366,7 +374,7 @@ export default function Results() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Repayment Tenure: {emiTenure} Months</label>
+                    <label className="form-label">{t('tenureMonths', 'Repayment Tenure')}: {emiTenure} {t('tenure', 'Months')}</label>
                     <input
                       type="range"
                       min="12"
@@ -380,9 +388,9 @@ export default function Results() {
                 </div>
 
                 <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '0.25rem' }}>Estimated Monthly EMI</div>
+                  <div style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '0.25rem' }}>{t('monthlyEmi', 'Estimated Monthly EMI')}</div>
                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#059669', marginBottom: '0.85rem' }}>
-                    ₹{calculatedEmi.emi.toLocaleString('en-IN')}<span style={{ fontSize: '0.9rem', color: '#475569' }}>/mo</span>
+                    ₹{calculatedEmi.emi.toLocaleString('en-IN')}<span style={{ fontSize: '0.9rem', color: '#475569' }}>{t('perMonth', '/mo')}</span>
                   </div>
                 </div>
               </div>
@@ -397,7 +405,7 @@ export default function Results() {
             {/* Interactive Partner Map */}
             <div className="card">
               <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MapPin size={20} style={{ color: '#059669' }} /> Interactive Partner Bank & CSC Locator Map
+                <MapPin size={20} style={{ color: '#059669' }} /> {t('interactiveMap', 'Interactive Partner Bank & CSC Locator Map')}
               </h3>
               <Map
                 partners={partners}

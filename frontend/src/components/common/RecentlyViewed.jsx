@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { History, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RecentlyViewed() {
+  const { t } = useLanguage();
   const [recentSchemes, setRecentSchemes] = useState([]);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function RecentlyViewed() {
     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
       <div className="flex items-center gap-2">
         <History className="w-5 h-5 text-amber-400" />
-        <h3 className="text-lg font-bold text-white">Recently Viewed Schemes</h3>
+        <h3 className="text-lg font-bold text-white">{t('recentlyViewedTitle', 'Recently Viewed Schemes')}</h3>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -41,7 +43,7 @@ export default function RecentlyViewed() {
               </h4>
             </div>
             <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-800/60 mt-2">
-              <span>View details</span>
+              <span>{t('viewDetails', 'View details')}</span>
               <ArrowRight className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 transition" />
             </div>
           </Link>

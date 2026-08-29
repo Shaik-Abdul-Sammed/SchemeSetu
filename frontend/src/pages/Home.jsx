@@ -60,15 +60,15 @@ export default function Home() {
         <div className="container">
           <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(217, 119, 6, 0.15)', color: '#F59E0B', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.88rem', fontWeight: 600, marginBottom: '1.25rem', border: '1px solid rgba(217, 119, 6, 0.3)' }}>
-              <ShieldCheck size={18} /> Official Citizen Welfare Discovery Portal
+              <ShieldCheck size={18} /> {t('officialPortalBadge', 'Official Citizen Welfare Discovery Portal')}
             </div>
 
             <h1 style={{ fontSize: '3rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.15, marginBottom: '1.25rem' }}>
-              {t('heroTitle')}
+              {t('heroTitle', 'Find Government Schemes You Are Eligible For')}
             </h1>
 
             <p style={{ fontSize: '1.15rem', color: '#CBD5E1', lineHeight: 1.6, marginBottom: '2rem' }}>
-              {t('heroSubtitle')}
+              {t('heroSubtitle', 'SchemeSetu simplifies welfare and business loan discovery across Central and State Governments.')}
             </p>
 
             {/* SNAPCHAT LOCATION SETUP RADAR BANNER */}
@@ -89,10 +89,10 @@ export default function Home() {
                 <Radio size={22} style={{ color: '#38BDF8' }} />
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>
-                    📍 Snapchat Radar Location: {location.district || location.state}
+                    📍 {t('snapchatRadarLocation', 'Snapchat Radar Location:')} {location.district || location.state}
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
-                    {nearbyPartners.length} Nearby Bank Branches & CSC Partners Mapped
+                    {nearbyPartners.length} {t('nearbyBanks', 'Nearby Bank Branches & CSC Partners Mapped')}
                   </div>
                 </div>
               </div>
@@ -102,7 +102,7 @@ export default function Home() {
                 className="btn btn-secondary btn-sm"
                 style={{ color: '#38BDF8', borderColor: '#38BDF8' }}
               >
-                <Navigation size={14} /> Setup Location Radar
+                <Navigation size={14} /> {t('setupLocationRadar', 'Setup Location Radar')}
               </button>
             </div>
 
@@ -114,12 +114,12 @@ export default function Home() {
                     value={searchTerm}
                     onChange={(val) => setSearchTerm(val)}
                     onSelect={(scheme) => navigate(`/schemes/${scheme.id}`)}
-                    placeholder={t('searchPlaceholder')}
+                    placeholder={t('searchPlaceholder', 'Search schemes, business types, categories, departments...')}
                   />
                 </div>
                 <VoiceSearchButton onResult={(text) => setSearchTerm(text)} />
                 <button type="submit" className="btn btn-primary font-bold px-5 py-3 rounded-xl shrink-0">
-                  Search
+                  {t('searchCriteria', 'Search')}
                 </button>
               </div>
             </form>
@@ -127,10 +127,10 @@ export default function Home() {
             {/* HERO CTAS */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <Link to="/eligibility" className="btn btn-primary btn-lg">
-                <Sparkles size={18} /> {t('findMySchemes')}
+                <Sparkles size={18} /> {t('findMySchemes', 'Find My Schemes')}
               </Link>
               <Link to="/schemes" className="btn btn-secondary btn-lg">
-                <Building2 size={18} /> {t('exploreAllSchemes')}
+                <Building2 size={18} /> {t('exploreAllSchemes', 'Explore All Schemes')}
               </Link>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>500+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Welfare Schemes</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('welfareStat', 'Welfare Schemes')}</div>
               </div>
             </div>
 
@@ -157,7 +157,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>10M+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Citizens Benefited</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('citizensBenefited', 'Citizens Benefited')}</div>
               </div>
             </div>
 
@@ -167,7 +167,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>₹50,000 Cr+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Direct Benefit Transfer</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('directBenefit', 'Direct Benefit Transfer')}</div>
               </div>
             </div>
 
@@ -177,7 +177,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>100%</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Verified Direct Links</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('verifiedLinks', 'Verified Direct Links')}</div>
               </div>
             </div>
           </div>
@@ -190,14 +190,14 @@ export default function Home() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h2 style={{ fontSize: '2rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-                {t('featuredTitle')}
+                {t('featuredTitle', 'Featured National Schemes')}
               </h2>
               <p style={{ color: '#64748B', fontSize: '1rem' }}>
-                {t('featuredSub')}
+                {t('featuredSub', 'Popular Central and State welfare initiatives empowering marginalized entrepreneurs and citizens.')}
               </p>
             </div>
             <Link to="/schemes" className="btn btn-outline">
-              View All Schemes <ArrowRight size={16} />
+              {t('viewAllSchemesCTA', 'View All Schemes')} <ArrowRight size={16} />
             </Link>
           </div>
 

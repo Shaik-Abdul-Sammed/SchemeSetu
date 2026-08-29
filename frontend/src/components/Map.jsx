@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { MapPin, Navigation, Phone, CheckCircle2, AlertTriangle, Building2, ExternalLink } from 'lucide-react';
 import { safeOpenExternalUrl } from '../utils/capacitor';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Map({ partners = [], selectedPartner, onSelectPartner }) {
+  const { t } = useLanguage();
   const [activeMarker, setActiveMarker] = useState(selectedPartner || partners[0] || null);
 
   const getMarkerColor = (partner) => {
@@ -75,7 +77,7 @@ export default function Map({ partners = [], selectedPartner, onSelectPartner })
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', fontWeight: 700, color: getMarkerColor(activeMarker) }}>
               <CheckCircle2 size={16} />
-              {activeMarker.fundAvailable ? 'Funds Available' : 'Limited Funds'}
+              {activeMarker.fundAvailable ? t('fundsAvailable', 'Funds Available') : t('limitedFunds', 'Limited Funds')}
             </div>
           </div>
 
@@ -85,14 +87,14 @@ export default function Map({ partners = [], selectedPartner, onSelectPartner })
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.82rem', color: '#0284C7', fontWeight: 600 }}>
-              Distance: {activeMarker.distanceKm || 1.5} km from your GPS location
+              {t('distance', 'Distance')}: {activeMarker.distanceKm || 1.5} {t('distanceKmText', 'km from your location')}
             </span>
 
             <button
               onClick={() => safeOpenExternalUrl(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeMarker.address)}`)}
               className="btn btn-green btn-sm"
             >
-              <Navigation size={14} /> Open in Google Maps
+              <Navigation size={14} /> {t('openGoogleMaps', 'Open in Google Maps')}
             </button>
           </div>
         </div>

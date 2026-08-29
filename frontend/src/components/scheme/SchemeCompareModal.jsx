@@ -1,73 +1,76 @@
 import React from 'react';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function SchemeCompareModal({ schemes, onClose, onSelectScheme }) {
+  const { t } = useLanguage();
   if (!schemes || schemes.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl p-6 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11,25,44,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem', overflowY: 'auto' }}>
+      <div className="card glass-card" style={{ maxWidth: '900px', width: '100%', padding: '1.75rem', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800 transition"
+          className="btn btn-sm btn-outline"
+          style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}
+          aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          ✕
         </button>
 
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-amber-400" />
-            <h3 className="text-xl font-bold text-white">Compare Schemes Side-by-Side</h3>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+            <ShieldCheck size={22} style={{ color: '#F59E0B' }} />
+            <h3 style={{ fontSize: '1.35rem', color: '#0B192C', margin: 0 }}>{t('compareSchemes', 'Compare Schemes Side-by-Side')}</h3>
           </div>
-          <p className="text-xs text-slate-400">Evaluate scheme parameters to find the best fit for your requirements.</p>
+          <p style={{ fontSize: '0.88rem', color: '#64748B', margin: 0 }}>{t('compareSub', 'Evaluate scheme parameters to find the best fit for your requirements.')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
           {schemes.map((s) => (
-            <div key={s.id} className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold tracking-wider text-amber-400 uppercase bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                    {s.level || 'Central'}
+            <div key={s.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <span className={`badge ${s.level === 'Central' ? 'badge-central' : 'badge-state'}`}>
+                    {s.level === 'Central' ? t('centralLevel', 'Central') : t('stateLevel', 'State')}
                   </span>
-                  <h4 className="text-base font-bold text-white leading-tight">{s.name}</h4>
-                  <p className="text-xs text-slate-400">{s.department}</p>
+                  <h4 style={{ fontSize: '1.05rem', color: '#0B192C', marginTop: '0.5rem', marginBottom: '0.25rem', lineHeight: 1.3 }}>{s.name}</h4>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>{s.department}</p>
                 </div>
 
-                <div className="space-y-2 border-t border-slate-800 pt-3 text-xs">
+                <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Primary Benefit</span>
-                    <span className="text-emerald-400 font-semibold">{s.summary || 'Direct Benefit Transfer'}</span>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.75rem' }}>{t('schemeBenefits', 'Primary Benefit')}</span>
+                    <strong style={{ color: '#059669' }}>{s.summary || 'Direct Benefit Transfer'}</strong>
                   </div>
 
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Max Annual Income</span>
-                    <span className="text-slate-300">
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.75rem' }}>{t('maxIncomeLimit', 'Max Annual Income')}</span>
+                    <strong style={{ color: '#0F172A' }}>
                       {s.incomeLimit ? `₹${Number(s.incomeLimit).toLocaleString('en-IN')}` : 'No strict limit'}
-                    </span>
+                    </strong>
                   </div>
 
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Eligible Category</span>
-                    <span className="text-slate-300">{s.category || 'Agriculture & Welfare'}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-500 block text-[11px]">Required Documents</span>
-                    <span className="text-slate-400 text-[11px] block">
-                      {Array.isArray(s.documents) ? s.documents.slice(0, 3).join(', ') : 'Aadhaar, Bank Passbook'}
-                    </span>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.75rem' }}>{t('categoryLabel', 'Eligible Category')}</span>
+                    <span style={{ color: '#334155' }}>{s.category || 'Agriculture & Welfare'}</span>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => onSelectScheme && onSelectScheme(s.id)}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1 shadow-md"
-              >
-                <span>View Full Scheme</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <div style={{ marginTop: '1rem' }}>
+                <button
+                  onClick={() => {
+                    if (onSelectScheme) onSelectScheme(s.id);
+                    onClose();
+                  }}
+                  className="btn btn-primary btn-sm"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <span>{t('viewDetailsBtn', 'View Scheme')}</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

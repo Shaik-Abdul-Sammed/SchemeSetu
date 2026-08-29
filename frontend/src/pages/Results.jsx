@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark, ChevronDown, ChevronUp, Navigation, FileCheck, Share2, Sparkles, ExternalLink, ShieldCheck, Zap, HelpCircle } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark, ChevronDown, ChevronUp, Navigation, FileCheck, Share2, Sparkles, ExternalLink, ShieldCheck, Zap, HelpCircle, ArrowLeft } from 'lucide-react';
 import { api } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { safeOpenExternalUrl } from '../utils/capacitor';
@@ -416,6 +416,16 @@ export default function Results() {
 
           </div>
         )}
+      </div>
+
+      {/* Centered Bottom Action Container */}
+      <div className="bottom-action-container">
+        <Link to="/schemes" className="btn btn-primary btn-lg" style={{ minWidth: '220px', justifyContent: 'center' }}>
+          <Building2 size={18} /> {t('exploreMoreSchemes', 'Explore All Government Schemes')}
+        </Link>
+        <Link to="/dashboard" className="btn btn-secondary btn-lg" style={{ minWidth: '220px', justifyContent: 'center', backgroundColor: '#0B192C' }}>
+          <Sparkles size={18} /> {t('dashboard', 'Go to Citizen Dashboard')}
+        </Link>
       </div>
 
       <QuizModal isOpen={quizOpen} onClose={() => setQuizOpen(false)} />

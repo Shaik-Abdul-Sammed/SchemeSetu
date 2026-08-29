@@ -282,6 +282,16 @@ export default function SchemeDetails() {
       <div style={{ marginTop: '2rem' }}>
         <SchemeFAQ schemeName={scheme.name} faqs={scheme.faqs} />
       </div>
+
+      {/* Perfectly Centered Bottom Action Container */}
+      <div className="bottom-action-container">
+        <Link to="/schemes" className="btn btn-secondary btn-lg" style={{ minWidth: '200px', justifyContent: 'center' }}>
+          <ArrowLeft size={18} /> {t('backToSchemes', 'Back to Schemes')}
+        </Link>
+        <button onClick={() => navigate('/eligibility')} className="btn btn-primary btn-lg" style={{ minWidth: '220px', justifyContent: 'center' }}>
+          <Sparkles size={18} /> {t('checkMyEligibility', 'Check My Eligibility')}
+        </button>
+      </div>
     </div>
   );
 }

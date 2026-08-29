@@ -83,13 +83,13 @@ export default function Onboarding() {
       {/* Main Onboarding Card */}
       <div style={{ maxWidth: '680px', margin: '0 auto', width: '100%' }} className="glass-card card">
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          {/* SchemeSakhi Avatar */}
+          {/* SchemeSetu AI Assistant Avatar */}
           <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #1E3E62, #0B192C)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', boxShadow: '0 4px 16px rgba(11, 25, 44, 0.3)', border: '3px solid #D97706' }}>
             <Sparkles size={38} style={{ color: '#F59E0B' }} />
           </div>
 
           <h1 style={{ fontSize: '1.8rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-            {t('namasteTitle', 'Namaste! I am SchemeSakhi')}
+            {t('namasteTitle', 'Namaste! I am SchemeSetu AI Assistant')}
           </h1>
           <p style={{ color: '#475569', fontSize: '1.05rem', maxWidth: '480px', margin: '0 auto' }}>
             {t('onboardingSubtitle', 'Your personal AI guide to discover government loan & welfare schemes tailored for you. Free and confidential.')}

@@ -2,49 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from '../../context/LocationContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
-import { MapPin, Navigation, Building2, Phone, ShieldCheck, RefreshCw, X, Radio } from 'lucide-react';
+import { MapPin, Navigation, Building2, Phone, ShieldCheck, RefreshCw, X, Radio, CheckCircle, ExternalLink } from 'lucide-react';
 import PartnerDetailsModal from './PartnerDetailsModal';
 
 export default function SnapchatLocationPicker({ isOpen, onClose }) {
-  const { location, updateLocation, setNearbyPartners } = useLocation();
+  const { location, updateLocation, nearbyPartners, setNearbyPartners, INDIAN_LOCATIONS } = useLocation();
   const { t } = useLanguage();
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [partners, setPartners] = useState([]);
-  const [fetchingPartners, setFetchingPartners] = useState(false);
   const [selectedState, setSelectedState] = useState(location.state || 'Telangana');
-  const [selectedDistrict, setSelectedDistrict] = useState(location.district || 'Hyderabad');
   const [activePartner, setActivePartner] = useState(null);
-
-  const statesList = [
-    { state: 'Telangana', district: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
-    { state: 'Andhra Pradesh', district: 'Vijayawada', lat: 16.5062, lng: 80.6480 },
-    { state: 'Tamil Nadu', district: 'Chennai', lat: 13.0827, lng: 80.2707 },
-    { state: 'Karnataka', district: 'Bengaluru', lat: 12.9716, lng: 77.5946 },
-    { state: 'Maharashtra', district: 'Mumbai', lat: 19.0760, lng: 72.8777 },
-    { state: 'Uttar Pradesh', district: 'Lucknow', lat: 26.8467, lng: 80.9462 }
-  ];
-
-  const fetchPartners = async (lat, lng) => {
-    setFetchingPartners(true);
-    try {
-      const res = await api.post('/partners/nearest', {
-        lat: lat || location.lat,
-        lng: lng || location.lng,
-        maxDistance: 100
-      });
-      const list = res.partners || [];
-      setPartners(list);
-      setNearbyPartners(list);
-    } catch (err) {
-      console.error("Partner fetch error:", err);
-    } finally {
-      setFetchingPartners(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPartners(location.lat, location.lng);
-  }, [location.lat, location.lng]);
 
   const handleGPSDetect = () => {
     if (!navigator.geolocation) {
@@ -61,14 +27,13 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
           lat,
           lng,
           isGPS: true,
-          address: `GPS Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+          address: `GPS Radar Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`
         });
-        fetchPartners(lat, lng);
         setGpsLoading(false);
       },
       (err) => {
         console.warn("GPS detection fallback:", err.message);
-        const fallback = statesList.find(s => s.state === selectedState) || statesList[0];
+        const fallback = INDIAN_LOCATIONS.find(s => s.state === selectedState) || INDIAN_LOCATIONS[0];
         updateLocation({
           lat: fallback.lat,
           lng: fallback.lng,
@@ -77,7 +42,6 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
           address: `${fallback.district}, ${fallback.state}`,
           isGPS: false
         });
-        fetchPartners(fallback.lat, fallback.lng);
         setGpsLoading(false);
       },
       { timeout: 8000, enableHighAccuracy: true }
@@ -87,9 +51,8 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
   const handleStateChange = (e) => {
     const newState = e.target.value;
     setSelectedState(newState);
-    const match = statesList.find(s => s.state === newState);
+    const match = INDIAN_LOCATIONS.find(s => s.state === newState);
     if (match) {
-      setSelectedDistrict(match.district);
       updateLocation({
         lat: match.lat,
         lng: match.lng,
@@ -98,7 +61,6 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
         address: `${match.district}, ${match.state}`,
         isGPS: false
       });
-      fetchPartners(match.lat, match.lng);
     }
   };
 
@@ -121,14 +83,16 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
     }}>
       <div className="card" style={{
         width: '100%',
-        maxWidth: '840px',
+        maxWidth: '860px',
         maxHeight: '90vh',
         overflowY: 'auto',
         backgroundColor: '#0F172A',
         color: '#FFFFFF',
         borderColor: '#1E293B',
         padding: 0,
-        boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+        boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {/* Modal Header */}
         <div style={{
@@ -139,10 +103,10 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
           borderBottom: '1px solid #1E293B',
           backgroundColor: '#0B192C'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
               backgroundColor: 'rgba(2, 132, 199, 0.2)',
               color: '#38BDF8',
@@ -150,11 +114,11 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Radio size={20} />
+              <Radio size={22} className="animate-pulse" />
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', color: '#FFFFFF', margin: 0 }}>
-                {t('locationSetup', 'Snapchat Location Radar')}
+                {t('locationSetup', 'SchemeSetu Location Radar')}
               </h2>
               <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
                 {t('nearbyBanks', 'Nearby Bank Branches & CSC Partners Mapped')}
@@ -174,13 +138,14 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
               display: 'flex',
               alignItems: 'center'
             }}
+            aria-label="Close"
           >
             <X size={22} />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: '1.5rem', flexGrow: 1 }}>
           {/* Controls Bar */}
           <div style={{
             display: 'grid',
@@ -194,8 +159,8 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
             >
-              <Navigation size={18} className={gpsLoading ? 'spin' : ''} />
-              {gpsLoading ? t('detectingLocation', 'Detecting GPS...') : t('useMyLocation', 'Use Current GPS Geolocation')}
+              <Navigation size={18} className={gpsLoading ? 'animate-spin' : ''} />
+              {gpsLoading ? t('detectingLocation', 'Detecting GPS Radar...') : t('useMyLocation', 'Use Current GPS Geolocation')}
             </button>
 
             <div className="form-group" style={{ margin: 0 }}>
@@ -204,8 +169,9 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
                 onChange={handleStateChange}
                 className="form-select"
                 style={{ backgroundColor: '#1E293B', color: '#FFFFFF', borderColor: '#334155', height: '44px' }}
+                aria-label="Select State"
               >
-                {statesList.map(s => (
+                {INDIAN_LOCATIONS.map(s => (
                   <option key={s.state} value={s.state}>{s.state} ({s.district})</option>
                 ))}
               </select>
@@ -218,17 +184,18 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             backgroundColor: '#1E293B',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
+            padding: '0.85rem 1.15rem',
+            borderRadius: '10px',
             marginBottom: '1.5rem',
-            fontSize: '0.88rem'
+            fontSize: '0.88rem',
+            border: '1px solid #334155'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#38BDF8' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#38BDF8' }}>
               <MapPin size={18} />
-              <span>{location.address || `${selectedDistrict}, ${selectedState}`}</span>
+              <strong style={{ color: '#FFFFFF' }}>{location.address || `${location.district}, ${location.state}`}</strong>
             </div>
-            <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>
-              {location.isGPS ? `GPS Active (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})` : 'State Centroid Pin'}
+            <span style={{ color: location.isGPS ? '#10B981' : '#F59E0B', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <ShieldCheck size={14} /> {location.isGPS ? 'Live High-Accuracy GPS' : 'State Centroid Pin'}
             </span>
           </div>
 
@@ -238,13 +205,13 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
               <h3 style={{ fontSize: '1.1rem', color: '#FFFFFF', margin: 0 }}>
                 {t('empanelledBranches', 'Empanelled Bank Branches & CSCs')}
               </h3>
-              <span style={{ fontSize: '0.8rem', color: '#38BDF8', backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                {partners.length} {t('branchesFound', 'Branches Found')}
+              <span style={{ fontSize: '0.8rem', color: '#38BDF8', backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 700 }}>
+                {nearbyPartners.length} {t('branchesFound', 'Branches Found')}
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              {partners.map(partner => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              {nearbyPartners.map(partner => (
                 <div
                   key={partner.id}
                   style={{
@@ -256,7 +223,7 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
-                    transition: 'transform 0.15s ease, border-color 0.15s ease'
+                    transition: 'all 0.2s ease'
                   }}
                   onClick={() => setActivePartner(partner)}
                 >
@@ -273,8 +240,8 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
                       }}>
                         {partner.type || 'Bank Branch'}
                       </span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38BDF8' }}>
-                        {partner.distance ? `${partner.distance.toFixed(1)} km` : '0.8 km'}
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38BDF8' }}>
+                        {partner.distanceKm ? `${partner.distanceKm} km` : `${partner.distanceText || '0.8 km'}`}
                       </span>
                     </div>
 
@@ -299,6 +266,20 @@ export default function SnapchatLocationPicker({ isOpen, onClose }) {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Centered Modal Footer Bottom Action */}
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderTop: '1px solid #1E293B',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#0B192C'
+        }}>
+          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ minWidth: '160px', justifyContent: 'center' }}>
+            {t('closeBtn', 'Done / Set Radar')}
+          </button>
         </div>
       </div>
 

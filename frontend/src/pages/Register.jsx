@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { UserPlus, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +20,7 @@ export default function Register() {
     setError('');
 
     if (!name || !email || !password) {
-      setError('Please fill in all required fields.');
+      setError(t('registerSubtitle', 'Please fill in all required fields.'));
       return;
     }
 
@@ -41,8 +43,8 @@ export default function Register() {
             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#ECFDF5', color: '#059669', marginBottom: '0.75rem' }}>
               <UserPlus size={28} />
             </div>
-            <h1 style={{ fontSize: '1.6rem', color: '#0B192C', marginBottom: '0.25rem' }}>Register Citizen Account</h1>
-            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Create a free profile for scheme recommendations</p>
+            <h1 style={{ fontSize: '1.6rem', color: '#0B192C', marginBottom: '0.25rem' }}>{t('registerTitle', 'Register Citizen Account')}</h1>
+            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>{t('registerSubtitle', 'Create a free profile for scheme recommendations')}</p>
           </div>
 
           {error && (
@@ -53,7 +55,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Full Name *</label>
+              <label className="form-label">{t('fullName', 'Full Name')} *</label>
               <input
                 type="text"
                 className="form-control"
@@ -65,7 +67,7 @@ export default function Register() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email Address *</label>
+              <label className="form-label">{t('emailAddress', 'Email Address')} *</label>
               <input
                 type="email"
                 className="form-control"
@@ -77,7 +79,7 @@ export default function Register() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password *</label>
+              <label className="form-label">{t('passwordLabel', 'Password')} *</label>
               <input
                 type="password"
                 className="form-control"
@@ -89,7 +91,7 @@ export default function Register() {
             </div>
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">State of Residence</label>
+              <label className="form-label">{t('stateOfResidence', 'State of Residence')}</label>
               <select 
                 className="form-select"
                 value={state}
@@ -104,12 +106,12 @@ export default function Register() {
             </div>
 
             <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-              {loading ? 'Registering...' : 'Create Account'}
+              {loading ? t('registering', 'Registering...') : t('createAccount', 'Create Account')}
             </button>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #E2E8F0', fontSize: '0.9rem', color: '#64748B' }}>
-            Already registered? <Link to="/login" style={{ color: '#D97706', fontWeight: 600 }}>Sign In</Link>
+            {t('alreadyRegistered', 'Already registered?')} <Link to="/login" style={{ color: '#D97706', fontWeight: 600 }}>{t('signInLink', 'Sign In')}</Link>
           </div>
         </div>
       </div>

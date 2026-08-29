@@ -1,11 +1,15 @@
 import React from 'react';
 import { X, MapPin, Phone, Clock, Navigation, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function PartnerDetailsModal({ partner, onClose }) {
+  const { t } = useLanguage();
   if (!partner) return null;
 
   const handleGetDirections = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${partner.lat},${partner.lng}`;
+    const lat = partner.coordinates?.lat || partner.lat || 13.0827;
+    const lng = partner.coordinates?.lng || partner.lng || 80.2707;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -33,7 +37,7 @@ export default function PartnerDetailsModal({ partner, onClose }) {
         <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 space-y-3 text-xs">
           <div className="flex items-center justify-between">
             <span className="text-slate-400 flex items-center gap-1.5">
-              <Navigation className="w-3.5 h-3.5 text-amber-400" /> Distance from Location:
+              <Navigation className="w-3.5 h-3.5 text-amber-400" /> {t('distance', 'Distance from Location')}:
             </span>
             <span className="text-amber-400 font-extrabold text-sm">
               {partner.distance ? `${partner.distance.toFixed(1)} km` : 'Nearby'}
@@ -42,25 +46,25 @@ export default function PartnerDetailsModal({ partner, onClose }) {
 
           <div className="flex items-center justify-between border-t border-slate-800 pt-2.5">
             <span className="text-slate-400 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-emerald-400" /> Helpdesk Contact:
+              <Phone className="w-3.5 h-3.5 text-emerald-400" /> {t('helpdeskContact', 'Helpdesk Contact:')}
             </span>
             <span className="text-slate-200 font-medium">{partner.phone || '+91 1800-180-1551'}</span>
           </div>
 
           <div className="flex items-center justify-between border-t border-slate-800 pt-2.5">
             <span className="text-slate-400 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-400" /> Working Hours:
+              <Clock className="w-3.5 h-3.5 text-amber-400" /> {t('workingHours', 'Working Hours:')}
             </span>
-            <span className="text-slate-200 font-medium">Mon - Sat (09:00 AM - 06:00 PM)</span>
+            <span className="text-slate-200 font-medium">{t('workingHoursDetail', 'Mon - Sat (09:00 AM - 06:00 PM)')}</span>
           </div>
         </div>
 
         <div className="space-y-2">
-          <span className="text-[11px] font-semibold text-slate-300 block">Supported Citizen Facilitation Services:</span>
+          <span className="text-[11px] font-semibold text-slate-300 block">{t('facilitationServices', 'Supported Citizen Facilitation Services:')}</span>
           <ul className="text-xs text-slate-400 space-y-1">
-            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> DBT Bank Account Seeding & e-KYC Verification</li>
-            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Agent-Assisted Scheme Application Submission</li>
-            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Printed PDF Scheme Application Form Generation</li>
+            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> {t('dbtVerification', 'DBT Bank Account Seeding & e-KYC Verification')}</li>
+            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> {t('agentAssisted', 'Agent-Assisted Scheme Application Submission')}</li>
+            <li className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> {t('pdfGeneration', 'Printed PDF Scheme Application Form Generation')}</li>
           </ul>
         </div>
 
@@ -68,7 +72,7 @@ export default function PartnerDetailsModal({ partner, onClose }) {
           onClick={handleGetDirections}
           className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg"
         >
-          <Navigation className="w-4 h-4" /> Get Live Google Maps Directions
+          <Navigation className="w-4 h-4" /> {t('getDirections', 'Get Live Google Maps Directions')}
         </button>
       </div>
     </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone, Check } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function InstallAppBanner() {
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -45,13 +47,13 @@ export default function InstallAppBanner() {
       <div className="bg-slate-900/90 text-slate-300 text-xs py-1.5 px-4 text-center border-b border-slate-800 flex items-center justify-between">
         <span className="flex items-center gap-1.5 justify-center w-full sm:w-auto">
           <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-          <span>SchemeSetu Web App - Install on mobile/desktop for offline access</span>
+          <span>{t('installAppPrompt', 'SchemeSetu Web App - Install on mobile/desktop for offline access')}</span>
         </span>
         <button
           onClick={handleInstallClick}
           className="hidden sm:inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-0.5 rounded text-[11px] font-semibold transition"
         >
-          <Download className="w-3 h-3" /> Install App
+          <Download className="w-3 h-3" /> {t('installAppBtn', 'Install App')}
         </button>
       </div>
     );
@@ -66,8 +68,8 @@ export default function InstallAppBanner() {
           <Smartphone className="w-4 h-4 text-emerald-400 animate-pulse" />
         </div>
         <div>
-          <span className="font-semibold text-emerald-300">Install SchemeSetu Web App</span>
-          <p className="text-[11px] text-slate-300 hidden sm:block">Access government schemes offline directly from your home screen.</p>
+          <span className="font-semibold text-emerald-300">{t('installBannerTitle', 'Install SchemeSetu Web App')}</span>
+          <p className="text-[11px] text-slate-300 hidden sm:block">{t('installBannerDesc', 'Access government schemes offline directly from your home screen.')}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -75,7 +77,7 @@ export default function InstallAppBanner() {
           onClick={handleInstallClick}
           className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1 rounded text-xs transition flex items-center gap-1 shadow-md"
         >
-          <Download className="w-3.5 h-3.5" /> Install
+          <Download className="w-3.5 h-3.5" /> {t('installAppBtn', 'Install')}
         </button>
         <button
           onClick={() => setShowBanner(false)}

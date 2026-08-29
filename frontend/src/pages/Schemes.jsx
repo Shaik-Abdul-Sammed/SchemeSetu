@@ -149,17 +149,17 @@ export default function Schemes() {
                 onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
                 className="btn btn-outline btn-sm"
               >
-                Previous
+                {t('previousPage', 'Previous')}
               </button>
               <span style={{ fontSize: '0.9rem', color: '#475569', padding: '0 0.75rem' }}>
-                Page {filters.page} of {totalPages}
+                {t('pageOf', 'Page')} {filters.page} / {totalPages}
               </span>
               <button
                 disabled={filters.page >= totalPages}
                 onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
                 className="btn btn-outline btn-sm"
               >
-                Next
+                {t('nextPage', 'Next')}
               </button>
             </div>
           )}

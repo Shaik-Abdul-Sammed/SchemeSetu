@@ -23,6 +23,7 @@ const communityRouter = require('./routes/v1/communityRoutes');
 const microloanRouter = require('./routes/v1/microloanRoutes');
 const vleRouter = require('./routes/v1/vleRoutes');
 const adminRouter = require('./routes/v1/adminRoutes');
+const translateRouter = require('./routes/v1/translate');
 
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
@@ -114,6 +115,7 @@ app.use('/api/v1/community', communityRouter);
 app.use('/api/v1/microloan', microloanRouter);
 app.use('/api/v1/vle', vleRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/translate', translateRouter);
 
 // 404 Catch-All Middleware
 app.use(notFound);

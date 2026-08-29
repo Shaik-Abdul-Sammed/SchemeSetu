@@ -1,68 +1,83 @@
 import React, { useState } from 'react';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function SchemeFAQ({ schemeName = 'Government Scheme', faqs = [] }) {
+  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState(0);
 
   const defaultFaqs = [
     {
-      qEn: `Who is eligible to apply for ${schemeName}?`,
-      qHi: `${schemeName} के लिए कौन पात्र है?`,
-      aEn: `Citizens matching the age limit, annual income criteria, and occupation guidelines listed under the eligibility section can apply.`,
-      aHi: `आयु सीमा, वार्षिक आय और व्यवसाय के मानदंडों को पूरा करने वाले सभी भारतीय नागरिक आवेदन कर सकते हैं।`
+      question: `Who is eligible to apply for ${schemeName}?`,
+      answer: `Citizens matching the age limit, annual income criteria, and occupation guidelines listed under the eligibility section can apply.`
     },
     {
-      qEn: `What documents are required for application submission?`,
-      qHi: `आवेदन जमा करने के लिए किन दस्तावेजों की आवश्यकता है?`,
-      aEn: `Primary documents include Aadhaar Card, Bank Account Passbook, Income Certificate, Caste/Category Certificate (if applicable), and Passport Photo.`,
-      aHi: `मुख्य दस्तावेजों में आधार कार्ड, बैंक खाता पासबुक, आय प्रमाण पत्र, जाति प्रमाण पत्र और पासपोर्ट फोटो शामिल हैं।`
+      question: `What documents are required for application submission?`,
+      answer: `Primary documents include Aadhaar Card, Bank Account Passbook, Income Certificate, Caste/Category Certificate (if applicable), and Passport Photo.`
     },
     {
-      qEn: `How is the cash benefit or subsidy disbursed?`,
-      qHi: `नकद लाभ या सब्सिडी का भुगतान कैसे किया जाता है?`,
-      aEn: `Financial grants are disbursed directly into the beneficiary's Aadhaar-seeded bank account via Direct Benefit Transfer (DBT).`,
-      aHi: `वित्तीय सहायता प्रत्यक्ष लाभ अंतरण (DBT) के माध्यम से लाभार्थी के आधार-लिंक्ड बैंक खाते में स्थानांतरित की जाती है।`
+      question: `How is the cash benefit or subsidy disbursed?`,
+      answer: `Financial grants are disbursed directly into the beneficiary's Aadhaar-seeded bank account via Direct Benefit Transfer (DBT).`
     },
     {
-      qEn: `Can an applicant apply through nearest Common Service Centre (CSC)?`,
-      qHi: `क्या आवेदक निकटतम सामान्य सेवा केंद्र (CSC) के माध्यम से आवेदन कर सकता है?`,
-      aEn: `Yes, certified Gram Panchayat VLEs and CSC Jan Seva Kendras can submit applications on your behalf using the Agent Portal.`,
-      aHi: `हाँ, सीएससी जन सेवा केंद्र और वीएलई एजेंट पोर्टल के माध्यम से आपका आवेदन जमा कर सकते हैं।`
+      question: `Can an applicant apply through nearest Common Service Centre (CSC)?`,
+      answer: `Yes, certified Gram Panchayat VLEs and CSC Jan Seva Kendras can submit applications on your behalf using the Agent Portal.`
     }
   ];
 
   const listToRender = faqs && faqs.length > 0 ? faqs : defaultFaqs;
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-      <div className="flex items-center gap-2">
-        <HelpCircle className="w-5 h-5 text-amber-400" />
-        <h3 className="text-lg font-bold text-white">Frequently Asked Questions (FAQs) / अक्सर पूछे जाने वाले प्रश्न</h3>
+    <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        <HelpCircle size={22} style={{ color: '#F59E0B' }} />
+        <h3 style={{ fontSize: '1.25rem', color: '#0B192C', margin: 0 }}>
+          {t('faqsTitle', 'Frequently Asked Questions (FAQs)')}
+        </h3>
       </div>
 
-      <div className="space-y-3">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {listToRender.map((faq, idx) => {
           const isOpen = openIndex === idx;
+          const qText = faq.question || faq.qEn || '';
+          const aText = faq.answer || faq.aEn || '';
+
           return (
             <div
               key={idx}
-              className="border border-slate-800 rounded-xl bg-slate-950/60 overflow-hidden transition"
+              style={{
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                backgroundColor: '#FFFFFF'
+              }}
             >
               <button
+                type="button"
                 onClick={() => setOpenIndex(isOpen ? -1 : idx)}
-                className="w-full p-4 text-left flex items-center justify-between gap-3 text-sm font-semibold text-slate-200 hover:text-white"
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  background: isOpen ? '#F8FAFC' : '#FFFFFF',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  color: '#0F172A'
+                }}
               >
-                <div>
-                  <p className="text-slate-100">{faq.qEn}</p>
-                  <p className="text-xs text-amber-400 font-normal mt-0.5">{faq.qHi}</p>
-                </div>
-                {isOpen ? <ChevronUp className="w-4 h-4 text-amber-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
+                <span>{qText}</span>
+                {isOpen ? <ChevronUp size={18} style={{ color: '#F59E0B', flexShrink: 0 }} /> : <ChevronDown size={18} style={{ color: '#64748B', flexShrink: 0 }} />}
               </button>
 
               {isOpen && (
-                <div className="px-4 pb-4 text-xs text-slate-300 space-y-2 border-t border-slate-800/60 pt-3">
-                  <p className="leading-relaxed">{faq.aEn}</p>
-                  <p className="text-slate-400 italic text-[11px] leading-relaxed">{faq.aHi}</p>
+                <div style={{ padding: '0.85rem 1rem 1rem', fontSize: '0.9rem', color: '#475569', borderTop: '1px solid #E2E8F0', lineHeight: 1.6, backgroundColor: '#F8FAFC' }}>
+                  <p style={{ margin: 0 }}>{aText}</p>
                 </div>
               )}
             </div>

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function EMIChart({ principal = 250000, totalInterest = 54000, tenureMonths = 36 }) {
+  const { t } = useLanguage();
   const totalRepayment = principal + totalInterest;
   const principalPercent = Math.round((principal / totalRepayment) * 100) || 80;
   const interestPercent = 100 - principalPercent;
@@ -8,8 +10,8 @@ export default function EMIChart({ principal = 250000, totalInterest = 54000, te
   return (
     <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginTop: '1rem' }}>
       <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>Repayment Cost Breakdown ({tenureMonths} Months)</span>
-        <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>Total: ₹{totalRepayment.toLocaleString('en-IN')}</span>
+        <span>{t('costBreakdown', 'Repayment Cost Breakdown')} ({tenureMonths} {t('tenure', 'Months')})</span>
+        <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>{t('totalRepayment', 'Total')}: ₹{totalRepayment.toLocaleString('en-IN')}</span>
       </div>
 
       {/* Visual Stacked Progress Bar Chart */}
@@ -29,7 +31,7 @@ export default function EMIChart({ principal = 250000, totalInterest = 54000, te
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
           <div style={{ width: '14px', height: '14px', borderRadius: '4px', background: '#0284C7', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Loan Principal ({principalPercent}%)</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748B' }}>{t('loanPrincipal', 'Loan Principal')} ({principalPercent}%)</div>
             <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A' }}>₹{principal.toLocaleString('en-IN')}</div>
           </div>
         </div>
@@ -37,7 +39,7 @@ export default function EMIChart({ principal = 250000, totalInterest = 54000, te
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
           <div style={{ width: '14px', height: '14px', borderRadius: '4px', background: '#D97706', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Total Interest ({interestPercent}%)</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748B' }}>{t('totalInterest', 'Total Interest')} ({interestPercent}%)</div>
             <div style={{ fontSize: '1rem', fontWeight: 700, color: '#D97706' }}>₹{totalInterest.toLocaleString('en-IN')}</div>
           </div>
         </div>

@@ -1,8 +1,9 @@
 {
-  "name": "frontend",
+  "name": "schemesetu",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "SchemeSetu - AI-Powered Citizen Scheme & Welfare Discovery Platform",
   "scripts": {
     "dev": "vite --host --port 3000",
     "build": "vite build",

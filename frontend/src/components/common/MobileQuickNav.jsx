@@ -2,17 +2,19 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Search, Award, MapPin, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function MobileQuickNav() {
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const navItems = [
-    { label: 'Home', path: '/', icon: Home },
-    { label: 'Schemes', path: '/schemes', icon: Search },
-    { label: 'Eligible', path: '/eligibility', icon: Award },
-    { label: 'Radar', path: '/#radar', icon: MapPin },
-    { label: user ? 'Dashboard' : 'Login', path: user ? '/dashboard' : '/login', icon: User }
+    { label: t('home', 'Home'), path: '/', icon: Home },
+    { label: t('exploreSchemes', 'Schemes'), path: '/schemes', icon: Search },
+    { label: t('checkEligibility', 'Eligible'), path: '/eligibility', icon: Award },
+    { label: t('locationSetup', 'Radar'), path: '/#radar', icon: MapPin },
+    { label: user ? t('dashboard', 'Dashboard') : t('login', 'Login'), path: user ? '/dashboard' : '/login', icon: User }
   ];
 
   return (

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, PlusCircle, Send, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Community() {
+  const { t } = useLanguage();
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
 
@@ -37,26 +39,26 @@ export default function Community() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }} className="container py-8">
       <h1 style={{ fontSize: '1.75rem', color: '#0B192C', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-        <MessageSquare style={{ color: '#0284C7' }} size={28} /> Community Q&A & Peer Support
+        <MessageSquare style={{ color: '#0284C7' }} size={28} /> {t('communityTitle', 'Community Q&A & Peer Support')}
       </h1>
       <p style={{ color: '#64748B', marginBottom: '2rem' }}>
-        Ask questions, share loan application experiences, and get advice from VLE agents and fellow citizens.
+        {t('communitySubtitle', 'Ask questions, share loan application experiences, and get advice from VLE agents and fellow citizens.')}
       </p>
 
       {/* Post Question Form */}
       <form onSubmit={handlePost} className="card" style={{ marginBottom: '2rem' }}>
-        <h3 style={{ fontSize: '1.1rem', color: '#0F172A', marginBottom: '0.75rem' }}>Ask the SchemeSetu Community</h3>
+        <h3 style={{ fontSize: '1.1rem', color: '#0F172A', marginBottom: '0.75rem' }}>{t('askCommunity', 'Ask the SchemeSetu Community')}</h3>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
             type="text"
             value={newQuestion}
             onChange={(e) => setNewQuestion(e.target.value)}
-            placeholder="Type your question about scheme eligibility or bank visits..."
+            placeholder={t('typeQuestion', 'Type your question about scheme eligibility or bank visits...')}
             className="form-control"
             required
           />
           <button type="submit" className="btn btn-primary" style={{ flexShrink: 0 }}>
-            <Send size={16} /> Post
+            <Send size={16} /> {t('postQuestion', 'Post')}
           </button>
         </div>
       </form>
@@ -79,7 +81,7 @@ export default function Community() {
             {q.answers && q.answers.length > 0 && (
               <div style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: '8px', borderLeft: '3px solid #059669', fontSize: '0.88rem', color: '#334155' }}>
                 <div style={{ fontWeight: 700, color: '#059669', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <CheckCircle2 size={14} /> {q.answers[0].author || 'Verified Answer'}
+                  <CheckCircle2 size={14} /> {q.answers[0].author || t('verifiedAnswer', 'Verified Answer')}
                 </div>
                 {q.answers[0].text}
               </div>

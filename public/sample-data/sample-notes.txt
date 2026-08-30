@@ -1,0 +1,10 @@
+FICTIONAL DEMONSTRATION DATA — NOT AN OFFICIAL DOCUMENT
+SchemeSetu Prototype Demo Reference Dataset for Smart India Hackathon 2026
+
+Beneficiary: Ramesh Kumar
+Occupation: Metal & Fabrication Enterprise
+Annual Family Income: Rs. 2,40,000
+Loan Requirement: Rs. 2,50,000
+Project Cost: Rs. 3,50,000
+Caste: Scheduled Caste (SC)
+State: Telangana (Hyderabad)

@@ -54,6 +54,7 @@ export default function App() {
             <Route path="/schemes" element={<Schemes />} />
             <Route path="/schemes/:id" element={<SchemeDetails />} />
             <Route path="/eligibility" element={<Eligibility />} />
+            <Route path="/media" element={<Eligibility initialMode="media" />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

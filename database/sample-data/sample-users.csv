@@ -1,6 +1,11 @@
-id,name,age,gender,category,annualIncome,education,occupation,businessType,projectCost,loanRequirement,state,district,bplStatus
-USER-001,Ramesh Kumar,32,Male,SC,240000,10th pass,Small Business Owner,Manufacturing,350000,250000,Telangana,Hyderabad,Yes
-USER-002,Lakshmi Devi,28,Female,OBC,180000,12th pass,Artisan,Handicrafts & Textiles,150000,100000,Tamil Nadu,Chennai,Yes
-USER-003,Manpreet Singh,45,Male,General,320000,Graduate,Farmer,Agriculture Allied / Dairy,500000,400000,Punjab,Ludhiana,No
-USER-004,Pooja Sharma,24,Female,General,90000,Graduate,Street Vendor / Retail,Retail / Food Stalls,25000,20000,Delhi,New Delhi,Yes
-USER-005,Devappa Naik,52,Male,ST,140000,8th pass,Traditional Artisan / Blacksmith,Metal Crafts & Tooling,200000,150000,Karnataka,Bengaluru Urban,Yes
+id,name,age,gender,category,annualIncome,education,occupation,businessType,projectCost,loanRequirement,state,district,bplStatus,scenario
+USER-001,Ramesh Kumar,32,Male,SC,240000,10th pass,Small Business Owner,Manufacturing / Fabrication,350000,250000,Telangana,Hyderabad,Yes,SC manufacturing entrepreneur
+USER-002,Suresh Chandra,29,Male,SC,180000,Diploma,Automobile Repair Service,Service Sector,200000,150000,Maharashtra,Nagpur,Yes,SC service entrepreneur
+USER-003,Priya Rani,34,Female,SC,150000,Graduate,Garment & Boutique Unit,Manufacturing,400000,300000,Tamil Nadu,Chennai,Yes,SC woman entrepreneur
+USER-004,Biram Soyam,27,Male,ST,120000,8th pass,Traditional Bamboo & Wood Artisan,Artisans & Handicrafts,150000,100000,Telangana,Adilabad,Yes,ST artisan
+USER-005,Devendra Marko,36,Male,ST,280000,12th pass,Organic Herbal Processing,Agri-Processing Enterprise,800000,600000,Madhya Pradesh,Mandla,No,ST entrepreneur
+USER-006,Lakshmi Devi,28,Female,OBC,180000,12th pass,Handloom Weaver & Micro Business,Handicrafts & Textiles,150000,100000,Andhra Pradesh,Guntur,Yes,OBC entrepreneur
+USER-007,Manpreet Singh,45,Male,General,320000,Graduate,Farmer / Dairy Entrepreneur,Agriculture Allied / Dairy,500000,400000,Punjab,Ludhiana,No,Farmer
+USER-008,Pooja Sharma,24,Female,General,90000,10th pass,Street Vendor / Food Cart,Retail / Food Stalls,25000,20000,Delhi,North Delhi,Yes,Street vendor
+USER-009,Abdul Hameed,38,Male,OBC,210000,10th pass,Kirana & Provision Store,Retail Trading,300000,200000,Karnataka,Bangalore Urban,No,Small trader
+USER-010,Vikramaditya Rao,42,Male,General,1200000,B.Tech,Precision Engineering Workshop,Medium Manufacturing,8000000,6000000,Telangana,Rangareddy,No,High-project-cost applicant

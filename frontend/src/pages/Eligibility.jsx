@@ -6,10 +6,15 @@ import DataUploadManager from '../components/admin/DataUploadManager';
 import { useLanguage } from '../context/LanguageContext';
 import { Sparkles, FileText, UploadCloud, UserCheck } from 'lucide-react';
 
-export default function Eligibility() {
+export default function Eligibility({ initialMode }) {
   const { t } = useLanguage();
   const location = useLocation();
-  const [intakeMode, setIntakeMode] = useState('wizard'); // 'wizard' | 'media' | 'upload'
+  const [intakeMode, setIntakeMode] = useState(() => {
+    if (initialMode) return initialMode;
+    if (location.pathname === '/media' || location.state?.mode === 'media') return 'media';
+    if (location.state?.mode === 'upload') return 'upload';
+    return 'wizard';
+  });
   const [extractedProfile, setExtractedProfile] = useState(null);
 
   const handleProfileExtracted = (profileData) => {

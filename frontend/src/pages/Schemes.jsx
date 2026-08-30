@@ -135,7 +135,7 @@ export default function Schemes() {
         <EmptyState onClear={handleClearFilters} />
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
             {schemes.map(scheme => (
               <SchemeCard key={scheme.id} scheme={scheme} />
             ))}

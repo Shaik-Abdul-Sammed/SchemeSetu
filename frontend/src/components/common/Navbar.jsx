@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
+import { usePWA } from '../../context/PWAContext';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
 import { 
   Building2, 
@@ -18,13 +19,15 @@ import {
   Mic,
   Users,
   MessageSquare,
-  Settings
+  Settings,
+  Download
 } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { lang, changeLanguage, t, availableLanguages } = useLanguage();
   const { location, nearbyPartners } = useLocation();
+  const { isInstalled, triggerInstall } = usePWA();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -135,6 +138,31 @@ export default function Navbar() {
                 ))}
               </select>
             </div>
+
+            {/* Install App Button */}
+            {!isInstalled && (
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  triggerInstall();
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  borderColor: '#F59E0B',
+                  color: '#F59E0B',
+                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontWeight: 600
+                }}
+                title="Install SchemeSetu Web App"
+                aria-label="Install SchemeSetu App"
+              >
+                <Download size={14} />
+                <span style={{ fontSize: '0.82rem' }}>{t('installAppBtn', 'Install App')}</span>
+              </button>
+            )}
 
             {isAuthenticated ? (
               <>

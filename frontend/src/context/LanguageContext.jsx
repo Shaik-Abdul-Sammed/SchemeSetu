@@ -367,7 +367,12 @@ const translations = {
     "exploreMoreSchemes": "Explore All Government Schemes",
     "recommendedSchemes": "Recommended Schemes for You",
     "allApplications": "All Applications",
-    "refreshDashboard": "Refresh Data"
+    "refreshDashboard": "Refresh Data",
+    "installSchemeSetuTitle": "Install SchemeSetu App",
+    "installSchemeSetuSubtitle": "Instant access to Bharat welfare schemes",
+    "pwaOfflineBadge": "100% Free & Lightweight",
+    "pwaOfflineDesc": "Works offline, loads instantaneously without taking up device storage space.",
+    "gotIt": "Got It"
   },
   "HI": {
     "brandTitle": "SchemeSetu",
@@ -734,7 +739,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu ऐप इंस्टॉल करें",
+    "installSchemeSetuSubtitle": "भारत कल्याणकारी योजनाओं तक त्वरित पहुंच",
+    "pwaOfflineBadge": "100% निःशुल्क और हल्का",
+    "pwaOfflineDesc": "ऑफ़लाइन काम करता है, डिवाइस स्टोरेज लिए बिना तुरंत लोड होता है।",
+    "gotIt": "समझ गया"
   },
   "TE": {
     "brandTitle": "SchemeSetu",
@@ -1101,7 +1111,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu యాప్‌ను ఇన్‌స్టాల్ చేయండి",
+    "installSchemeSetuSubtitle": "భారత సంక్షేమ పథకాలకు తక్షణ ప్రాప్యత",
+    "pwaOfflineBadge": "100% ఉచితం & తేలికైనది",
+    "pwaOfflineDesc": "ఆఫ్‌లైన్‌లో పనిచేస్తుంది, పరికర నిల్వ లేకుండా తక్షణమే లోడ్ అవుతుంది.",
+    "gotIt": "అర్థమైంది"
   },
   "TA": {
     "brandTitle": "SchemeSetu",
@@ -1468,7 +1483,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu செயலியை நிறுவு",
+    "installSchemeSetuSubtitle": "பாரத நலத்திட்டங்களுக்கான உடனடி அணுகல்",
+    "pwaOfflineBadge": "100% இலவசம் & இலகுவானது",
+    "pwaOfflineDesc": "ஆஃப்லைனில் இயங்குகிறது, சேமிப்பிடத்தை எடுக்காமல் உடனடியாக ஏற்றுகிறது.",
+    "gotIt": "புரிந்தது"
   },
   "KN": {
     "brandTitle": "SchemeSetu",
@@ -1835,7 +1855,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu ಆ್ಯಪ್ ಸ್ಥಾಪಿಸಿ",
+    "installSchemeSetuSubtitle": "ಭಾರತ ಕಲ್ಯಾಣ ಯೋಜನೆಗಳಿಗೆ ತ್ವರಿತ ಪ್ರವೇಶ",
+    "pwaOfflineBadge": "100% ಉಚಿತ & ಹಗುರ",
+    "pwaOfflineDesc": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ, ಸಾಧನದ ಸಂಗ್ರಹಣೆಯನ್ನು ತೆಗೆದುಕೊಳ್ಳದೆ ತಕ್ಷಣವೇ ಲೋಡ್ ಆಗುತ್ತದೆ.",
+    "gotIt": "ತಿಳಿಯಿತು"
   },
   "ML": {
     "brandTitle": "SchemeSetu",
@@ -2202,7 +2227,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക",
+    "installSchemeSetuSubtitle": "ഭാരത ക്ഷേമ പദ്ധതികളിലേക്കുള്ള തൽക്ഷണ പ്രവേശനം",
+    "pwaOfflineBadge": "100% സൗജന്യവും ഭാരം കുറഞ്ഞതും",
+    "pwaOfflineDesc": "ഓഫ്‌ലൈനിൽ പ്രവർത്തിക്കുന്നു, ഉപകരണ സംഭരണമെടുക്കാതെ തൽക്ഷണം ലോഡുചെയ്യുന്നു.",
+    "gotIt": "മനസ്സിലായി"
   },
   "BN": {
     "brandTitle": "SchemeSetu",
@@ -2569,7 +2599,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu অ্যাপ ইনস্টল করুন",
+    "installSchemeSetuSubtitle": "ভারত কল্যাণমূলক প্রকল্পগুলিতে তাৎক্ষণিক অ্যাক্সেস",
+    "pwaOfflineBadge": "100% বিনামূল্যে এবং হালকা",
+    "pwaOfflineDesc": "অফলাইনে কাজ করে, ডিভাইসের স্টোরেজ না নিয়েই তাৎক্ষণিকভাবে লোড হয়।",
+    "gotIt": "বুঝেছি"
   },
   "MR": {
     "brandTitle": "SchemeSetu",
@@ -2936,7 +2971,12 @@ const translations = {
     "exploreMoreSchemes": "सभी सरकारी योजनाएं देखें",
     "recommendedSchemes": "आपके लिए अनुशंसित योजनाएं",
     "allApplications": "सभी आवेदन",
-    "refreshDashboard": "डेटा ताज़ा करें"
+    "refreshDashboard": "डेटा ताज़ा करें",
+    "installSchemeSetuTitle": "SchemeSetu अॅप स्थापित करा",
+    "installSchemeSetuSubtitle": "भारत कल्याणकारी योजनांमध्ये त्वरित प्रवेश",
+    "pwaOfflineBadge": "100% मोफत आणि हलके",
+    "pwaOfflineDesc": "ऑफलाइन कार्य करते, डिव्हाइस स्टोरेज न घेता त्वरित लोड होते.",
+    "gotIt": "समजले"
   }
 };
 

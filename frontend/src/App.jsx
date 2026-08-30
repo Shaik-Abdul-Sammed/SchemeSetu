@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import InstallAppBanner from './components/common/InstallAppBanner';
+import PWAInstallModal from './components/common/PWAInstallModal';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import MobileQuickNav from './components/common/MobileQuickNav';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -31,7 +32,8 @@ export default function App() {
         <Navbar />
         <main style={{ flexGrow: 1 }}>
           <Routes>
-            <Route path="/" element={<Onboarding />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/input" element={<InputHub />} />
             <Route path="/results" element={<Results />} />
@@ -39,7 +41,6 @@ export default function App() {
             <Route path="/community" element={<Community />} />
             <Route path="/vle" element={<VLEDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/home" element={<Home />} />
             <Route path="/schemes" element={<Schemes />} />
             <Route path="/schemes/:id" element={<SchemeDetails />} />
             <Route path="/eligibility" element={<Eligibility />} />
@@ -51,6 +52,7 @@ export default function App() {
         </main>
         <Footer />
         <MobileQuickNav />
+        <PWAInstallModal />
       </div>
     </ErrorBoundary>
   );

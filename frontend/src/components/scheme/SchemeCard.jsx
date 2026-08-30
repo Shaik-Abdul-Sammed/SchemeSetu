@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, ArrowRight, Bookmark, Award, UserCheck, Percent, IndianRupee, Clock } from 'lucide-react';
+import { Building2, ArrowRight, Bookmark, Award, UserCheck, Percent, IndianRupee, Clock, FileText } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import ApplicationGuidanceModal from './ApplicationGuidanceModal';
 
 export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
   const { t } = useLanguage();
   const [saved, setSaved] = useState(initialSaved);
   const [saving, setSaving] = useState(false);
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
   const handleToggleSave = async (e) => {
@@ -99,15 +101,26 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
-        <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <UserCheck size={14} style={{ color: '#0284C7' }} />
-          <span>{scheme.beneficiary}</span>
-        </span>
+        <button 
+          type="button"
+          onClick={() => setGuidanceOpen(true)} 
+          className="btn btn-sm"
+          style={{ backgroundColor: '#ECFDF5', color: '#065F46', borderColor: '#A7F3D0', fontWeight: 600, fontSize: '0.78rem' }}
+          title={t('applyGuidance', 'Apply & Guidance Checklist')}
+        >
+          <FileText size={13} /> {t('applyGuidance', 'Apply')}
+        </button>
 
         <Link to={`/schemes/${scheme.id}`} className="btn btn-outline btn-sm">
           {t('viewDetails', 'Details')} <ArrowRight size={14} />
         </Link>
       </div>
+
+      <ApplicationGuidanceModal 
+        isOpen={guidanceOpen} 
+        onClose={() => setGuidanceOpen(false)} 
+        scheme={scheme} 
+      />
     </div>
   );
 }

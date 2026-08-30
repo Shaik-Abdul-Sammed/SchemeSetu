@@ -1,0 +1,6 @@
+id,name,age,gender,category,annualIncome,education,occupation,businessType,projectCost,loanRequirement,state,district,bplStatus
+USER-001,Ramesh Kumar,32,Male,SC,240000,10th pass,Small Business Owner,Manufacturing,350000,250000,Telangana,Hyderabad,Yes
+USER-002,Lakshmi Devi,28,Female,OBC,180000,12th pass,Artisan,Handicrafts & Textiles,150000,100000,Tamil Nadu,Chennai,Yes
+USER-003,Manpreet Singh,45,Male,General,320000,Graduate,Farmer,Agriculture Allied / Dairy,500000,400000,Punjab,Ludhiana,No
+USER-004,Pooja Sharma,24,Female,General,90000,Graduate,Street Vendor / Retail,Retail / Food Stalls,25000,20000,Delhi,New Delhi,Yes
+USER-005,Devappa Naik,52,Male,ST,140000,8th pass,Traditional Artisan / Blacksmith,Metal Crafts & Tooling,200000,150000,Karnataka,Bengaluru Urban,Yes

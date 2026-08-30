@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function TextToSpeech({ text }) {
   const { lang, t } = useLanguage();
+  const { showToast } = useToast();
   const [speaking, setSpeaking] = useState(false);
 
   const getLanguageLocale = () => {
@@ -22,7 +24,7 @@ export default function TextToSpeech({ text }) {
 
   const handleSpeak = () => {
     if (!('speechSynthesis' in window)) {
-      alert(t('voiceUnsupported', 'Text-to-speech is not supported in this browser.'));
+      showToast(t('voiceUnsupported', 'Text-to-speech is not supported in this browser.'), 'warning');
       return;
     }
 

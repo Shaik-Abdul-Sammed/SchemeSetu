@@ -7,6 +7,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { LocationProvider } from './context/LocationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PWAProvider } from './context/PWAContext';
+import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import './index.css';
 
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <LocationProvider>
               <AuthProvider>
                 <PWAProvider>
-                  <App />
+                  <ToastProvider>
+                    <App />
+                  </ToastProvider>
                 </PWAProvider>
               </AuthProvider>
             </LocationProvider>

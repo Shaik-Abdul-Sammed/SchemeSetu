@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { Calculator, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { sanitizeNumericInput, formatIndianCurrency } from '../../utils/numberValidator';
 
 export default function BenefitEstimator({ scheme }) {
   const { t } = useLanguage();
   const [landAcres, setLandAcres] = useState(2);
   const [projectCost, setProjectCost] = useState(100000);
   const [annualIncome, setAnnualIncome] = useState(150000);
+
+  // Safe numerical parsing and boundary clamping
+  const safeLand = Math.min(100, Math.max(0, parseInt(landAcres, 10) || 0));
+  const safeCost = Math.min(50000000, Math.max(0, parseInt(projectCost, 10) || 0));
+  const safeIncome = Math.min(10000000, Math.max(0, parseInt(annualIncome, 10) || 0));
 
   // Dynamic estimate calculation based on scheme type
   let estimatedPayout = 6000;
@@ -16,14 +22,14 @@ export default function BenefitEstimator({ scheme }) {
     estimatedPayout = 6000;
     calculationNote = '₹6,000 per year paid in 3 equal installments of ₹2,000 via DBT.';
   } else if (scheme?.id === 'pmegp') {
-    const subsidyRate = annualIncome < 200000 ? 0.35 : 0.25;
-    estimatedPayout = Math.min(projectCost * subsidyRate, 875000);
-    calculationNote = `${(subsidyRate * 100).toFixed(0)}% government margin money subsidy on project cost of ₹${Number(projectCost).toLocaleString('en-IN')}.`;
+    const subsidyRate = safeIncome < 200000 ? 0.35 : 0.25;
+    estimatedPayout = Math.min(safeCost * subsidyRate, 875000);
+    calculationNote = `${(subsidyRate * 100).toFixed(0)}% government margin money subsidy on project cost of ${formatIndianCurrency(safeCost)}.`;
   } else if (scheme?.id === 'ayushman-bharat') {
     estimatedPayout = 500000;
     calculationNote = 'Free health insurance cover up to ₹5,00,000 per family per year for secondary & tertiary hospital care.';
   } else {
-    estimatedPayout = Math.min(annualIncome * 0.15 + 10000, 50000);
+    estimatedPayout = Math.min(safeIncome * 0.15 + 10000, 50000);
     calculationNote = 'Estimated financial assistance based on income and welfare category eligibility.';
   }
 
@@ -42,12 +48,14 @@ export default function BenefitEstimator({ scheme }) {
             {t('landHolding', 'Land Holding (Acres)')}
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            maxLength={3}
             value={landAcres}
-            onChange={(e) => setLandAcres(Number(e.target.value))}
+            onChange={(e) => setLandAcres(sanitizeNumericInput(e.target.value, 3))}
             className="form-input"
             style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
-            min="0"
+            placeholder="0 - 100"
           />
         </div>
 
@@ -56,12 +64,14 @@ export default function BenefitEstimator({ scheme }) {
             {t('annualIncomeLabel', 'Annual Household Income (₹)')}
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            maxLength={8}
             value={annualIncome}
-            onChange={(e) => setAnnualIncome(Number(e.target.value))}
+            onChange={(e) => setAnnualIncome(sanitizeNumericInput(e.target.value, 8))}
             className="form-input"
             style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
-            min="0"
+            placeholder="0 - 10000000"
           />
         </div>
 
@@ -70,12 +80,14 @@ export default function BenefitEstimator({ scheme }) {
             {t('projectCostLabel', 'Proposed Project/Loan Cost (₹)')}
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            maxLength={8}
             value={projectCost}
-            onChange={(e) => setProjectCost(Number(e.target.value))}
+            onChange={(e) => setProjectCost(sanitizeNumericInput(e.target.value, 8))}
             className="form-input"
             style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
-            min="0"
+            placeholder="0 - 50000000"
           />
         </div>
       </div>

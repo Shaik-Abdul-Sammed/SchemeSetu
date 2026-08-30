@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { eligibilityService } from '../../services/eligibilityService';
 import { useLanguage } from '../../context/LanguageContext';
+import { sanitizeNumericInput, validateAndParseNumber, formatIndianCurrency } from '../../utils/numberValidator';
 import ErrorMessage from '../common/ErrorMessage';
 
 export default function MultiStepEligibilityWizard() {
@@ -52,14 +53,16 @@ export default function MultiStepEligibilityWizard() {
 
   const validateCurrentStep = () => {
     if (step === 1) {
-      if (!formData.age || Number(formData.age) < 0 || Number(formData.age) > 110) {
-        setValidationError(t('ageValidationError', 'Please enter a valid age between 0 and 110.'));
+      const ageVal = validateAndParseNumber(formData.age, 'age');
+      if (!ageVal.isValid) {
+        setValidationError(t('ageValidationError', 'Please enter a valid age between 18 and 100 years.'));
         return false;
       }
     }
     if (step === 3) {
-      if (formData.annualIncome === undefined || Number(formData.annualIncome) < 0) {
-        setValidationError(t('incomeValidationError', 'Please enter a valid annual family income.'));
+      const incomeVal = validateAndParseNumber(formData.annualIncome, 'income');
+      if (!incomeVal.isValid) {
+        setValidationError(t('incomeValidationError', 'Please enter an annual family income between ₹0 and ₹1,00,00,000.'));
         return false;
       }
     }
@@ -261,13 +264,15 @@ export default function MultiStepEligibilityWizard() {
             <div className="form-group">
               <label className="form-label">{t('ageInYears', 'Age (in Years) *')}</label>
               <input 
-                type="number" 
+                type="text" 
+                inputMode="numeric"
                 className="form-control" 
-                min="0"
-                max="110"
+                maxLength={3}
+                placeholder="18 - 100"
                 value={formData.age}
-                onChange={e => handleChange('age', e.target.value)}
+                onChange={e => handleChange('age', sanitizeNumericInput(e.target.value, 3))}
               />
+              <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Valid range: 18 to 100 years</span>
             </div>
 
             <div className="form-group">
@@ -351,13 +356,17 @@ export default function MultiStepEligibilityWizard() {
             <div className="form-group">
               <label className="form-label">{t('annualFamilyIncome', 'Annual Family Income (in ₹) *')}</label>
               <input 
-                type="number" 
+                type="text" 
+                inputMode="numeric"
                 className="form-control" 
-                step="10000"
+                maxLength={8}
+                placeholder="e.g. 180000"
                 value={formData.annualIncome}
-                onChange={e => handleChange('annualIncome', e.target.value)}
+                onChange={e => handleChange('annualIncome', sanitizeNumericInput(e.target.value, 8))}
               />
-              <span style={{ fontSize: '0.8rem', color: '#64748B' }}>e.g. ₹1,80,000 per year</span>
+              <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                Formatted: <strong>{formatIndianCurrency(formData.annualIncome)}</strong> / year (Max: ₹1,00,00,000)
+              </span>
             </div>
 
             <div className="form-group">

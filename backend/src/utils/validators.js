@@ -7,13 +7,19 @@ function isNonEmptyString(value) {
 }
 
 function isPositiveNumber(value) {
+  if (value === null || value === undefined || value === '') return false;
+  const str = String(value).trim();
+  if (str.replace('-', '').length > 12) return false;
   const num = Number(value);
-  return typeof num === 'number' && !isNaN(num) && num > 0;
+  return typeof num === 'number' && !isNaN(num) && isFinite(num) && num > 0 && num <= 1000000000;
 }
 
 function isNonNegativeNumber(value) {
+  if (value === null || value === undefined || value === '') return false;
+  const str = String(value).trim();
+  if (str.replace('-', '').length > 12) return false;
   const num = Number(value);
-  return typeof num === 'number' && !isNaN(num) && num >= 0;
+  return typeof num === 'number' && !isNaN(num) && isFinite(num) && num >= 0 && num <= 1000000000;
 }
 
 function isValidEmail(email) {

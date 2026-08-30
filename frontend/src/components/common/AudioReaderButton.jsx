@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function AudioReaderButton({ textToRead, label }) {
   const { lang, t } = useLanguage();
+  const { showToast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
 
   const getLanguageLocale = () => {
@@ -22,7 +24,7 @@ export default function AudioReaderButton({ textToRead, label }) {
 
   const toggleSpeech = () => {
     if (!('speechSynthesis' in window)) {
-      alert(t('voiceUnsupported', 'Text-to-Speech audio reader is not supported in this browser.'));
+      showToast(t('voiceUnsupported', 'Text-to-Speech audio reader is not supported in this browser.'), 'warning');
       return;
     }
 

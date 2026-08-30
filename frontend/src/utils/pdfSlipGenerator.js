@@ -132,3 +132,6 @@ startxref
   const blob = new Blob([pdfContent], { type: 'application/pdf' });
   triggerBlobDownload(blob, filename);
 }
+
+export const generateUniversalApplicationSlip = downloadApplicationSlipPdf;
+

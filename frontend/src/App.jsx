@@ -9,6 +9,7 @@ import OfflineIndicator from './components/common/OfflineIndicator';
 import MobileQuickNav from './components/common/MobileQuickNav';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import VoiceAssistantModal from './components/voice/VoiceAssistantModal';
+import GPSDebugPanel from './components/debug/GPSDebugPanel';
 import Onboarding from './pages/Onboarding';
 import InputHub from './pages/InputHub';
 import Results from './pages/Results';
@@ -67,6 +68,7 @@ export default function App() {
         <MobileQuickNav onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />
         <PWAInstallModal />
         <EntranceVoiceGreeting />
+        <GPSDebugPanel />
 
         {/* Floating Voice Assistant Trigger (Desktop) */}
         <button

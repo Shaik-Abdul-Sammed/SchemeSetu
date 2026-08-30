@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { generateUniversalApplicationSlip } from '../utils/pdfSlipGenerator';
 import { safeOpenExternalUrl } from '../utils/capacitor';
+import { useLocation as useGPSLocation } from '../context/LocationContext';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
 import EMIChart from '../components/EMIChart';
 import Map from '../components/Map';
@@ -19,6 +20,7 @@ export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { location: gpsLocation } = useGPSLocation();
 
   const passedCriteria = location.state?.criteria || {
     income: 240000,
@@ -70,8 +72,13 @@ export default function Results() {
         setSchemes(schemeRes.schemes || []);
       }
 
-      const partnerRes = await api.post('/partners/nearest', { lat: 28.6139, lng: 77.2090 });
-      setPartners(partnerRes.partners || []);
+      // Use actual GPS coordinates from centralized location service — never hardcoded
+      const userLat = gpsLocation?.lat || null;
+      const userLng = gpsLocation?.lng || null;
+      if (userLat !== null && userLng !== null) {
+        const partnerRes = await api.post('/partners/nearest', { lat: userLat, lng: userLng });
+        setPartners(partnerRes.partners || []);
+      }
     } catch (err) {
       console.error("Results initial fetch error:", err);
     } finally {

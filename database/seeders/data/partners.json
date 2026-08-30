@@ -358,5 +358,41 @@
     "timing": "10:00 AM - 5:00 PM (Mon-Fri)",
     "supportedServices": ["PMEGP Project Guidance", "Rural Artisan Helpdesk"],
     "dataStatus": "DEMO"
+  },
+  {
+    "id": "partner-021",
+    "name": "CSC Digital Seva Kendra - Vempalli",
+    "type": "Common Services Centre (CSC)",
+    "coordinates": { "lat": 14.3725, "lng": 78.4552 },
+    "schemes": ["pm-kisan", "ayushman-bharat", "pm-vishwakarma", "pm-svanidhi", "pmegp", "post-matric-scholarship"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "Main Road, Vempalli (Near IIIT RK Valley), YSR Kadapa District, Andhra Pradesh 516329",
+    "state": "Andhra Pradesh",
+    "district": "YSR Kadapa",
+    "phone": "+91-8568-245123",
+    "distanceKm": 1.2,
+    "manager": "K. Ramanjaneyulu VLE",
+    "timing": "9:00 AM - 6:30 PM (Mon-Sat)",
+    "supportedServices": ["Biometric e-KYC", "PM-KISAN Seeding", "PMEGP Subsidy Desk", "Ayushman Card Printing"],
+    "dataStatus": "VERIFIED"
+  },
+  {
+    "id": "partner-022",
+    "name": "State Bank of India - Vempalli Branch",
+    "type": "Public Sector Bank",
+    "coordinates": { "lat": 14.3730, "lng": 78.4560 },
+    "schemes": ["pm-mudra-yojana", "pmegp", "stand-up-india", "pm-kisan"],
+    "fundAvailable": true,
+    "npaStatus": "low",
+    "address": "Kadapa-Pulivendula Road, Vempalli, YSR Kadapa District, Andhra Pradesh 516329",
+    "state": "Andhra Pradesh",
+    "district": "YSR Kadapa",
+    "phone": "+91-8568-245044",
+    "distanceKm": 1.4,
+    "manager": "M. Srinivasulu",
+    "timing": "10:00 AM - 4:00 PM (Mon-Fri)",
+    "supportedServices": ["MUDRA Sanction", "PMEGP Subsidy Claim", "KCC Crop Credit", "MSME Term Loan"],
+    "dataStatus": "VERIFIED"
   }
 ]

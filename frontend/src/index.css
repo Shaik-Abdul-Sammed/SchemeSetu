@@ -550,7 +550,7 @@ button, input, select, a.btn {
   color: var(--text-main);
 }
 
-.form-control, .form-select {
+.form-control, .form-select, .form-input {
   width: 100%;
   padding: 0.7rem 0.95rem;
   font-size: 0.95rem;
@@ -559,9 +559,10 @@ button, input, select, a.btn {
   background-color: var(--bg-surface);
   color: var(--text-main);
   transition: var(--transition-fast);
+  box-sizing: border-box;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus, .form-select:focus, .form-input:focus {
   border-color: var(--border-focus);
   outline: none;
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
@@ -933,10 +934,18 @@ button, input, select, a.btn {
    MOBILE BOTTOM NAVIGATION (Fixed & Glassmorphic)
    ========================================================================== */
 .mobile-bottom-nav {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
+  body {
+    padding-bottom: 72px !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
   .mobile-bottom-nav {
     display: flex !important;
     position: fixed;
@@ -961,8 +970,8 @@ button, input, select, a.btn {
     align-items: center;
     justify-content: center;
     gap: 0.2rem;
-    color: #94A3B8;
-    text-decoration: none;
+    color: #94A3B8 !important;
+    text-decoration: none !important;
     font-size: 0.72rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
@@ -974,12 +983,12 @@ button, input, select, a.btn {
 
   .mobile-nav-item:hover,
   .mobile-nav-item:focus {
-    color: #F8FAFC;
-    text-decoration: none;
+    color: #F8FAFC !important;
+    text-decoration: none !important;
   }
 
   .mobile-nav-item.active {
-    color: #F59E0B;
+    color: #F59E0B !important;
     font-weight: 700;
   }
 

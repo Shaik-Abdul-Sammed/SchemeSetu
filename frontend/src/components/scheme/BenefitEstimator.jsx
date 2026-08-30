@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, DollarSign, Sparkles } from 'lucide-react';
+import { Calculator, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function BenefitEstimator({ scheme }) {
@@ -28,60 +28,84 @@ export default function BenefitEstimator({ scheme }) {
   }
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-      <div className="flex items-center gap-2">
-        <Calculator className="w-5 h-5 text-emerald-400" />
-        <h3 className="text-lg font-bold text-white">{t('estimatorTitle', 'Interactive Subsidy & Benefit Estimator')}</h3>
+    <div className="card" style={{ backgroundColor: '#0B192C', borderColor: '#1E293B', color: '#FFFFFF', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Calculator size={20} style={{ color: '#10B981' }} />
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+          {t('estimatorTitle', 'Interactive Subsidy & Benefit Estimator')}
+        </h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        <div className="space-y-1">
-          <label className="text-slate-400 font-medium">{t('landHolding', 'Land Holding (Acres)')}</label>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label" style={{ color: '#94A3B8', fontSize: '0.82rem' }}>
+            {t('landHolding', 'Land Holding (Acres)')}
+          </label>
           <input
             type="number"
             value={landAcres}
             onChange={(e) => setLandAcres(Number(e.target.value))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            className="form-input"
+            style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
             min="0"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-slate-400 font-medium">{t('annualIncomeLabel', 'Annual Household Income (₹)')}</label>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label" style={{ color: '#94A3B8', fontSize: '0.82rem' }}>
+            {t('annualIncomeLabel', 'Annual Household Income (₹)')}
+          </label>
           <input
             type="number"
             value={annualIncome}
             onChange={(e) => setAnnualIncome(Number(e.target.value))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            className="form-input"
+            style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
             min="0"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-slate-400 font-medium">{t('projectCostLabel', 'Proposed Project/Loan Cost (₹)')}</label>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label" style={{ color: '#94A3B8', fontSize: '0.82rem' }}>
+            {t('projectCostLabel', 'Proposed Project/Loan Cost (₹)')}
+          </label>
           <input
             type="number"
             value={projectCost}
             onChange={(e) => setProjectCost(Number(e.target.value))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            className="form-input"
+            style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#334155' }}
             min="0"
           />
         </div>
       </div>
 
-      <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="space-y-1 text-center sm:text-left">
-          <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span className="text-xs font-semibold text-emerald-300">{t('estFinancialAssistance', 'Estimated Government Financial Assistance')}</span>
+      <div style={{
+        backgroundColor: 'rgba(5, 150, 105, 0.15)',
+        border: '1px solid rgba(5, 150, 105, 0.3)',
+        borderRadius: '12px',
+        padding: '1.25rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#34D399', fontWeight: 600, fontSize: '0.85rem' }}>
+            <Sparkles size={16} style={{ color: '#F59E0B' }} />
+            <span>{t('estFinancialAssistance', 'Estimated Government Financial Assistance')}</span>
           </div>
-          <p className="text-xs text-slate-300">{calculationNote}</p>
+          <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: 0, lineHeight: 1.4 }}>
+            {calculationNote}
+          </p>
         </div>
-        <div className="text-center sm:text-right shrink-0">
-          <span className="text-2xl font-extrabold text-amber-400">
+
+        <div style={{ textAlign: 'right' }}>
+          <span style={{ fontSize: '1.75rem', fontWeight: 800, color: '#F59E0B', display: 'block' }}>
             ₹{Math.round(estimatedPayout).toLocaleString('en-IN')}
           </span>
-          <span className="text-[10px] text-slate-400 block">{t('estAnnualValue', 'Est. Annual Value')}</span>
+          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{t('estAnnualValue', 'Est. Annual Value')}</span>
         </div>
       </div>
     </div>

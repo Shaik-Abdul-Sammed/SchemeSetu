@@ -11,7 +11,10 @@ import {
   Radio,
   Navigation,
   Zap,
-  Mic
+  Mic,
+  FileCheck,
+  CheckCircle2,
+  Phone
 } from 'lucide-react';
 import { schemeService } from '../services/schemeService';
 import { useLanguage } from '../context/LanguageContext';
@@ -27,23 +30,24 @@ export default function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { location, nearbyPartners } = useLocation();
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [featuredSchemes, setFeaturedSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   useEffect(() => {
-    async function loadFeatured() {
+    async function fetchFeatured() {
       try {
-        const res = await schemeService.getSchemes({ limit: 3 });
-        setFeaturedSchemes(res.data || res.schemes || []);
+        const res = await schemeService.getSchemes({ limit: 6 });
+        setFeaturedSchemes(res.data || []);
       } catch (err) {
-        console.error("Error loading featured schemes:", err);
+        console.error("Failed to load featured schemes:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadFeatured();
+    fetchFeatured();
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -56,287 +60,267 @@ export default function Home() {
   };
 
   return (
-    <div>
-      {/* HERO SECTION */}
-      <section style={{ backgroundColor: '#0B192C', color: '#FFFFFF', padding: '4rem 0 5rem 0', position: 'relative' }}>
-        <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(217, 119, 6, 0.15)', color: '#F59E0B', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.88rem', fontWeight: 600, marginBottom: '1.25rem', border: '1px solid rgba(217, 119, 6, 0.3)' }}>
-              <ShieldCheck size={18} /> {t('officialPortalBadge', 'Official Citizen Welfare Discovery Portal')}
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      {/* 1. HERO SECTION */}
+      <section style={{ 
+        backgroundColor: '#0B192C', 
+        color: '#FFFFFF', 
+        padding: '3.5rem 1rem 4rem 1rem', 
+        position: 'relative',
+        borderBottom: '1px solid #1E293B'
+      }}>
+        <div className="container" style={{ maxWidth: '860px', margin: '0 auto', textAlign: 'center' }}>
+          
+          {/* Top Badge & Location Pill */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              backgroundColor: 'rgba(245, 158, 11, 0.15)', 
+              color: '#F59E0B', 
+              padding: '0.3rem 0.85rem', 
+              borderRadius: '9999px', 
+              fontSize: '0.82rem', 
+              fontWeight: 700,
+              border: '1px solid rgba(245, 158, 11, 0.3)'
+            }}>
+              <ShieldCheck size={16} /> {t('officialPortalBadge', 'Official Citizen Welfare Discovery Portal')}
+            </span>
 
-            <h1 style={{ fontSize: '3rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.15, marginBottom: '1.25rem' }}>
-              {t('heroTitle', 'Find Government Schemes You Are Eligible For')}
-            </h1>
+            <button
+              onClick={() => setLocationModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: 'rgba(2, 132, 199, 0.18)',
+                color: '#38BDF8',
+                padding: '0.3rem 0.85rem',
+                borderRadius: '9999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                cursor: 'pointer'
+              }}
+              title="Set Location Radar"
+            >
+              <Radio size={14} />
+              <span>
+                {location.isDemo
+                  ? `Demo: ${location.district}`
+                  : location.isGPS
+                    ? `GPS: ${location.district}`
+                    : location.state
+                      ? `${location.district || location.state}`
+                      : 'Location Radar'} ({nearbyPartners.length} centers)
+              </span>
+            </button>
+          </div>
 
-            <p style={{ fontSize: '1.15rem', color: '#CBD5E1', lineHeight: 1.6, marginBottom: '2rem' }}>
-              {t('heroSubtitle', 'SchemeSetu simplifies welfare and business loan discovery across Central and State Governments.')}
-            </p>
+          {/* Main Title */}
+          <h1 style={{ 
+            fontSize: 'clamp(2rem, 5vw, 2.75rem)', 
+            fontWeight: 800, 
+            color: '#FFFFFF', 
+            lineHeight: 1.2, 
+            marginBottom: '1rem',
+            letterSpacing: '-0.02em'
+          }}>
+            {t('heroTitle', 'Find Government Schemes You Are Eligible For')}
+          </h1>
 
-            {/* SNAPCHAT LOCATION SETUP RADAR BANNER */}
+          <p style={{ 
+            fontSize: 'clamp(0.95rem, 2vw, 1.1rem)', 
+            color: '#CBD5E1', 
+            lineHeight: 1.5, 
+            maxWidth: '680px', 
+            margin: '0 auto 2rem' 
+          }}>
+            {t('heroSubtitle', 'SchemeSetu simplifies welfare and business loan discovery across Central and State Governments.')}
+          </p>
+
+          {/* SEARCH & VOICE INPUT BAR */}
+          <form onSubmit={handleSearchSubmit} style={{ maxWidth: '680px', margin: '0 auto 1.75rem' }}>
             <div style={{
-              backgroundColor: 'rgba(2, 132, 199, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              borderRadius: '12px',
-              padding: '0.85rem 1.25rem',
-              maxWidth: '640px',
-              margin: '0 auto 2rem',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '0.75rem'
+              backgroundColor: '#0F172A',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              padding: '0.4rem 0.6rem',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+              gap: '0.5rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textAlign: 'left' }}>
-                <Radio size={22} style={{ color: '#38BDF8' }} />
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>
-                    📍 {t('snapchatRadarLocation', 'Snapchat Radar Location:')} {location.district || location.state}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
-                    {nearbyPartners.length} {t('nearbyBanks', 'Nearby Bank Branches & CSC Partners Mapped')}
-                  </div>
-                </div>
+              <div style={{ flexGrow: 1 }}>
+                <SearchAutocomplete
+                  value={searchTerm}
+                  onChange={(val) => setSearchTerm(val)}
+                  onSelect={(scheme) => navigate(`/schemes/${scheme.id}`)}
+                  placeholder={t('searchPlaceholder', 'Search schemes, business types, categories, departments...')}
+                />
               </div>
 
-              <button
-                onClick={() => setLocationModalOpen(true)}
-                className="btn btn-secondary btn-sm"
-                style={{ color: '#38BDF8', borderColor: '#38BDF8' }}
+              <VoiceSearchButton onResult={(text) => setSearchTerm(text)} />
+
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                style={{ borderRadius: '12px', padding: '0.6rem 1.25rem', fontWeight: 700, flexShrink: 0 }}
               >
-                <Navigation size={14} /> {t('setupLocationRadar', 'Setup Location Radar')}
+                <Search size={16} />
+                <span className="hide-on-mobile">{t('searchCriteria', 'Search')}</span>
               </button>
             </div>
+          </form>
 
-            {/* SEARCH FORM WITH AUTOCOMPLETE & VOICE */}
-            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '680px', margin: '0 auto 2rem', position: 'relative' }}>
-              <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-2xl">
-                <div className="flex-1">
-                  <SearchAutocomplete
-                    value={searchTerm}
-                    onChange={(val) => setSearchTerm(val)}
-                    onSelect={(scheme) => navigate(`/schemes/${scheme.id}`)}
-                    placeholder={t('searchPlaceholder', 'Search schemes, business types, categories, departments...')}
-                  />
-                </div>
-                <VoiceSearchButton onResult={(text) => setSearchTerm(text)} />
-                <button type="submit" className="btn btn-primary font-bold px-5 py-3 rounded-xl shrink-0">
-                  {t('searchCriteria', 'Search')}
-                </button>
-              </div>
-            </form>
+          {/* HERO ACTION BUTTONS */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <Link 
+              to="/input" 
+              className="btn btn-primary btn-lg" 
+              style={{ 
+                background: 'linear-gradient(135deg, #F59E0B, #D97706)', 
+                color: '#0B192C', 
+                fontWeight: 800, 
+                borderColor: '#F59E0B' 
+              }}
+            >
+              <Mic size={18} /> {t('voiceAssistant', 'Try Voice AI Assistant')}
+            </Link>
 
-            {/* HERO CTAS */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-              <Link to="/input" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0B192C', fontWeight: 800, borderColor: '#F59E0B' }}>
-                <Mic size={18} /> {t('voiceAssistant', 'Try Voice AI Assistant')}
-              </Link>
-              <Link to="/eligibility" className="btn btn-secondary btn-lg">
-                <Sparkles size={18} /> {t('findMySchemes', 'Find My Schemes')}
-              </Link>
-              <Link to="/schemes" className="btn btn-secondary btn-lg">
-                <Building2 size={18} /> {t('exploreAllSchemes', 'Explore Schemes')}
-              </Link>
-            </div>
+            <Link to="/eligibility" className="btn btn-secondary btn-lg">
+              <Sparkles size={18} /> {t('findMySchemes', 'Find My Schemes')}
+            </Link>
 
-            {/* QUICK DEMO SHOWCASE BUTTON */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button
-                onClick={() => {
-                  navigate('/results', {
-                    state: {
-                      criteria: {
-                        income: 200000,
-                        cost: 350000,
-                        education: '10th pass',
-                        projectType: 'business',
-                        occupation: 'Farmer',
-                        age: 32,
-                        state: 'Telangana'
-                      }
-                    }
-                  });
-                }}
-                className="btn btn-secondary btn-sm"
-                style={{
-                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                  borderColor: '#F59E0B',
-                  color: '#FCD34D',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.4rem 1rem',
-                  borderRadius: '20px'
-                }}
-              >
-                <Zap size={15} style={{ color: '#F59E0B' }} />
-                <span>⚡ Launch 1-Click SIH 2026 Demo Flow</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* QUICK STATS */}
-      <section style={{ marginTop: '-2rem', position: 'relative', zIndex: 10 }}>
-        <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#EFF6FF', color: '#1D4ED8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>500+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('welfareStat', 'Welfare Schemes')}</div>
-              </div>
-            </div>
-
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#ECFDF5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Users size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>10M+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('citizensBenefited', 'Citizens Benefited')}</div>
-              </div>
-            </div>
-
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IndianRupee size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>₹50,000 Cr+</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('directBenefit', 'Direct Benefit Transfer')}</div>
-              </div>
-            </div>
-
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#F3E8FF', color: '#7E22CE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>100%</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748B' }}>{t('verifiedLinks', 'Verified Direct Links')}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURED SCHEMES */}
-      <section style={{ padding: '4rem 0' }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h2 style={{ fontSize: '2rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-                {t('featuredTitle', 'Featured National Schemes')}
-              </h2>
-              <p style={{ color: '#64748B', fontSize: '1rem' }}>
-                {t('featuredSub', 'Popular Central and State welfare initiatives empowering marginalized entrepreneurs and citizens.')}
-              </p>
-            </div>
-            <Link to="/schemes" className="btn btn-outline">
-              {t('viewAllSchemesCTA', 'View All Schemes')} <ArrowRight size={16} />
+            <Link to="/schemes" className="btn btn-secondary btn-lg">
+              <Building2 size={18} /> {t('exploreAllSchemes', 'Explore Schemes')}
             </Link>
           </div>
 
-          {loading ? (
-            <LoadingSkeleton count={3} />
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.5rem' }}>
-              {featuredSchemes.map(scheme => (
-                <SchemeCard key={scheme.id} scheme={scheme} />
-              ))}
-            </div>
-          )}
-
-          {/* Recently Viewed Schemes History */}
-          <div style={{ marginTop: '3rem' }}>
-            <RecentlyViewed />
+          {/* 1-CLICK DEMO BUTTON */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => {
+                navigate('/results', {
+                  state: {
+                    criteria: {
+                      income: 200000,
+                      cost: 350000,
+                      education: '10th pass',
+                      projectType: 'business',
+                      occupation: 'Farmer',
+                      age: 32,
+                      state: 'Telangana'
+                    }
+                  }
+                });
+              }}
+              className="btn btn-secondary btn-sm"
+              style={{
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                borderColor: '#F59E0B',
+                color: '#FCD34D',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.4rem 1.15rem',
+                borderRadius: '9999px',
+                fontWeight: 600
+              }}
+            >
+              <Zap size={15} style={{ color: '#F59E0B' }} />
+              <span>⚡ Launch 1-Click SIH 2026 Demo Flow</span>
+            </button>
           </div>
+
         </div>
       </section>
 
-      {/* ── MOBILE APP DOWNLOAD SECTION ─────────────────────────────────── */}
-      <section className="app-download-section">
+      {/* 2. STATS PILLARS */}
+      <section style={{ marginTop: '-2.5rem', position: 'relative', zIndex: 10 }}>
         <div className="container">
-          <div className="app-download-card">
-            {/* Left: Text content */}
-            <div className="app-download-text">
-              <div className="app-download-badge">{t('mobileAppBadge', 'Now Available on Mobile')}</div>
-              <h2 className="app-download-heading">
-                {t('mobileAppHeading', 'Take SchemeSetu Everywhere')}
-              </h2>
-              <p className="app-download-sub">
-                {t('mobileAppSub', 'Access 500+ government schemes, track applications, and get AI-powered guidance — right from your phone. Available in 8 Indian languages.')}
-              </p>
-              <div className="app-download-buttons">
-                <a
-                  href="#"
-                  className="app-store-btn"
-                  aria-label="Download on Google Play"
-                  onClick={e => e.preventDefault()}
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M3.18 23.76c.37.21.8.22 1.18.03l12.64-7.04-2.79-2.79-11.03 9.8zm-1.05-20.4A1.5 1.5 0 0 0 2 4.5v15c0 .48.23.9.6 1.17l.08.06 8.4-8.4v-.2L2.13 3.36zm18.12 8.38-2.72-1.52-3.08 3.08 3.08 3.09 2.74-1.53a1.54 1.54 0 0 0 0-2.62v-.5zm-16.4-9.4L15.21 9.8l-2.79 2.79L.37 2.24C.74.96 1.87.25 3.85 2.34z"/>
-                  </svg>
-                  <div className="app-store-btn-text">
-                    <span className="app-store-label">{t('getItOn', 'GET IT ON')}</span>
-                    <span className="app-store-name">Google Play</span>
-                  </div>
-                </a>
-
-                <a
-                  href="#"
-                  className="app-store-btn"
-                  aria-label="Download on App Store"
-                  onClick={e => e.preventDefault()}
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.15-2.19 1.28-2.17 3.82.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.36 2.76M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                  </svg>
-                  <div className="app-store-btn-text">
-                    <span className="app-store-label">{t('downloadOn', 'DOWNLOAD ON THE')}</span>
-                    <span className="app-store-name">App Store</span>
-                  </div>
-                </a>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#EFF6FF', color: '#1D4ED8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Building2 size={22} />
               </div>
-              <p className="app-download-note">
-                🔒 {t('mobileAppNote', 'Free forever · No ads · Works offline · All 8 Indian languages')}
-              </p>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>500+</div>
+                <div style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>{t('welfareStat', 'Welfare Schemes')}</div>
+              </div>
             </div>
 
-            {/* Right: Phone mockup illustration */}
-            <div className="app-download-visual" aria-hidden="true">
-              <div className="phone-mockup">
-                <div className="phone-screen">
-                  <div className="phone-screen-header">
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#fff', opacity: 0.9 }}>SchemeSetu</span>
-                  </div>
-                  <div style={{ padding: '0.5rem' }}>
-                    {['PM Mudra Yojana', 'Stand Up India', 'PMEGP Scheme'].map((s, i) => (
-                      <div key={i} className="phone-scheme-item">
-                        <div className="phone-scheme-dot" />
-                        <span style={{ fontSize: '0.55rem', color: '#1e3e62', fontWeight: 600 }}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="phone-cta-bar">
-                    <span style={{ fontSize: '0.5rem', fontWeight: 700, color: '#fff' }}>Check Eligibility →</span>
-                  </div>
-                </div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#ECFDF5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Users size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>10M+</div>
+                <div style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>{t('citizensBenefited', 'Citizens Benefited')}</div>
+              </div>
+            </div>
+
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IndianRupee size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>₹50,000 Cr+</div>
+                <div style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>{t('directBenefit', 'Direct Benefit (DBT)')}</div>
+              </div>
+            </div>
+
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#F5F3FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0B192C' }}>100%</div>
+                <div style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>{t('verifiedLinks', 'Verified Official Links')}</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Snapchat Location Setup Modal */}
-      <SnapchatLocationPicker
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-      />
+      {/* 3. FEATURED SCHEMES SECTION */}
+      <section className="container py-8">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', color: '#0B192C', margin: 0, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Sparkles size={22} style={{ color: '#D97706' }} /> {t('featuredTitle', 'Featured Government Schemes')}
+            </h2>
+            <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0.25rem 0 0' }}>
+              {t('featuredSub', 'Popular government initiatives empowering citizens, farmers, and entrepreneurs.')}
+            </p>
+          </div>
+          <Link to="/schemes" className="btn btn-outline" style={{ fontSize: '0.85rem' }}>
+            {t('viewAllSchemesCTA', 'View All Schemes')} <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {loading ? (
+          <LoadingSkeleton count={3} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {featuredSchemes.slice(0, 6).map((scheme) => (
+              <SchemeCard key={scheme.id} scheme={scheme} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. RECENTLY VIEWED SCHEMES */}
+      <div className="container">
+        <RecentlyViewed />
+      </div>
+
+      {/* Location Radar Modal */}
+      {locationModalOpen && (
+        <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
+      )}
     </div>
   );
 }

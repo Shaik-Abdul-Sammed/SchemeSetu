@@ -1,0 +1,127 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Globe, Check, ChevronDown } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+
+export default function LanguageSelectorIcon() {
+  const { lang, changeLanguage, availableLanguages } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const languageLabels = {
+    EN: { label: 'English', native: 'English' },
+    HI: { label: 'Hindi', native: 'हिन्दी' },
+    TE: { label: 'Telugu', native: 'తెలుగు' },
+    TA: { label: 'Tamil', native: 'தமிழ்' },
+    KN: { label: 'Kannada', native: 'ಕನ್ನಡ' },
+    ML: { label: 'Malayalam', native: 'മലയാളം' },
+    BN: { label: 'Bengali', native: 'বাংলা' },
+    MR: { label: 'Marathi', native: 'मराठी' }
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (code) => {
+    changeLanguage(code);
+    setIsOpen(false);
+  };
+
+  return (
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          backgroundColor: 'rgba(255, 255, 255, 0.12)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '8px',
+          padding: '0.35rem 0.65rem',
+          color: '#FFFFFF',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          fontSize: '0.85rem',
+          fontWeight: 700
+        }}
+        title="Change Language / भाषा बदलें / భాషను మార్చండి"
+        aria-label="Select Language"
+      >
+        <Globe size={16} style={{ color: '#F59E0B' }} />
+        <span style={{ fontSize: '0.82rem', letterSpacing: '0.04em' }}>{lang}</span>
+        <ChevronDown size={13} style={{ opacity: 0.8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            backgroundColor: '#0F172A',
+            border: '1px solid #334155',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)',
+            zIndex: 9999,
+            minWidth: '180px',
+            overflow: 'hidden',
+            padding: '0.35rem'
+          }}
+        >
+          <div style={{ padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#94A3B8', borderBottom: '1px solid #1E293B', marginBottom: '0.25rem' }}>
+            🌐 Select Language
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {availableLanguages.map((code) => {
+              const isSelected = code === lang;
+              const meta = languageLabels[code] || { label: code, native: code };
+
+              return (
+                <button
+                  key={code}
+                  onClick={() => handleSelect(code)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.5rem 0.65rem',
+                    backgroundColor: isSelected ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: isSelected ? '#FCD34D' : '#E2E8F0',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    textAlign: 'left',
+                    transition: 'background-color 0.15s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                    <span style={{ fontSize: '0.88rem' }}>{meta.native}</span>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{meta.label}</span>
+                  </div>
+                  {isSelected && <Check size={15} style={{ color: '#F59E0B' }} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

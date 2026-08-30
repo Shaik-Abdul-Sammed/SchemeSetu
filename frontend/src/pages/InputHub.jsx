@@ -23,6 +23,7 @@ import { api } from '../services/api';
 import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
+import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
 
 export default function InputHub() {
   const navigate = useNavigate();
@@ -51,8 +52,10 @@ export default function InputHub() {
     projectType: '',
     cost: '',
     income: '',
-    education: '',
-    occupation: ''
+    age: '',
+    state: '',
+    occupation: '',
+    education: ''
   });
 
   // Agent Mode Fast-Fill State
@@ -236,7 +239,7 @@ export default function InputHub() {
     setVoiceState('ready');
   };
 
-  // Conversational Flow Logic
+  // Conversational Flow Logic with Intelligent Entity & Missing-Information Extraction
   const handleUserMessage = async (text) => {
     if (!text || !text.trim()) {
       setVoiceState('ready');
@@ -250,71 +253,24 @@ export default function InputHub() {
     setCurrentTranscript('');
     setVoiceState('processing');
 
-    const lower = trimmed.toLowerCase();
-    let updatedCriteria = { ...criteria };
+    // 1. Extract entities and merge with existing criteria
+    const updatedCriteria = parseUserInput(trimmed, criteria);
+    setCriteria(updatedCriteria);
 
-    // Step 1: Detect Project Type
-    if (!updatedCriteria.projectType) {
-      if (lower.includes('farm') || lower.includes('agri') || lower.includes('kisan') || lower.includes('crop')) {
-        updatedCriteria.projectType = 'agriculture';
-      } else if (lower.includes('edu') || lower.includes('scholarship') || lower.includes('study') || lower.includes('college')) {
-        updatedCriteria.projectType = 'education';
-      } else if (lower.includes('health') || lower.includes('hospital') || lower.includes('medical') || lower.includes('ayushman')) {
-        updatedCriteria.projectType = 'healthcare';
-      } else {
-        updatedCriteria.projectType = 'business';
+    // 2. Generate contextual missing-information response in user's selected language
+    const botResult = generateAssistantResponse(updatedCriteria, lang);
+
+    setTimeout(() => {
+      setMessages([...updatedMessages, { sender: 'bot', text: botResult.text }]);
+      speakResponse(botResult.text);
+
+      // If all required information is gathered, transition to scheme recommendations
+      if (botResult.isComplete) {
+        setTimeout(() => {
+          submitRecommendation(updatedCriteria);
+        }, 1200);
       }
-      setCriteria(updatedCriteria);
-
-      const botReply = `Got it! You are looking for ${updatedCriteria.projectType} assistance. What is your estimated project cost or required loan amount (in ₹)?`;
-      setTimeout(() => {
-        setMessages([...updatedMessages, { sender: 'bot', text: botReply }]);
-        speakResponse(botReply);
-      }, 400);
-      return;
-    }
-
-    // Step 2: Detect Project Cost
-    if (!updatedCriteria.cost) {
-      const costNum = parseInt(trimmed.replace(/[^0-9]/g, '')) || 300000;
-      updatedCriteria.cost = costNum;
-      setCriteria(updatedCriteria);
-
-      const botReply = `Understood: Required loan/assistance amount is ₹${costNum.toLocaleString('en-IN')}. What is your annual household family income (in ₹)?`;
-      setTimeout(() => {
-        setMessages([...updatedMessages, { sender: 'bot', text: botReply }]);
-        speakResponse(botReply);
-      }, 400);
-      return;
-    }
-
-    // Step 3: Detect Household Income
-    if (!updatedCriteria.income) {
-      const incomeNum = parseInt(trimmed.replace(/[^0-9]/g, '')) || 180000;
-      updatedCriteria.income = incomeNum;
-      setCriteria(updatedCriteria);
-
-      const botReply = `Great! What is your highest education level (e.g., 10th pass, 12th pass, graduate, or diploma)?`;
-      setTimeout(() => {
-        setMessages([...updatedMessages, { sender: 'bot', text: botReply }]);
-        speakResponse(botReply);
-      }, 400);
-      return;
-    }
-
-    // Step 4: Detect Education and Submit Recommendation
-    if (!updatedCriteria.education) {
-      updatedCriteria.education = trimmed;
-      setCriteria(updatedCriteria);
-
-      const botReply = t('calculating', 'Thank you! SchemeSetu is evaluating verified government schemes for you now...');
-      setMessages([...updatedMessages, { sender: 'bot', text: botReply }]);
-      speakResponse(botReply);
-
-      setTimeout(() => {
-        submitRecommendation(updatedCriteria);
-      }, 800);
-    }
+    }, 450);
   };
 
   const submitRecommendation = async (finalCriteria) => {
@@ -407,6 +363,19 @@ export default function InputHub() {
       {mode === 'user' && (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 14px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
           
+          {/* Live Extracted Entities Bar */}
+          {(criteria.projectType || criteria.income || criteria.age || criteria.state || criteria.occupation || criteria.education) && (
+            <div style={{ padding: '0.65rem 1rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+              <span style={{ fontWeight: 700, color: '#475569', marginRight: '0.25rem' }}>Captured Profile:</span>
+              {criteria.projectType && <span className="badge badge-cat">🎯 {criteria.projectType}</span>}
+              {criteria.income && <span className="badge badge-eligible">💰 ₹{Number(criteria.income).toLocaleString('en-IN')}</span>}
+              {criteria.age && <span className="badge badge-central">🎂 {criteria.age} yrs</span>}
+              {criteria.state && <span className="badge badge-state">📍 {criteria.state}</span>}
+              {criteria.occupation && <span className="badge badge-cat">💼 {criteria.occupation}</span>}
+              {criteria.education && <span className="badge badge-central">🎓 {criteria.education}</span>}
+            </div>
+          )}
+
           {/* Chat Message Scrollable Container */}
           <div style={{ flexGrow: 1, padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '380px', maxHeight: '480px' }}>
             {messages.map((msg, index) => (

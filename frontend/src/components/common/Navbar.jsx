@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
 import { usePWA } from '../../context/PWAContext';
+import LanguageSelectorIcon from './LanguageSelectorIcon';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
 import { 
   Building2, 
@@ -107,37 +108,8 @@ export default function Navbar() {
               </span>
             </button>
 
-            {/* All 8 Languages Selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-              <Globe size={15} style={{ color: '#F59E0B' }} />
-              <select
-                value={lang}
-                onChange={(e) => changeLanguage(e.target.value)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#FFFFFF',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
-                aria-label="Select Language"
-              >
-                {availableLanguages.map(l => (
-                  <option key={l} value={l} style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>
-                    {l === 'EN' ? 'English (EN)' :
-                     l === 'HI' ? 'हिंदी (HI)' :
-                     l === 'TE' ? 'తెలుగు (TE)' :
-                     l === 'TA' ? 'தமிழ் (TA)' :
-                     l === 'KN' ? 'ಕನ್ನಡ (KN)' :
-                     l === 'ML' ? 'മലയാളം (ML)' :
-                     l === 'BN' ? 'বাংলা (BN)' :
-                     'मराठी (MR)'}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Icon-Only Language Selector */}
+            <LanguageSelectorIcon />
 
             {/* Install App Button */}
             {!isInstalled && (

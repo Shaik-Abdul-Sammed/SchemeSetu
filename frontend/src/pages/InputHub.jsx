@@ -546,16 +546,53 @@ export default function InputHub() {
                 {voiceState === 'listening' ? <MicOff size={34} /> : <Mic size={34} />}
               </button>
 
-              <div style={{ marginTop: '0.65rem', fontSize: '0.85rem', fontWeight: 700, color: voiceState === 'listening' ? '#DC2626' : '#475569', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <div style={{ marginTop: '0.65rem', fontSize: '0.85rem', fontWeight: 700, color: voiceState === 'listening' ? '#DC2626' : '#475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
                 {voiceState === 'listening' ? (
                   <span>Recording voice input... (Tap when done)</span>
                 ) : voiceState === 'processing' ? (
                   <span>Evaluating answer...</span>
                 ) : voiceState === 'responding' ? (
-                  <span>Assistant speaking...</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>Assistant speaking...</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.speechSynthesis) window.speechSynthesis.cancel();
+                        setVoiceState('ready');
+                      }}
+                      className="btn btn-secondary btn-xs"
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderColor: '#DC2626', color: '#DC2626' }}
+                    >
+                      <VolumeX size={12} /> Stop
+                    </button>
+                  </div>
                 ) : (
                   <span>Tap Microphone to Speak</span>
                 )}
+
+                {/* ⚡ 1-CLICK SIH DEMO VOICE FLOW BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUserMessage('I want a loan for my small business in Andhra Pradesh with annual income three lakh rupees.');
+                  }}
+                  className="btn btn-secondary btn-xs"
+                  style={{
+                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    borderColor: '#F59E0B',
+                    color: '#D97706',
+                    marginTop: '0.4rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.76rem',
+                    fontWeight: 700,
+                    borderRadius: '20px',
+                    padding: '0.25rem 0.75rem'
+                  }}
+                >
+                  <Sparkles size={12} /> ⚡ 1-Click SIH Voice Demo Flow
+                </button>
               </div>
             </div>
 

@@ -1,14 +1,14 @@
 /**
  * SchemeSetu Voice & Conversational Assistant Intelligence Engine
- * Handles Entity Extraction, Missing Field Detection, and Multilingual Natural Responses
+ * Handles Entity Extraction, Sequential Missing Field Prompts, and Multilingual Natural Responses
  */
 
 export const REQUIRED_ELIGIBILITY_FIELDS = [
   'projectType',
-  'income',
-  'age',
   'state',
+  'income',
   'occupation',
+  'age',
   'education'
 ];
 
@@ -23,8 +23,18 @@ export const FIELD_LABELS = {
     BN: 'প্রকল্পের ধরন (ব্যবসা, কৃষি, শিক্ষা, স্বাস্থ্য)',
     MR: 'योजनेचा प्रकार (व्यवसाय, शेती, शिक्षण, आरोग्य)'
   },
+  state: {
+    EN: 'state of residence',
+    HI: 'निवास का राज्य',
+    TE: 'నివాస రాష్ట్రం',
+    TA: 'வசிக்கும் மாநிலம்',
+    KN: 'ವಾಸಿಸುವ ರಾಜ್ಯ',
+    ML: 'താമസിക്കുന്ന സംസ്ഥാനം',
+    BN: 'বসবাসের রাজ্য',
+    MR: 'रहिवासी राज्य'
+  },
   income: {
-    EN: 'annual family income',
+    EN: 'annual household income',
     HI: 'वार्षिक पारिवारिक आय',
     TE: 'వార్షిక కుటుంబ ఆదాయం',
     TA: 'ஆண்டு குடும்ப வருமானம்',
@@ -33,61 +43,116 @@ export const FIELD_LABELS = {
     BN: 'বার্ষিক পারিবারিক আয়',
     MR: 'वार्षिक कौटुंबिक उत्पन्न'
   },
+  occupation: {
+    EN: 'primary occupation',
+    HI: 'मुख्य व्यवसाय',
+    TE: 'ప్రధాన వృత్తి',
+    TA: 'முதன்மை தொழில்',
+    KN: 'ಮುಖ್ಯ ಉದ್ಯೋಗ',
+    ML: 'പ്രധാന തൊഴിൽ',
+    BN: 'প্রধান পেশা',
+    MR: 'मुख्य व्यवसाय'
+  },
   age: {
     EN: 'age in years',
     HI: 'आयु (वर्षों में)',
-    TE: 'వయస్సు (సంవత్సరాలలో)',
+    TE: 'వయస్సు',
     TA: 'வயது',
     KN: 'ವಯಸ್ಸು',
     ML: 'വയസ്സ്',
     BN: 'বয়স',
     MR: 'वय'
   },
-  state: {
-    EN: 'state or district location',
-    HI: 'राज्य या जिला',
-    TE: 'రాష్ట్రం లేదా జిల్లా',
-    TA: 'மாநிலம் அல்லது மாவட்டம்',
-    KN: 'ರಾಜ್ಯ ಅಥವಾ ಜಿಲ್ಲೆ',
-    ML: 'സംസ്ഥാനം അല്ലെങ്കിൽ ജില്ല',
-    BN: 'রাজ্য বা জেলা',
-    MR: 'राज्य किंवा जिल्हा'
-  },
-  occupation: {
-    EN: 'current occupation (e.g. farmer, artisan, self-employed)',
-    HI: 'वर्तमान व्यवसाय (उदा. किसान, कारीगर, स्व-रोजगार)',
-    TE: 'ప్రస్తుత వృత్తి (ఉదా. రైతు, చేతివృత్తిదారుడు, స్వయం ఉపాధి)',
-    TA: 'தற்போதைய தொழில் (எ.கா. விவசாயி, கைவினைஞர், சுயதொழில்)',
-    KN: 'ಪ್ರಸ್ತುತ ಉದ್ಯೋಗ (ಉದಾ. ರೈತ, ಕುಶಲಕರ್ಮಿ, ಸ್ವಯಂ ಉದ್ಯೋಗಿ)',
-    ML: 'നിലവിലെ തൊഴിൽ (ഉദാ. കർഷകൻ, കരകൗശല വിദഗ്ദ്ധൻ, സ്വയംതൊഴിൽ)',
-    BN: 'বর্তমান পেশা (যেমন কৃষক, কারিগর, স্ব-নিযুক্ত)',
-    MR: 'सध्याचा व्यवसाय (उदा. शेतकरी, कारागीर, स्वयंरोजगार)'
-  },
   education: {
-    EN: 'education level (e.g. 10th pass, graduate, diploma)',
-    HI: 'शिक्षा का स्तर (उदा. 10वीं पास, स्नातक, डिप्लोमा)',
-    TE: 'విద్యార్హత (ఉదా. 10వ తరగతి, డిగ్రీ, డిప్లొమా)',
-    TA: 'கல்வி தகுதி (எ.கா. 10ஆம் வகுப்பு, பட்டதாரி, டிப்ளமோ)',
-    KN: 'ಶಿಕ್ಷಣ ಮಟ್ಟ (ಉದಾ. 10ನೇ ತರಗತಿ, ಪದವಿ, ಡಿಪ್ಲೊಮಾ)',
-    ML: 'വിദ്യാഭ്യാസ യോഗ്യത (ഉദാ. 10-ാം ക്ലാസ്, ബിരുദം, ഡിപ്ലോമ)',
-    BN: 'শিক্ষাগত যোগ্যতা (যেমন ১০ম পাস, স্নাতক, ডিপ্লোমা)',
-    MR: 'शिक्षणाचा स्तर (उदा. १०वी उत्तीर्ण, पदवीधर, डिप्लोमा)'
+    EN: 'education level',
+    HI: 'शिक्षा का स्तर',
+    TE: 'విద్యార్హత',
+    TA: 'கல்வி தகுதி',
+    KN: 'ಶಿಕ್ಷಣ ಮಟ್ಟ',
+    ML: 'വിദ്യാഭ്യാസ യോഗ്യത',
+    BN: 'শিক্ষাগত যোগ্যতা',
+    MR: 'शिक्षणाचा स्तर'
   }
 };
 
 /**
- * Extract numerical value for money (handling lakhs, thousands, numerals)
+ * Sequential single-question prompts for missing fields in 8 languages
+ */
+export const SEQUENTIAL_FIELD_PROMPTS = {
+  projectType: {
+    EN: "What type of government scheme or assistance are you looking for? (e.g. business loan, farming subsidy, education scholarship, healthcare)",
+    HI: "आप किस प्रकार की सरकारी योजना या सहायता की तलाश कर रहे हैं? (उदा. व्यवसाय ऋण, कृषि सब्सिडी, छात्रवृत्ति, स्वास्थ्य)",
+    TE: "మీరు ఏ రకమైన ప్రభుత్వ పథకం లేదా సహాయం కోసం చూస్తున్నారు? (ఉదా. వ్యాపార రుణం, వ్యవసాయ రాయితీ, విద్యా స్కాలర్‌షిప్, ఆరోగ్యం)",
+    TA: "நீங்கள் எந்த வகையான அரசு திட்டம் அல்லது உதவியை எதிர்பார்க்கிறீர்கள்? (எ.கா. தொழில் கடன், விவசாய மானியம், கல்வி உதவித்தொகை)",
+    KN: "ನೀವು ಯಾವ ರೀತಿಯ ಸರ್ಕಾರಿ ಯೋಜನೆ ಅಥವಾ ಸಹಾಯವನ್ನು ಹುಡುಕುತ್ತಿದ್ದೀರಿ? (ಉದಾ. ವ್ಯಾಪಾರ ಸಾಲ, ಕೃಷಿ ಸಬ್ಸಿಡಿ, ಶಿಕ್ಷಣ ವಿದ್ಯಾರ್ಥಿವೇತನ)",
+    ML: "നിങ്ങൾ ഏത് തരത്തിലുള്ള സർക്കാർ പദ്ധതിയാണ് അന്വേഷിക്കുന്നത്? (ഉദാ. ബിസിനസ് വായ്പ, കാർഷിക സബ്സിഡി, സ്കോളർഷിപ്പ്)",
+    BN: "আপনি কী ধরণের সরকারি স্কিম বা সহায়তা খুঁজছেন? (যেমন ব্যবসা ঋণ, কৃষি ভর্তুকি, শিক্ষা বৃত্তি, স্বাস্থ্য)",
+    MR: "तुम्ही कोणत्या प्रकारची सरकारी योजना किंवा मदत शोधत आहात? (उदा. व्यवसाय कर्ज, कृषी अनुदान, शिष्यवृत्ती)"
+  },
+  state: {
+    EN: "Which state or union territory do you live in?",
+    HI: "आप किस राज्य या केंद्र शासित प्रदेश में रहते हैं?",
+    TE: "మీరు ఏ రాష్ట్రం లేదా కేంద్రపాలిత ప్రాంతంలో నివసిస్తున్నారు?",
+    TA: "நீங்கள் எந்த மாநிலத்தில் வசிக்கிறீர்கள்?",
+    KN: "ನೀವು ಯಾವ ರಾಜ್ಯದಲ್ಲಿ ವಾಸಿಸುತ್ತಿದ್ದೀರಿ?",
+    ML: "നിങ്ങൾ ഏത് സംസ്ഥാനത്താണ് താമസിക്കുന്നത്?",
+    BN: "আপনি কোন রাজ্যে বসবাস করেন?",
+    MR: "तुम्ही कोणत्या राज्यात राहता?"
+  },
+  income: {
+    EN: "What is your approximate annual household income?",
+    HI: "आपकी अनुमानित वार्षिक पारिवारिक आय कितनी है?",
+    TE: "మీ వార్షిక కుటుంబ ఆదాయం సుమారు ఎంత?",
+    TA: "உங்கள் தோராயமான ஆண்டு குடும்ப வருமானம் எவ்வளவு?",
+    KN: "ನಿಮ್ಮ ಅಂದಾಜು ವಾರ್ಷಿಕ ಕುಟುಂಬ ಆದಾಯ ಎಷ್ಟು?",
+    ML: "നിങ്ങളുടെ ഏകദേശ വാർഷിക കുടുംബ വരുമാനം എത്രയാണ്?",
+    BN: "আপনার আনুমানিক বার্ষিক পারিবারিক আয় কত?",
+    MR: "तुमचे अंदाजे वार्षिक कौटुंबिक उत्पन्न किती आहे?"
+  },
+  occupation: {
+    EN: "What is your primary occupation? (e.g. farmer, artisan, street vendor, shopkeeper, student)",
+    HI: "आपका मुख्य व्यवसाय क्या है? (उदा. किसान, कारीगर, स्ट्रीट वेंडर, दुकानदार, छात्र)",
+    TE: "మీ ప్రధాన వృత్తి ఏమిటి? (ఉదా. రైతు, చేతివృత్తిదారుడు, వీధి వ్యాపారి, దుకాణదారుడు, విద్యార్థి)",
+    TA: "உங்கள் முதன்மை தொழில் என்ன? (எ.கா. விவசாயி, கைவினைஞர், கடைக்காரர், மாணவர்)",
+    KN: "ನಿಮ್ಮ ಮುಖ್ಯ ಉದ್ಯೋಗ ಏನು? (ಉದಾ. ರೈತ, ಕುಶಲಕರ್ಮಿ, ಬೀದಿ ವ್ಯಾಪಾರಿ, ಅಂಗಡಿಕಾರ, ವಿದ್ಯಾರ್ಥಿ)",
+    ML: "നിങ്ങളുടെ പ്രധാന തൊഴിൽ എന്താണ്? (ഉദാ. കർഷകൻ, കരകൗശല വിദഗ്ദ്ധൻ, വഴിയോര കച്ചവടക്കാരൻ, വിദ്യാർത്ഥി)",
+    BN: "আপনার প্রধান পেশা কী? (যেমন কৃষক, কারিগর, হকার, দোকানদার, ছাত্র)",
+    MR: "तुमचा मुख्य व्यवसाय कोणता आहे? (उदा. शेतकरी, कारागीर, दुकानदार, विद्यार्थी)"
+  },
+  age: {
+    EN: "What is your age in years?",
+    HI: "आपकी आयु (वर्षों में) कितनी है?",
+    TE: "మీ వయస్సు (సంవత్సరాలలో) ఎంత?",
+    TA: "உங்கள் வயது என்ன?",
+    KN: "ನಿಮ್ಮ ವಯಸ್ಸು ಎಷ್ಟು?",
+    ML: "നിങ്ങളുടെ വയസ്സ് എത്രയാണ്?",
+    BN: "আপনার বয়স কত?",
+    MR: "तुमचे वय किती आहे?"
+  },
+  education: {
+    EN: "What is your highest educational qualification?",
+    HI: "आपकी उच्चतम शैक्षणिक योग्यता क्या है?",
+    TE: "మీ అత్యధిక విద్యార్హత ఏమిటి?",
+    TA: "உங்கள் கல்வி தகுதி என்ன?",
+    KN: "ನಿಮ್ಮ ಶಿಕ್ಷಣ ಮಟ್ಟ ಏನು?",
+    ML: "നിങ്ങളുടെ വിദ്യാഭ്യാസ യോഗ്യത എന്താണ്?",
+    BN: "আপনার সর্বোচ্চ শিক্ষাগত যোগ্যতা কী?",
+    MR: "तुमची सर्वोच्च शैक्षणिक पात्रता काय आहे?"
+  }
+};
+
+/**
+ * Extract numerical value for money (handling lakhs, thousands, numerals in English & Indian languages)
  */
 export function extractIncomeOrAmount(text) {
   const lower = text.toLowerCase();
   
-  // Check for lakh / lacs / L (e.g. 2.5 lakh, 3lakh, 200000, २ लाख, 2 లక్షలు)
-  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lakhs|lac|lacs|l|लाख|లక్ష|ലക്ഷം|লাখ)/i);
+  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lakhs|lac|lacs|l|लाख|లక్ష|లక్షల|ലക്ഷം|লাখ)/i);
   if (lakhMatch) {
     return Math.round(parseFloat(lakhMatch[1]) * 100000);
   }
 
-  const kMatch = lower.match(/(\d+(\.\d+)?)\s*(k|thousand|हजार|వేలు|ആയിരം|হাজার)/i);
+  const kMatch = lower.match(/(\d+(\.\d+)?)\s*(k|thousand|हजार|వేలు|వేల|ആയിരം|হাজার)/i);
   if (kMatch) {
     return Math.round(parseFloat(kMatch[1]) * 1000);
   }
@@ -104,7 +169,7 @@ export function extractIncomeOrAmount(text) {
  * Extract age from speech or text input
  */
 export function extractAge(text) {
-  const ageMatch = text.match(/(?:age|aged|am|years?\s*old|साल|वर्ष|సంవత్సరాల|വയസ്സ്)\s*[:=]?\s*(\d{1,3})/i) ||
+  const ageMatch = text.match(/(?:age|aged|am|years?\s*old|साल|वर्ष|సంవత్సరాల|సంవత్సరాలు|വയസ്സ്)\s*[:=]?\s*(\d{1,3})/i) ||
                    text.match(/(\d{1,3})\s*(?:years?\s*old|yrs|years|साल|वर्ष|సంవత్సరాలు|വയസ്സ്)/i);
   if (ageMatch) {
     const ageVal = parseInt(ageMatch[1], 10);
@@ -126,12 +191,13 @@ export function extractState(text) {
   for (const s of states) {
     if (lower.includes(s.toLowerCase())) return s;
   }
-  if (lower.includes('hyderabad') || lower.includes('warangal')) return 'Telangana';
-  if (lower.includes('bangalore') || lower.includes('mysore')) return 'Karnataka';
-  if (lower.includes('chennai') || lower.includes('coimbatore')) return 'Tamil Nadu';
-  if (lower.includes('mumbai') || lower.includes('pune')) return 'Maharashtra';
-  if (lower.includes('kolkata')) return 'West Bengal';
-  if (lower.includes('delhi')) return 'Delhi';
+  if (lower.includes('hyderabad') || lower.includes('warangal') || lower.includes('తెలంగాణ')) return 'Telangana';
+  if (lower.includes('amaravati') || lower.includes('vijayawada') || lower.includes('ఆంధ్ర')) return 'Andhra Pradesh';
+  if (lower.includes('bangalore') || lower.includes('bengaluru') || lower.includes('కర్ణాటక')) return 'Karnataka';
+  if (lower.includes('chennai') || lower.includes('தமிழ்நாடு')) return 'Tamil Nadu';
+  if (lower.includes('mumbai') || lower.includes('pune') || lower.includes('महाराष्ट्र')) return 'Maharashtra';
+  if (lower.includes('kolkata') || lower.includes('বাংলা')) return 'West Bengal';
+  if (lower.includes('delhi') || lower.includes('दिल्ली')) return 'Delhi';
   return null;
 }
 
@@ -140,19 +206,19 @@ export function extractState(text) {
  */
 export function extractOccupation(text) {
   const lower = text.toLowerCase();
-  if (lower.includes('farm') || lower.includes('kisan') || lower.includes('crop') || lower.includes('रैतु') || lower.includes('రైతు') || lower.includes('किसान')) {
+  if (lower.includes('farm') || lower.includes('kisan') || lower.includes('crop') || lower.includes('రైతు') || lower.includes('किसान') || lower.includes('విவசாயி')) {
     return 'Farmer';
   }
-  if (lower.includes('vendor') || lower.includes('street') || lower.includes('cart') || lower.includes('ठेला') || lower.includes('दुकान')) {
+  if (lower.includes('vendor') || lower.includes('street') || lower.includes('cart') || lower.includes('ठेला') || lower.includes('दुकान') || lower.includes('వీధి వ్యాపారి')) {
     return 'Street Vendor';
   }
   if (lower.includes('weaver') || lower.includes('artisan') || lower.includes('handicraft') || lower.includes('बुनकर') || lower.includes('చేనేత')) {
     return 'Artisan / Weaver';
   }
-  if (lower.includes('shop') || lower.includes('business') || lower.includes('retail') || lower.includes('व्यापारी') || lower.includes('వ్యాపారం')) {
+  if (lower.includes('shop') || lower.includes('business') || lower.includes('retail') || lower.includes('व्यापारी') || lower.includes('వ్యాపారం') || lower.includes('தொழில்')) {
     return 'Self Employed / Shopkeeper';
   }
-  if (lower.includes('student') || lower.includes('study') || lower.includes('छात्र') || lower.includes('విద్యార్థి')) {
+  if (lower.includes('student') || lower.includes('study') || lower.includes('छात्र') || lower.includes('విద్యార్థి') || lower.includes('மாணவர்')) {
     return 'Student';
   }
   return null;
@@ -186,7 +252,7 @@ export function extractProjectType(text) {
   if (lower.includes('health') || lower.includes('hospital') || lower.includes('medical') || lower.includes('medicine') || lower.includes('treatment') || lower.includes('दवा') || lower.includes('చికిత్స')) {
     return 'healthcare';
   }
-  if (lower.includes('loan') || lower.includes('business') || lower.includes('shop') || lower.includes('store') || lower.includes('manufacturing') || lower.includes('startup') || lower.includes('काम') || lower.includes('ఉపాధి')) {
+  if (lower.includes('loan') || lower.includes('business') || lower.includes('shop') || lower.includes('store') || lower.includes('manufacturing') || lower.includes('startup') || lower.includes('काम') || lower.includes('ఉపాధి') || lower.includes('రుణం')) {
     return 'business';
   }
   return null;
@@ -226,61 +292,53 @@ export function parseUserInput(text, existingCriteria = {}) {
 }
 
 /**
- * Detect missing fields for scheme recommendation
+ * Detect missing fields for scheme recommendation in prioritized order
  */
 export function getMissingFields(criteria) {
   const missing = [];
   if (!criteria.projectType) missing.push('projectType');
-  if (!criteria.income) missing.push('income');
-  if (!criteria.age) missing.push('age');
   if (!criteria.state) missing.push('state');
+  if (!criteria.income) missing.push('income');
   if (!criteria.occupation) missing.push('occupation');
+  if (!criteria.age) missing.push('age');
   if (!criteria.education) missing.push('education');
   return missing;
 }
 
 /**
- * Generate intelligent missing-information response in the selected language
+ * Generate intelligent sequential missing-information question in the selected language
  */
 export function generateAssistantResponse(criteria, lang = 'EN') {
   const missing = getMissingFields(criteria);
 
   if (missing.length === 0) {
     const successMessages = {
-      EN: "Thank you! I have gathered your details. SchemeSetu is now evaluating suitable government schemes for your profile...",
-      HI: "धन्यवाद! मैंने आपकी सभी जानकारी नोट कर ली है। SchemeSetu अब आपके लिए उपयुक्त सरकारी योजनाओं की जाँच कर रहा है...",
-      TE: "ధన్యవాదాలు! మీ వివరాలు సేకరించబడ్డాయి. SchemeSetu ఇప్పుడు మీ ప్రొఫైల్ కోసం తగిన ప్రభుత్వ పథకాలను పరిశీలిస్తోంది...",
-      TA: "நன்றி! உங்கள் தகவல்கள் சேகரிக்கப்பட்டன. SchemeSetu இப்போது உங்களுக்கான பொருத்தமான அரசு திட்டங்களை மதிப்பீடு செய்கிறது...",
-      KN: "ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗಿದೆ. SchemeSetu ಈಗ ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ಗಾಗಿ ಸೂಕ್ತವಾದ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತಿದೆ...",
-      ML: "നന്ദി! നിങ്ങളുടെ വിവരങ്ങൾ ശേഖരിച്ചു. SchemeSetu ഇപ്പോൾ നിങ്ങളുടെ പ്രൊഫൈലിനായി അനുയോജ്യമായ സർക്കാർ പദ്ധതികൾ വിലയിരുത്തുന്നു...",
-      BN: "ধন্যবাদ! আমি আপনার বিবরণ সংগ্রহ করেছি। SchemeSetu এখন আপনার জন্য উপযুক্ত সরকারি স্কিমগুলি মূল্যায়ন করছে...",
-      MR: "धन्यवाद! मी तुमचे सर्व तपशील नोंदवले आहेत. SchemeSetu आता तुमच्यासाठी योग्य सरकारी योजना तपासत आहे..."
+      EN: "Thank you! I have gathered all necessary information. SchemeSetu is now finding your matched government schemes...",
+      HI: "धन्यवाद! मैंने आपकी सभी आवश्यक जानकारी एकत्र कर ली है। SchemeSetu अब आपके लिए उपयुक्त सरकारी योजनाएं खोज रहा है...",
+      TE: "ధన్యవాదాలు! మీ వివరాలు పూర్తయ్యాయి. SchemeSetu ఇప్పుడు మీ అర్హత గల ప్రభుత్వ పథకాలను సిఫార్సు చేస్తోంది...",
+      TA: "நன்றி! தேவையான அனைத்து தகவல்களும் பெறப்பட்டன. SchemeSetu இப்போது உங்களுக்கான அரசு திட்டங்களை மதிப்பீடு செய்கிறது...",
+      KN: "ಧನ್ಯವಾದಗಳು! ಅಗತ್ಯವಿರುವ ಎಲ್ಲಾ ವಿವರಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗಿದೆ. SchemeSetu ಈಗ ನಿಮ್ಮ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಹುಡುಕುತ್ತಿದೆ...",
+      ML: "നന്ദി! ആവശ്യമായ വിവരങ്ങൾ ശേഖരിച്ചു കഴിഞ്ഞു. SchemeSetu ഇപ്പോൾ നിങ്ങൾക്കുള്ള സർക്കാർ പദ്ധതികൾ കണ്ടെത്തുന്നു...",
+      BN: "ধন্যবাদ! প্রয়োজনীয় সমস্ত তথ্য সংগ্রহ করা হয়েছে। SchemeSetu এখন আপনার জন্য সরকারি স্কিমগুলি খুঁজছে...",
+      MR: "धन्यवाद! आवश्यक सर्व माहिती गोळा केली आहे. SchemeSetu आता तुमच्यासाठी सरकारी योजना शोधत आहे..."
     };
     return {
       isComplete: true,
       text: successMessages[lang] || successMessages.EN,
+      nextField: null,
       missingFields: []
     };
   }
 
-  // Format missing field labels in current language
-  const missingLabels = missing.map(m => FIELD_LABELS[m]?.[lang] || FIELD_LABELS[m]?.EN || m);
-  const formattedList = missingLabels.join(', ');
-
-  const templates = {
-    EN: `I can help find suitable schemes. To check your eligibility, I still need your: ${formattedList}.`,
-    HI: `मैं उपयुक्त योजनाएं खोजने में आपकी मदद कर सकता हूं। आपकी पात्रता की सटीक जांच के लिए, मुझे अभी भी आपकी: ${formattedList} चाहिए।`,
-    TE: `నేను తగిన పథకాలను కనుగొనడంలో మీకు సహాయపడగలను. మీ అర్హతను ఖచ్చితంగా పరిశీలించడానికి, నాకు ఇంకా మీ: ${formattedList} అవసరం.`,
-    TA: `பொருத்தமான திட்டங்களை கண்டறிய நான் உதவ முடியும். உங்கள் தகுதியை சரிபார்க்க, எனக்கு இன்னும் உங்கள்: ${formattedList} தேவை.`,
-    KN: `ಸೂಕ್ತವಾದ ಯೋಜನೆಗಳನ್ನು ಹುಡುಕಲು ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ. ನಿಮ್ಮ ಅರ್హತೆಯನ್ನು ಪರಿಶೀಲಿಸಲು, ನನಗೆ ಇನ್ನೂ ನಿಮ್ಮ: ${formattedList} ಅಗತ್ಯವಿದೆ.`,
-    ML: `അനുയോജ്യമായ പദ്ധതികൾ കണ്ടെത്താൻ എനിക്ക് സഹായിക്കാനാകും. നിങ്ങളുടെ യോഗ്യത പരിശോധിക്കാൻ, എനിക്ക് ഇനി നിങ്ങളുടെ: ${formattedList} ആവശ്യമാണ്.`,
-    BN: `আমি উপযুক্ত স্কিম খুঁজে পেতে আপনাকে সাহায্য করতে পারি। আপনার যোগ্যতা পরীক্ষা করতে, আমার এখনও আপনার: ${formattedList} প্রয়োজন।`,
-    MR: `मी योग्य योजना शोधण्यात मदत करू शकतो. तुमची पात्रता तपासण्यासाठी, मला अजूनही तुमचे: ${formattedList} हवे आहे.`
-  };
+  // Ask the NEXT single most important missing field
+  const nextField = missing[0];
+  const promptMap = SEQUENTIAL_FIELD_PROMPTS[nextField] || {};
+  const questionText = promptMap[lang] || promptMap.EN || `Please provide your ${nextField}.`;
 
   return {
     isComplete: false,
-    text: templates[lang] || templates.EN,
+    text: questionText,
+    nextField,
     missingFields: missing
   };
 }

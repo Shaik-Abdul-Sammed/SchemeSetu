@@ -977,9 +977,13 @@ async function runAllTests() {
     console.log('\n--- 15. Localization & 100% Translation Key Coverage (10 tests) ---');
     const fs = require('fs');
     const path = require('path');
-    const langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    let langFilePath = path.resolve(__dirname, '../../../frontend/src/context/languageStore.js');
+    if (!fs.existsSync(langFilePath)) {
+      langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    }
     const langFileContent = fs.readFileSync(langFilePath, 'utf8');
-    const langMatch = langFileContent.match(/const translations = ({[\s\S]*?});\n\nconst LanguageContext/);
+    const langMatch = langFileContent.match(/export const translations = ({[\s\S]*?});/) || 
+                      langFileContent.match(/const translations = ({[\s\S]*?});/);
     const transObj = eval('(' + langMatch[1] + ')');
     const enKeys = Object.keys(transObj.EN);
     const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'];

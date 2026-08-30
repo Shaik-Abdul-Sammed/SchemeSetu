@@ -89,15 +89,48 @@ export default function InputHub() {
     }
   };
 
+  const hasSpokenGreetingRef = useRef(false);
+
+  const getGreetingText = (currentLang) => {
+    switch (currentLang) {
+      case 'HI':
+        return 'नमस्ते! मैं SchemeSetu हूँ। मैं सरकारी योजनाएं खोजने में आपकी मदद कर सकता हूँ। बताएं आपको क्या चाहिए।';
+      case 'TE':
+        return 'నమస్కారం! నేను SchemeSetu. మీకు సరైన ప్రభుత్వ పథకాలను కనుగొనడంలో నేను సహాయపడగలను. మీకు ఏమి కావాలో చెప్పండి.';
+      case 'TA':
+        return 'வணக்கம்! நான் SchemeSetu. அரசு திட்டங்களை கண்டறிய உங்களுக்கு உதவ முடியும். உங்களுக்கு என்ன தேவை என்று சொல்லுங்கள்.';
+      case 'KN':
+        return 'ನಮಸ್ಕಾರ! ನಾನು SchemeSetu. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಹುಡುಕಲು ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ. ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ತಿಳಿಸಿ.';
+      case 'ML':
+        return 'നമസ്കാരം! ഞാൻ SchemeSetu. സർക്കാർ പദ്ധതികൾ കണ്ടെത്താൻ എന്നെക്കൊണ്ട് സഹായിക്കാനാകും. നിങ്ങൾക്ക് എന്താണ് ആവശ്യമെന്ന് പറയുക.';
+      case 'BN':
+        return 'নমস্কার! আমি SchemeSetu। সরকারি স্কিমগুলি খুঁজে পেতে আমি আপনাকে সাহায্য করতে পারি। আপনার কী প্রয়োজন তা বলুন।';
+      case 'MR':
+        return 'नमस्कार! मी SchemeSetu आहे. मी सरकारी योजना शोधण्यात मदत करू शकतो. आपल्याला काय हवे आहे ते सांगा.';
+      case 'EN':
+      default:
+        return 'Namaste! I am SchemeSetu. I can help you find government schemes. Tell me what you need (e.g. business loan, farming subsidy, education scholarship).';
+    }
+  };
+
   // Set initial welcome greeting in selected language
   useEffect(() => {
-    const welcomeText = t('botWelcome', 'Namaste! I am SchemeSetu AI Assistant. What kind of government assistance do you need today? (e.g. business loan, agriculture subsidy, education)');
+    const greetingText = getGreetingText(lang);
     setMessages([
       {
         sender: 'bot',
-        text: welcomeText
+        text: greetingText,
+        isGreeting: true
       }
     ]);
+
+    // Speak aloud once if allowed
+    if (!hasSpokenGreetingRef.current && !isMuted) {
+      hasSpokenGreetingRef.current = true;
+      try {
+        speakResponse(greetingText);
+      } catch (e) {}
+    }
   }, [lang]);
 
   useEffect(() => {
@@ -404,10 +437,36 @@ export default function InputHub() {
                     fontSize: '0.95rem',
                     lineHeight: 1.5,
                     boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                    wordBreak: 'break-word'
+                    wordBreak: 'break-word',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem'
                   }}
                 >
-                  {msg.text}
+                  <div>{msg.text}</div>
+                  {msg.sender === 'bot' && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                      <button
+                        onClick={() => speakResponse(msg.text)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#0284C7',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          padding: '0.2rem 0.4rem',
+                          borderRadius: '4px'
+                        }}
+                        title="Listen to this message aloud"
+                      >
+                        <Volume2 size={13} /> Speak
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {msg.sender === 'user' && (

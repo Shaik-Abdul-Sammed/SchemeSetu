@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -14,24 +14,36 @@ import {
   Menu, 
   X, 
   LayoutDashboard,
-  Globe,
   Radio,
   FileCheck,
   Mic,
   Users,
   MessageSquare,
   Settings,
-  Download
+  Download,
+  ChevronDown
 } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
-  const { lang, changeLanguage, t, availableLanguages } = useLanguage();
+  const { lang, t } = useLanguage();
   const { location, nearbyPartners } = useLocation();
   const { isInstalled, triggerInstall } = usePWA();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        setMoreOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -48,8 +60,8 @@ export default function Navbar() {
               <span>से</span>
             </div>
             <div>
-              <span className="brand-title">{t('brandTitle')}</span>
-              <span className="brand-subtitle">{t('brandSubtitle')}</span>
+              <span className="brand-title">{t('brandTitle', 'SchemeSetu')}</span>
+              <span className="brand-subtitle">{t('brandSubtitle', 'AI Citizen Welfare Platform')}</span>
             </div>
           </Link>
 
@@ -63,50 +75,107 @@ export default function Navbar() {
 
           <nav className={`nav-links ${mobileOpen ? 'open' : ''}`}>
             <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              {t('home')}
+              {t('home', 'Home')}
             </NavLink>
-            <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Mic size={16} /> {t('voiceAssistant')}
-            </NavLink>
+
             <NavLink to="/schemes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Building2 size={16} /> {t('exploreSchemes')}
+              <Building2 size={16} /> {t('exploreSchemes', 'Schemes')}
+            </NavLink>
+
+            <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)} style={{ color: '#FCD34D', fontWeight: 600 }}>
+              <Mic size={16} style={{ color: '#F59E0B' }} /> {t('voiceAssistant', 'Voice AI')}
+            </NavLink>
+
+            <NavLink to="/eligibility" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <Sparkles size={16} /> {t('checkEligibility', 'Eligibility')}
             </NavLink>
 
             <NavLink to="/applications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <FileCheck size={16} /> {t('applications')}
+              <FileCheck size={16} /> {t('applications', 'Applications')}
             </NavLink>
 
-            <NavLink to="/community" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <MessageSquare size={16} /> {t('community')}
-            </NavLink>
+            {/* Desktop More Menu for Secondary Portals */}
+            <div className="more-menu-container" style={{ position: 'relative' }} ref={moreRef}>
+              <button
+                onClick={() => setMoreOpen(!moreOpen)}
+                className="nav-link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                aria-expanded={moreOpen}
+              >
+                <span>More</span>
+                <ChevronDown size={14} style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
 
-            <NavLink to="/vle" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Users size={16} /> {t('vle')}
-            </NavLink>
+              {moreOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: 0,
+                    backgroundColor: '#0F172A',
+                    border: '1px solid #334155',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                    zIndex: 9999,
+                    minWidth: '200px',
+                    padding: '0.4rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px'
+                  }}
+                >
+                  <NavLink
+                    to="/community"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                  >
+                    <MessageSquare size={16} style={{ color: '#38BDF8' }} /> {t('community', 'Community Forum')}
+                  </NavLink>
 
-            <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-              <Settings size={16} /> {t('admin')}
-            </NavLink>
+                  <NavLink
+                    to="/vle"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                  >
+                    <Users size={16} style={{ color: '#4ADE80' }} /> {t('vle', 'VLE Agent Portal')}
+                  </NavLink>
 
-            {/* Location Setup Badge */}
-            <button
-              onClick={() => setLocationModalOpen(true)}
-              className="btn btn-secondary btn-sm"
-              style={{
-                borderColor: '#0284C7',
-                color: '#38BDF8',
-                backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-              title="Open Location Radar & Partner Map"
-            >
-              <Radio size={14} style={{ color: '#38BDF8' }} />
-              <span style={{ fontSize: '0.82rem' }}>
-                📍 {location.district || location.state || 'Location'} ({nearbyPartners.length})
-              </span>
-            </button>
+                  <NavLink
+                    to="/admin"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                  >
+                    <Settings size={16} style={{ color: '#CBD5E1' }} /> {t('admin', 'Admin Portal')}
+                  </NavLink>
+
+                  <button
+                    onClick={() => {
+                      setMoreOpen(false);
+                      setMobileOpen(false);
+                      setLocationModalOpen(true);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#38BDF8',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.85rem',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Radio size={16} /> 📍 Location Radar ({nearbyPartners.length})
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Icon-Only Language Selector */}
             <LanguageSelectorIcon />
@@ -126,7 +195,8 @@ export default function Navbar() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
                 }}
                 title="Install SchemeSetu Web App"
                 aria-label="Install SchemeSetu App"
@@ -136,25 +206,23 @@ export default function Navbar() {
               </button>
             )}
 
+            {/* Auth Login / Dashboard */}
             {isAuthenticated ? (
-              <>
-                <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
-                  <LayoutDashboard size={16} /> {t('dashboard')}
-                </NavLink>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: '#94A3B8' }}>Hi, {user?.name?.split(' ')[0]}</span>
-                  <button onClick={handleLogout} className="btn btn-secondary btn-sm" aria-label="Logout">
-                    <LogOut size={14} /> {t('logout')}
-                  </button>
-                </div>
-              </>
-            ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Link to="/login" className="btn btn-secondary btn-sm" onClick={() => setMobileOpen(false)}>
-                  <LogIn size={14} /> {t('login')}
+                <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+                  <LayoutDashboard size={16} /> {t('dashboard', 'Dashboard')}
+                </NavLink>
+                <button onClick={handleLogout} className="btn btn-secondary btn-sm" style={{ padding: '0.35rem 0.65rem' }} aria-label="Logout">
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Link to="/login" className="btn btn-secondary btn-sm" style={{ padding: '0.35rem 0.75rem' }} onClick={() => setMobileOpen(false)}>
+                  <LogIn size={14} /> {t('login', 'Login')}
                 </Link>
-                <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setMobileOpen(false)}>
-                  {t('register')}
+                <Link to="/register" className="btn btn-primary btn-sm" style={{ padding: '0.35rem 0.75rem' }} onClick={() => setMobileOpen(false)}>
+                  {t('register', 'Register')}
                 </Link>
               </div>
             )}
@@ -162,10 +230,10 @@ export default function Navbar() {
         </div>
       </header>
 
-      <SnapchatLocationPicker
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-      />
+      {/* Snapchat Location Setup Radar Modal */}
+      {locationModalOpen && (
+        <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
+      )}
     </>
   );
 }

@@ -9,7 +9,9 @@ import {
   Users, 
   IndianRupee, 
   Radio,
-  Navigation
+  Navigation,
+  Zap,
+  Mic
 } from 'lucide-react';
 import { schemeService } from '../services/schemeService';
 import { useLanguage } from '../context/LanguageContext';
@@ -125,13 +127,51 @@ export default function Home() {
             </form>
 
             {/* HERO CTAS */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link to="/eligibility" className="btn btn-primary btn-lg">
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+              <Link to="/input" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0B192C', fontWeight: 800, borderColor: '#F59E0B' }}>
+                <Mic size={18} /> {t('voiceAssistant', 'Try Voice AI Assistant')}
+              </Link>
+              <Link to="/eligibility" className="btn btn-secondary btn-lg">
                 <Sparkles size={18} /> {t('findMySchemes', 'Find My Schemes')}
               </Link>
               <Link to="/schemes" className="btn btn-secondary btn-lg">
-                <Building2 size={18} /> {t('exploreAllSchemes', 'Explore All Schemes')}
+                <Building2 size={18} /> {t('exploreAllSchemes', 'Explore Schemes')}
               </Link>
+            </div>
+
+            {/* QUICK DEMO SHOWCASE BUTTON */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  navigate('/results', {
+                    state: {
+                      criteria: {
+                        income: 200000,
+                        cost: 350000,
+                        education: '10th pass',
+                        projectType: 'business',
+                        occupation: 'Farmer',
+                        age: 32,
+                        state: 'Telangana'
+                      }
+                    }
+                  });
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                  borderColor: '#F59E0B',
+                  color: '#FCD34D',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 1rem',
+                  borderRadius: '20px'
+                }}
+              >
+                <Zap size={15} style={{ color: '#F59E0B' }} />
+                <span>⚡ Launch 1-Click SIH 2026 Demo Flow</span>
+              </button>
             </div>
           </div>
         </div>

@@ -1,42 +1,46 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Award, MapPin, User } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Home, Building2, Mic, Sparkles, User, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function MobileQuickNav() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
   const navItems = [
     { label: t('home', 'Home'), path: '/', icon: Home },
-    { label: t('exploreSchemes', 'Schemes'), path: '/schemes', icon: Search },
-    { label: t('checkEligibility', 'Eligible'), path: '/eligibility', icon: Award },
-    { label: t('locationSetup', 'Radar'), path: '/#radar', icon: MapPin },
-    { label: user ? t('dashboard', 'Dashboard') : t('login', 'Login'), path: user ? '/dashboard' : '/login', icon: User }
+    { label: t('exploreSchemes', 'Schemes'), path: '/schemes', icon: Building2 },
+    { label: t('voiceAssistant', 'Voice AI'), path: '/input', icon: Mic, highlight: true },
+    { label: t('checkEligibility', 'Eligible'), path: '/eligibility', icon: Sparkles },
+    { 
+      label: isAuthenticated ? t('dashboard', 'Dashboard') : t('login', 'Login'), 
+      path: isAuthenticated ? '/dashboard' : '/login', 
+      icon: isAuthenticated ? User : LogIn 
+    }
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 py-1.5 px-3 flex justify-around items-center shadow-2xl">
+    <nav className="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = location.pathname === item.path || (item.path.startsWith('/#') && location.hash === '#radar');
+        const isActive = location.pathname === item.path;
+
         return (
-          <Link
-            key={item.label}
+          <NavLink
+            key={item.path}
             to={item.path}
-            className={`flex flex-col items-center gap-0.5 text-[10px] font-medium transition ${
-              isActive ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`mobile-nav-item ${isActive ? 'active' : ''} ${item.highlight ? 'highlight' : ''}`}
+            aria-current={isActive ? 'page' : undefined}
           >
-            <div className={`p-1 rounded-lg ${isActive ? 'bg-amber-400/10' : ''}`}>
-              <Icon className="w-5 h-5" />
+            <div className="mobile-nav-icon-wrap">
+              <Icon size={20} />
             </div>
-            <span>{item.label}</span>
-          </Link>
+            <span className="mobile-nav-label">{item.label}</span>
+          </NavLink>
         );
       })}
-    </div>
+    </nav>
   );
 }

@@ -999,7 +999,7 @@ async function runAllTests() {
 
     await test('Translation fallback function returns English value for unknown language', async () => {
       const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
-      assert.strictEqual(t('UNKNOWN', 'brandTitle'), 'SANGASETU');
+      assert.strictEqual(t('UNKNOWN', 'brandTitle'), 'SchemeSetu');
     });
 
     await test('Translation fallback function returns key string for completely non-existent key', async () => {

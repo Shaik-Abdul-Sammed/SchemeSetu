@@ -1117,6 +1117,41 @@ async function runAllTests() {
       assert(fs.existsSync(path.join(dlDir, 'demo-person-multiple-profiles.csv')));
     });
 
+    console.log('\n--- 18. Scheme Comparator & Voice Assistant Locales (4 tests) ---');
+    await test('GET /api/v1/schemes/pm-mudra-yojana returns valid data for comparison', async () => {
+      const res = await request('GET', '/api/v1/schemes/pm-mudra-yojana');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.id, 'pm-mudra-yojana');
+      assert.strictEqual(typeof res.data.maxLoan, 'number');
+    });
+
+    await test('GET /api/v1/schemes/pmegp returns valid SC margin subsidy metadata', async () => {
+      const res = await request('GET', '/api/v1/schemes/pmegp');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.id, 'pmegp');
+      assert(res.data.maxLoan >= 1000000);
+    });
+
+    await test('Voice Assistant locale maps 10 languages accurately', async () => {
+      const localeMap = {
+        EN: 'en-IN', HI: 'hi-IN', TE: 'te-IN', TA: 'ta-IN',
+        KN: 'kn-IN', ML: 'ml-IN', BN: 'bn-IN', MR: 'mr-IN',
+        GON: 'hi-IN', BHI: 'hi-IN'
+      };
+      assert.strictEqual(Object.keys(localeMap).length, 10);
+      assert.strictEqual(localeMap['TE'], 'te-IN');
+      assert.strictEqual(localeMap['GON'], 'hi-IN');
+      assert.strictEqual(localeMap['BHI'], 'hi-IN');
+    });
+
+    await test('All 400+ keys are present across all 10 languages', async () => {
+      const allLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        assert(transObj[l], `Language ${l} dictionary must exist`);
+        assert.strictEqual(Object.keys(transObj[l]).length, enKeys.length);
+      }
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

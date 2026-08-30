@@ -100,7 +100,7 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
         <button 
           type="button"
           onClick={() => setGuidanceOpen(true)} 
@@ -111,7 +111,17 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
           <FileText size={13} /> {t('applyGuidance', 'Apply')}
         </button>
 
-        <Link to={`/schemes/${scheme.id}`} className="btn btn-outline btn-sm">
+        <Link 
+          to="/compare" 
+          state={{ schemeIds: [scheme.id, 'pmegp'] }}
+          className="btn btn-sm btn-outline"
+          style={{ fontSize: '0.78rem', color: '#D97706', borderColor: '#FDE68A' }}
+          title="Compare with other schemes"
+        >
+          {t('compare', 'Compare')}
+        </Link>
+
+        <Link to={`/schemes/${scheme.id}`} className="btn btn-outline btn-sm" style={{ fontSize: '0.78rem' }}>
           {t('viewDetails', 'Details')} <ArrowRight size={14} />
         </Link>
       </div>

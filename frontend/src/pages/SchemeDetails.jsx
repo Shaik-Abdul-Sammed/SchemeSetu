@@ -121,6 +121,10 @@ export default function SchemeDetails() {
             <FileText size={18} /> {t('applyGuidanceBtn', 'Apply Now / Application Guidance')}
           </button>
 
+          <button onClick={() => navigate('/compare', { state: { schemeIds: [scheme.id, 'pmegp'] } })} className="btn btn-secondary btn-lg" style={{ borderColor: '#D97706', color: '#D97706' }}>
+            <Scale size={18} /> {t('compare', 'Compare')}
+          </button>
+
           <button onClick={() => navigate('/eligibility')} className="btn btn-secondary btn-lg">
             <Sparkles size={18} /> {t('checkMyEligibility', 'Check My Eligibility')}
           </button>

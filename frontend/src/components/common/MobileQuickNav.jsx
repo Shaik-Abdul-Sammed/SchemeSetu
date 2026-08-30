@@ -4,7 +4,7 @@ import { Home, Building2, Mic, Sparkles, User, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function MobileQuickNav() {
+export default function MobileQuickNav({ onOpenVoiceAssistant }) {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
@@ -12,7 +12,7 @@ export default function MobileQuickNav() {
   const navItems = [
     { label: t('home', 'Home'), path: '/', icon: Home },
     { label: t('exploreSchemes', 'Schemes'), path: '/schemes', icon: Building2 },
-    { label: t('voiceAssistant', 'Voice AI'), path: '/input', icon: Mic, highlight: true },
+    { label: t('voiceAssistant', 'Voice AI'), path: '/voice', icon: Mic, highlight: true, isVoice: true },
     { label: t('checkEligibility', 'Eligible'), path: '/eligibility', icon: Sparkles },
     { 
       label: isAuthenticated ? t('dashboard', 'Dashboard') : t('login', 'Login'), 
@@ -26,6 +26,23 @@ export default function MobileQuickNav() {
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
+
+        if (item.isVoice && onOpenVoiceAssistant) {
+          return (
+            <button
+              key={item.label}
+              type="button"
+              onClick={onOpenVoiceAssistant}
+              className={`mobile-nav-item ${item.highlight ? 'highlight' : ''}`}
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <div className="mobile-nav-icon-wrap">
+                <Icon size={20} />
+              </div>
+              <span className="mobile-nav-label">{item.label}</span>
+            </button>
+          );
+        }
 
         return (
           <NavLink

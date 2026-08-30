@@ -24,7 +24,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 
-export default function Navbar() {
+export default function Navbar({ onOpenVoiceAssistant }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { lang, t } = useLanguage();
   const { location, nearbyPartners } = useLocation();
@@ -87,12 +87,25 @@ export default function Navbar() {
               <Building2 size={16} /> {t('exploreSchemes', 'Schemes')}
             </NavLink>
 
-            <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)} style={{ color: '#FCD34D', fontWeight: 600 }}>
+            <button 
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                if (onOpenVoiceAssistant) onOpenVoiceAssistant();
+                else navigate('/input');
+              }} 
+              className="nav-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCD34D', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            >
               <Mic size={16} style={{ color: '#F59E0B' }} /> {t('voiceAssistant', 'Voice AI')}
-            </NavLink>
+            </button>
 
             <NavLink to="/eligibility" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
               <Sparkles size={16} /> {t('checkEligibility', 'Eligibility')}
+            </NavLink>
+
+            <NavLink to="/compare" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              {t('compare', 'Compare')}
             </NavLink>
 
             <NavLink to="/applications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>

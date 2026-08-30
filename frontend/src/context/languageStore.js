@@ -395,7 +395,16 @@ export const translations = {
     "tabAudioUpload": "Voice Note / Audio Description",
     "stepwiseWizard": "Step-by-Step Wizard",
     "mediaDocAnalysis": "Media & Document Intake",
-    "demoPersonUpload": "Upload Demo Person Profile"
+    "demoPersonUpload": "Upload Demo Person Profile",
+    "compare": "Compare",
+    "schemeComparison": "Government Scheme Comparator",
+    "compareSchemesTitle": "Side-by-Side Scheme Comparison",
+    "compareSchemesSubtitle": "Compare official financial caps, SC subsidies, interest rates, eligibility criteria, and required documents across government welfare initiatives.",
+    "stopListening": "Stop Listening",
+    "startListening": "Speak Query",
+    "stopSpeaking": "Stop Voice",
+    "replayAudio": "Replay Voice",
+    "speechNotSupported": "Browser speech recognition not available. Please type your query below."
   },
   "HI": {
     "brandTitle": "SchemeSetu",
@@ -791,7 +800,16 @@ export const translations = {
     "tabAudioUpload": "वॉयस नोट / बोलकर बताएं",
     "stepwiseWizard": "चरण-दर-चरण प्रश्नावली",
     "mediaDocAnalysis": "मीडिया और दस्तावेज़ विश्लेषण",
-    "demoPersonUpload": "डेमो व्यक्ति प्रोफ़ाइल अपलोड करें"
+    "demoPersonUpload": "डेमो व्यक्ति प्रोफ़ाइल अपलोड करें",
+    "compare": "तुलना करें",
+    "schemeComparison": "सरकारी योजना तुलना केंद्र",
+    "compareSchemesTitle": "योजनाओं की आमने-सामने तुलना",
+    "compareSchemesSubtitle": "सरकारी योजनाओं में लोन सीमा, अनुसूचित जाति (SC) सब्सिडी, ब्याज दर, पात्रता और आवश्यक दस्तावेजों की विस्तृत तुलना करें।",
+    "stopListening": "सुनना बंद करें",
+    "startListening": "बोलकर पूछें",
+    "stopSpeaking": "आवाज़ बंद करें",
+    "replayAudio": "दोबारा सुनें",
+    "speechNotSupported": "ब्राउज़र में वॉयस इनपुट उपलब्ध नहीं है। कृपया नीचे लिखकर पूछें।"
   },
   "TE": {
     "brandTitle": "SchemeSetu",
@@ -1187,7 +1205,16 @@ export const translations = {
     "tabAudioUpload": "వాయిస్ నోట్ / ఆడియో వివరణ",
     "stepwiseWizard": "దశలవారీ ప్రశ్నావళి",
     "mediaDocAnalysis": "మీడియా & పత్రాల విశ్లేషణ",
-    "demoPersonUpload": "డెమో ప్రొఫైల్ అప్‌లోడ్ చేయండి"
+    "demoPersonUpload": "డెమో ప్రొఫైల్ అప్‌లోడ్ చేయండి",
+    "compare": "పోల్చండి",
+    "schemeComparison": "ప్రభుత్వ పథకాల పోలిక",
+    "compareSchemesTitle": "పథకాల ముఖాముఖి పోలిక",
+    "compareSchemesSubtitle": "ప్రభుత్వ సంక్షేమ పథకాలలో గరిష్ట రుణాలు, SC సబ్సిడీలు, వడ్డీ రేట్లు మరియు పత్రాలను పోల్చండి.",
+    "stopListening": "వినడం ఆపండి",
+    "startListening": "మాట్లాడి అడగండి",
+    "stopSpeaking": "వాయిస్ ఆపండి",
+    "replayAudio": "మళ్లీ వినండి",
+    "speechNotSupported": "బ్రౌజర్‌లో వాయిస్ గుర్తింపు అందుబాటులో లేదు. దయచేసి క్రింద టైప్ చేయండి."
   },
   "TA": {
     "brandTitle": "SchemeSetu",
@@ -1583,7 +1610,16 @@ export const translations = {
     "tabAudioUpload": "குரல் பதிவு / ஆடியோ விளக்கம்",
     "stepwiseWizard": "படி படியான வழிகாட்டி",
     "mediaDocAnalysis": "ஊடக மற்றும் ஆவண உள்ளீடு",
-    "demoPersonUpload": "மாதிரி நபர் சுயவிவர பதிவேற்றம்"
+    "demoPersonUpload": "மாதிரி நபர் சுயவிவர பதிவேற்றம்",
+    "compare": "ஒப்பிடுங்கள்",
+    "schemeComparison": "அரசு திட்ட ஒப்பீட்டாளர்",
+    "compareSchemesTitle": "திட்டங்களின் ஒப்பீடு",
+    "compareSchemesSubtitle": "அரசு திட்டங்களில் கடன் வரம்புகள், எஸ்சி மானியங்கள் மற்றும் ஆவணங்களை ஒப்பிடுங்கள்.",
+    "stopListening": "கேட்பதை நிறுத்து",
+    "startListening": "பேசி கேளுங்கள்",
+    "stopSpeaking": "குரலை நிறுத்து",
+    "replayAudio": "மீண்டும் கேளுங்கள்",
+    "speechNotSupported": "குரல் அறிதல் கிடைக்கவில்லை. கீழே தட்டச்சு செய்யவும்."
   },
   "KN": {
     "brandTitle": "SchemeSetu",
@@ -1979,7 +2015,16 @@ export const translations = {
     "tabAudioUpload": "ಧ್ವನಿ ಟಿಪ್ಪಣಿ / ಆಡಿಯೋ ವಿವರಣೆ",
     "stepwiseWizard": "ಹಂತ ಹಂತದ ಮಾದರಿ",
     "mediaDocAnalysis": "ಮಾಧ್ಯಮ ಮತ್ತು ದಾಖಲೆ ಪರಿಶೀಲನೆ",
-    "demoPersonUpload": "ಡೆಮೊ ಪ್ರೊಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"
+    "demoPersonUpload": "ಡೆಮೊ ಪ್ರೊಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    "compare": "ಹೋಲಿಕೆ ಮಾಡಿ",
+    "schemeComparison": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಹೋಲಿಕೆ",
+    "compareSchemesTitle": "ಯೋಜನೆಗಳ ಮುಖಾಮುಖಿ ಹೋಲಿಕೆ",
+    "compareSchemesSubtitle": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳಲ್ಲಿ ಸಾಲ ಮಿತಿಗಳು, ಎಸ್‌ಸಿ ಸಬ್ಸಿಡಿಗಳು ಮತ್ತು ದಾಖಲೆಗಳನ್ನು ಹೋಲಿಸಿ.",
+    "stopListening": "ಕೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ",
+    "startListening": "ಮಾತನಾಡಿ ಕೇಳಿ",
+    "stopSpeaking": "ಧ್ವನಿ ನಿಲ್ಲಿಸಿ",
+    "replayAudio": "ಮತ್ತೆ ಕೇಳಿ",
+    "speechNotSupported": "ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ."
   },
   "ML": {
     "brandTitle": "SchemeSetu",
@@ -2375,7 +2420,16 @@ export const translations = {
     "tabAudioUpload": "വോയ്‌സ് നോട്ട് / ഓഡിയോ വിവരണം",
     "stepwiseWizard": "ഘട്ടം ഘട്ടമായുള്ള വിവരണം",
     "mediaDocAnalysis": "മീഡിയ & രേഖ ഇൻടേക്ക്",
-    "demoPersonUpload": "ഡെമോ പ്രൊഫൈൽ അപ്‌ലോഡ് ചെയ്യുക"
+    "demoPersonUpload": "ഡെമോ പ്രൊഫൈൽ അപ്‌ലോഡ് ചെയ്യുക",
+    "compare": "താരതമ്യം ചെയ്യുക",
+    "schemeComparison": "സർക്കാർ പദ്ധതി താരതമ്യം",
+    "compareSchemesTitle": "പദ്ധതികളുടെ താരതമ്യം",
+    "compareSchemesSubtitle": "സർക്കാർ പദ്ധതികളിലെ വായ്പാ പരിധികൾ, സബ്‌സിഡികൾ, രേഖകൾ എന്നിവ താരതമ്യം ചെയ്യുക.",
+    "stopListening": "കേൾക്കുന്നത് നിർത്തുക",
+    "startListening": "സംസാരിച്ച് ചോദിക്കുക",
+    "stopSpeaking": "ശബ്ദം നിർത്തുക",
+    "replayAudio": "വീണ്ടും കേൾക്കുക",
+    "speechNotSupported": "വോയ്‌സ് റെക്കഗ്നിഷൻ ലഭ്യമല്ല. ദയവായി താഴെ ടൈപ്പ് ചെയ്യുക."
   },
   "BN": {
     "brandTitle": "SchemeSetu",
@@ -2771,7 +2825,16 @@ export const translations = {
     "tabAudioUpload": "ভয়েস নোট / অডিও বিবরণ",
     "stepwiseWizard": "ধাপে ধাপে প্রশ্নাবলী",
     "mediaDocAnalysis": "মিডিয়া এবং নথি ইনপুট",
-    "demoPersonUpload": "ডেমো ব্যক্তি প্রোফাইল আপলোড"
+    "demoPersonUpload": "ডেমো ব্যক্তি প্রোফাইল আপলোড",
+    "compare": "তুলনা করুন",
+    "schemeComparison": "সরকারী প্রকল্প তুলনাকারী",
+    "compareSchemesTitle": "প্রকল্পের পাশাপাশি তুলনা",
+    "compareSchemesSubtitle": "সরকারী প্রকল্পে ঋণের সীমা, এসসি ভর্তুকি, সুদের হার এবং নথি তুলনা করুন।",
+    "stopListening": "শোনা বন্ধ করুন",
+    "startListening": "বলে জিজ্ঞাসা করুন",
+    "stopSpeaking": "ভয়েস বন্ধ করুন",
+    "replayAudio": "আবার শুনুন",
+    "speechNotSupported": "ভয়েস রিকগনিশন উপলব্ধ নেই। অনুগ্রহ করে নিচে টাইপ করুন।"
   },
   "MR": {
     "brandTitle": "SchemeSetu",
@@ -3167,7 +3230,16 @@ export const translations = {
     "tabAudioUpload": "व्हॉइस नोट / ऑडिओ वर्णन",
     "stepwiseWizard": "टप्प्याटप्प्याने प्रश्नमंजुषा",
     "mediaDocAnalysis": "मीडिया आणि दस्तऐवज तपासणी",
-    "demoPersonUpload": "डेमो प्रोफाइल अपलोड करा"
+    "demoPersonUpload": "डेमो प्रोफाइल अपलोड करा",
+    "compare": "तुलना करा",
+    "schemeComparison": "सरकारी योजना तुलना",
+    "compareSchemesTitle": "योजनांची समोरासमोर तुलना",
+    "compareSchemesSubtitle": "सरकारी योजनांमध्ये कर्ज मर्यादा, एससी सबसिडी, व्याजदर आणि कागदपत्रांची तुलना करा.",
+    "stopListening": "ऐकणे थांबवा",
+    "startListening": "बोलून विचारा",
+    "stopSpeaking": "आवाज थांबवा",
+    "replayAudio": "पुन्हा ऐका",
+    "speechNotSupported": "ब्राउझरमध्ये व्हॉइस इनपुट उपलब्ध नाही. कृपया खाली टाइप करा."
   },
   "GON": {
     "brandTitle": "SchemeSetu (स्कीमसेतू)",
@@ -3563,7 +3635,16 @@ export const translations = {
     "tabAudioUpload": "आवाज संदेश / बोल के बतावा",
     "stepwiseWizard": "कदम दर कदम सवाल",
     "mediaDocAnalysis": "कागज अउर आवाज जांच",
-    "demoPersonUpload": "डेमो नागरिक प्रोफाइल अपलोड कीम"
+    "demoPersonUpload": "डेमो नागरिक प्रोफाइल अपलोड कीम",
+    "compare": "तुलना कीम",
+    "schemeComparison": "सरकारी योजना तुलना केंद्र",
+    "compareSchemesTitle": "योजनाना सीधा तुलना",
+    "compareSchemesSubtitle": "सरकारी योजना मय लोन सीमा, एससी सब्सिडी, ब्याज दर अउर कागज-पत्तरना तुलना कीम।",
+    "stopListening": "सुनल बंद कीम",
+    "startListening": "बोल के पूछा",
+    "stopSpeaking": "आवाज बंद कीम",
+    "replayAudio": "फिर से सुना",
+    "speechNotSupported": "ब्राउज़र मय आवाज सुविधा नाई चलत। नीचे लिख के पूछा।"
   },
   "BHI": {
     "brandTitle": "SchemeSetu (स्कीमसेतू)",
@@ -3959,7 +4040,16 @@ export const translations = {
     "tabAudioUpload": "आवाज संदेश / बोली ने समजावो",
     "stepwiseWizard": "पगले पगले सवाल",
     "mediaDocAnalysis": "कागळिया अणे आवाज तपास",
-    "demoPersonUpload": "डेमो नागरिक प्रोफाइल अपलोड करो"
+    "demoPersonUpload": "डेमो नागरिक प्रोफाइल अपलोड करो",
+    "compare": "तुलना करो",
+    "schemeComparison": "सरकारी योजना तुलना केंद्र",
+    "compareSchemesTitle": "योजना नी सामे सामी तुलना",
+    "compareSchemesSubtitle": "सरकारी योजना मा लोन सीमा, एससी सब्सिडी, व्याज दर अणे कागळिया नी तुलना करो।",
+    "stopListening": "सांभळवुं बंध करो",
+    "startListening": "बोली ने पूछो",
+    "stopSpeaking": "आवाज बंध करो",
+    "replayAudio": "फरी सांभळो",
+    "speechNotSupported": "ब्राउझर मा आवाज सुविधा नथी। नीचे लखीने पूछो।"
   }
 };
 

@@ -171,7 +171,16 @@ export default function Navbar() {
                       textAlign: 'left'
                     }}
                   >
-                    <Radio size={16} /> 📍 Location Radar ({nearbyPartners.length})
+                    <Radio size={16} />
+                    <span>
+                      {location.isDemo 
+                        ? `📍 Demo: ${location.district}`
+                        : location.isGPS 
+                          ? `📍 GPS: ${location.district}`
+                          : location.state 
+                            ? `📍 ${location.district || location.state}`
+                            : '📍 Location Radar'}
+                    </span>
                   </button>
                 </div>
               )}

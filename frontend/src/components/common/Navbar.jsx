@@ -112,6 +112,10 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               <FileCheck size={16} /> {t('applications', 'Applications')}
             </NavLink>
 
+            <NavLink to="/locations" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
+              <MapPin size={16} /> {t('partners', 'Locations')}
+            </NavLink>
+
             {/* Desktop More Menu for Secondary Portals */}
             <div className="more-menu-container" style={{ position: 'relative' }} ref={moreRef}>
               <button

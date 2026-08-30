@@ -21,6 +21,7 @@ import Schemes from './pages/Schemes';
 import SchemeDetails from './pages/SchemeDetails';
 import Eligibility from './pages/Eligibility';
 import Compare from './pages/Compare';
+import Locations from './pages/Locations';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -45,6 +46,8 @@ export default function App() {
             <Route path="/voice" element={<InputHub />} />
             <Route path="/results" element={<Results />} />
             <Route path="/applications" element={<MyApplications />} />
+            <Route path="/locations" element={<Locations />} />
+            <Route path="/nearby" element={<Locations />} />
             <Route path="/community" element={<Community />} />
             <Route path="/vle" element={<VLEDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
@@ -52,7 +55,6 @@ export default function App() {
             <Route path="/schemes/:id" element={<SchemeDetails />} />
             <Route path="/eligibility" element={<Eligibility />} />
             <Route path="/compare" element={<Compare />} />
-            <Route path="/nearby" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />

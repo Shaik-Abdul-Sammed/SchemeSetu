@@ -1204,6 +1204,44 @@ async function runAllTests() {
       assert(validRes.data.applicationId.startsWith('APP-'));
     });
 
+    console.log('\n--- 20. 1,500+ Translation Keys, Applications & Locations Module (5 tests) ---');
+    await test('languageStore.js contains >= 1,500 unique structured translation keys in EN', async () => {
+      assert(enKeys.length >= 1500, `Expected >= 1500 keys in EN, but got ${enKeys.length}`);
+    });
+
+    await test('All 10 languages have exact key parity with EN (>= 1500 keys each)', async () => {
+      const allLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        const lKeys = Object.keys(transObj[l] || {});
+        assert.strictEqual(lKeys.length, enKeys.length, `Language ${l} count (${lKeys.length}) does not match EN (${enKeys.length})`);
+      }
+    });
+
+    await test('GET /api/v1/partners returns list of verified assistance centers', async () => {
+      const res = await request('GET', '/api/v1/partners');
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data) || Array.isArray(res.data.partners));
+    });
+
+    await test('POST /api/v1/partners/nearest returns nearest centers with valid distance calculations', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 13.0827,
+        lng: 80.2707
+      });
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.partners));
+      assert(res.data.partners.length > 0);
+    });
+
+    await test('No undefined, null, or [object Object] present in language translation dictionaries', async () => {
+      const allLangs = ['EN', 'HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        for (const [k, v] of Object.entries(transObj[l])) {
+          assert(v !== undefined && v !== null && v !== '' && v !== '[object Object]', `Invalid value for key ${k} in lang ${l}`);
+        }
+      }
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

@@ -37,6 +37,7 @@ export default function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/input" element={<InputHub />} />
+            <Route path="/voice" element={<InputHub />} />
             <Route path="/results" element={<Results />} />
             <Route path="/applications" element={<MyApplications />} />
             <Route path="/community" element={<Community />} />
@@ -45,9 +46,11 @@ export default function App() {
             <Route path="/schemes" element={<Schemes />} />
             <Route path="/schemes/:id" element={<SchemeDetails />} />
             <Route path="/eligibility" element={<Eligibility />} />
+            <Route path="/nearby" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

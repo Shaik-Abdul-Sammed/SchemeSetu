@@ -46,7 +46,40 @@ function sanitizeAndValidateNumber(value, fieldKey, required = true) {
   return { value: num, isValid: true, error: null };
 }
 
+function formatIndianCurrency(amount) {
+  if (amount === null || amount === undefined || amount === '') return '₹0';
+  if (typeof amount === 'string' && amount.startsWith('₹') && !amount.includes('e+')) {
+    return amount;
+  }
+  
+  if (typeof amount === 'string') {
+    const rawDigits = amount.replace(/[^\d]/g, '');
+    if (rawDigits.length > 12) {
+      return 'Outside Supported Limit';
+    }
+  }
+
+  const cleanStr = typeof amount === 'string' ? amount.replace(/[^\d.]/g, '') : String(amount);
+  if (!cleanStr) return '₹0';
+
+  const num = Number(cleanStr);
+  if (isNaN(num) || !isFinite(num) || num < 0) {
+    return '₹0';
+  }
+
+  if (num > 1000000000) {
+    return 'Outside Supported Limit';
+  }
+
+  try {
+    return `₹${Math.round(num).toLocaleString('en-IN')}`;
+  } catch (e) {
+    return `₹${Math.round(num)}`;
+  }
+}
+
 module.exports = {
   NUMERIC_LIMITS,
-  sanitizeAndValidateNumber
+  sanitizeAndValidateNumber,
+  formatIndianCurrency
 };

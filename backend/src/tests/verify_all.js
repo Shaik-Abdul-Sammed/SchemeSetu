@@ -1152,6 +1152,58 @@ async function runAllTests() {
       }
     });
 
+    console.log('\n--- 19. Extreme Numerical & Agent Mode Financial Validation (6 tests) ---');
+    const { sanitizeAndValidateNumber, formatIndianCurrency } = require('../utils/numberValidator');
+
+    await test('Number validator rejects extreme overflow string (e.g. 100000000000000000000000)', async () => {
+      const res = sanitizeAndValidateNumber('100000000000000000000000', 'income');
+      assert.strictEqual(res.isValid, false);
+    });
+
+    await test('Number validator rejects scientific notation (1e100) and negative values (-50000)', async () => {
+      const res1 = sanitizeAndValidateNumber('1e100', 'cost');
+      assert.strictEqual(res1.isValid, false);
+      const res2 = sanitizeAndValidateNumber('-50000', 'income');
+      assert.strictEqual(res2.isValid, false);
+    });
+
+    await test('Number validator rejects unrealistic age (999 or -5)', async () => {
+      const res1 = sanitizeAndValidateNumber('999', 'age');
+      assert.strictEqual(res1.isValid, false);
+      const res2 = sanitizeAndValidateNumber('-5', 'age');
+      assert.strictEqual(res2.isValid, false);
+    });
+
+    await test('formatIndianCurrency handles extreme numbers safely without infinite repetition', async () => {
+      const formattedHuge = formatIndianCurrency('100000000000000000000000');
+      assert.strictEqual(formattedHuge, 'Outside Supported Limit');
+      
+      const formattedNaN = formatIndianCurrency('abc');
+      assert.strictEqual(formattedNaN, '₹0');
+
+      const formattedValid = formatIndianCurrency(250000);
+      assert.strictEqual(formattedValid, '₹2,50,000');
+    });
+
+    await test('POST /api/v1/agent/submit validates required fields safely', async () => {
+      const invalidRes = await request('POST', '/api/v1/agent/submit', { agentId: 'agent-101' });
+      assert.strictEqual(invalidRes.status, 400);
+    });
+
+    await test('POST /api/v1/agent/submit accepts valid submission and returns 201', async () => {
+      const validRes = await request('POST', '/api/v1/agent/submit', {
+        agentId: 'agent-101',
+        userId: 'user-sc-01',
+        schemeId: 'pm-mudra-yojana',
+        applicationData: {
+          name: 'Ramesh Kumar',
+          loanAmount: 250000
+        }
+      });
+      assert.strictEqual(validRes.status, 201);
+      assert(validRes.data.applicationId.startsWith('APP-'));
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

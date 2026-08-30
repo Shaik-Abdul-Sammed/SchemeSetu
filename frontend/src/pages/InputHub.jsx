@@ -24,6 +24,8 @@ import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
 import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
+import { validateAgentProfile, evaluateAgentSchemes } from '../utils/agentValidationEngine';
+import { formatIndianCurrency } from '../utils/numberValidator';
 
 export default function InputHub() {
   const navigate = useNavigate();
@@ -47,6 +49,12 @@ export default function InputHub() {
   const [agentReportOpen, setAgentReportOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Agent Mode State & Evaluation Results
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [validatedProfile, setValidatedProfile] = useState(null);
+  const [topSchemes, setTopSchemes] = useState([]);
+  const [rejectedSchemes, setRejectedSchemes] = useState([]);
+
   // User Profile Input Criteria Collected
   const [criteria, setCriteria] = useState({
     projectType: '',
@@ -62,12 +70,15 @@ export default function InputHub() {
   const [agentForm, setAgentForm] = useState({
     name: 'Ramesh Kumar',
     age: 32,
+    casteCategory: 'SC',
     income: 240000,
-    projectType: 'manufacturing',
+    projectType: 'Manufacturing',
     cost: 350000,
+    loanRequirement: 250000,
     education: '10th pass',
-    occupation: 'Farmer',
-    location: 'Hyderabad, Telangana'
+    occupation: 'Small Business',
+    location: 'Hyderabad, Telangana',
+    state: 'Telangana'
   });
 
   // Web Speech API Refs
@@ -329,11 +340,25 @@ export default function InputHub() {
   const handleAgentSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await api.post('/agent/submit', { ...agentForm, agentId: 'agent-101' });
+
+    const validation = validateAgentProfile(agentForm);
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
       setIsLoading(false);
-      setAgentReportOpen(true);
+      return;
+    }
+
+    setValidationErrors([]);
+    const evalRes = evaluateAgentSchemes(validation.data);
+    setValidatedProfile(validation.data);
+    setTopSchemes(evalRes.topSchemes);
+    setRejectedSchemes(evalRes.rejectedSchemes);
+
+    try {
+      await api.post('/agent/submit', { ...validation.data, agentId: 'agent-101' });
     } catch (err) {
+      // Local prototype fallback
+    } finally {
       setIsLoading(false);
       setAgentReportOpen(true);
     }
@@ -558,7 +583,7 @@ export default function InputHub() {
                       type="button"
                       onClick={() => {
                         if (window.speechSynthesis) window.speechSynthesis.cancel();
-                        setVoiceState('ready');
+                      setVoiceState('ready');
                       }}
                       className="btn btn-secondary btn-xs"
                       style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderColor: '#DC2626', color: '#DC2626' }}
@@ -641,51 +666,110 @@ export default function InputHub() {
       {mode === 'agent' && (
         <div className="card" style={{ flexGrow: 1 }}>
           <form onSubmit={handleAgentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ fontSize: '1.25rem', color: '#0B192C', marginBottom: '0.5rem' }}>
-              CSC / VLE Agent Beneficiary Intake Form
-            </h3>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', color: '#0B192C', margin: 0 }}>
+                CSC / VLE Agent Beneficiary Intake Form
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0.2rem 0 0' }}>
+                All inputs are strictly validated prior to running recommendation algorithms or generating reports.
+              </p>
+            </div>
+
+            {/* Validation Errors Box */}
+            {validationErrors.length > 0 && (
+              <div style={{ backgroundColor: '#FEF2F2', border: '1.5px solid #FCA5A5', padding: '1rem 1.25rem', borderRadius: '10px', color: '#991B1B' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem' }}>
+                  <AlertCircle size={18} />
+                  <span>Agent Analysis Blocked ({validationErrors.length} issues need correction):</span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', lineHeight: 1.4 }}>
+                  {validationErrors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
               <div className="form-group">
-                <label className="form-label">{t('fullName', 'Beneficiary Full Name')}</label>
+                <label className="form-label">{t('fullName', 'Beneficiary Full Name')} *</label>
                 <input
                   type="text"
                   value={agentForm.name}
                   onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
                   className="form-control"
+                  placeholder="e.g. Ramesh Kumar"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">{t('ageInYears', 'Age')}</label>
+                <label className="form-label">{t('ageInYears', 'Age')} (18-100) *</label>
                 <input
                   type="number"
+                  min="18"
+                  max="100"
                   value={agentForm.age}
-                  onChange={(e) => setAgentForm({ ...agentForm, age: Number(e.target.value) })}
+                  onChange={(e) => setAgentForm({ ...agentForm, age: e.target.value })}
                   className="form-control"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">{t('annualIncomeLabel', 'Annual Household Income (₹)')}</label>
+                <label className="form-label">Social Category / Caste *</label>
+                <select
+                  value={agentForm.casteCategory}
+                  onChange={(e) => setAgentForm({ ...agentForm, casteCategory: e.target.value })}
+                  className="form-select"
+                  required
+                >
+                  <option value="SC">Scheduled Caste (SC)</option>
+                  <option value="ST">Scheduled Tribe (ST)</option>
+                  <option value="OBC">Other Backward Class (OBC)</option>
+                  <option value="General">General Category</option>
+                  <option value="EWS">Economically Weaker Section (EWS)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('annualIncomeLabel', 'Annual Household Income (₹)')} *</label>
                 <input
                   type="number"
+                  min="0"
+                  max="10000000"
                   value={agentForm.income}
-                  onChange={(e) => setAgentForm({ ...agentForm, income: Number(e.target.value) })}
+                  onChange={(e) => setAgentForm({ ...agentForm, income: e.target.value })}
                   className="form-control"
+                  placeholder="e.g. 240000"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">{t('projectCostLabel', 'Project / Loan Cost (₹)')}</label>
+                <label className="form-label">{t('projectCostLabel', 'Total Project / Enterprise Cost (₹)')} *</label>
                 <input
                   type="number"
+                  min="1000"
+                  max="50000000"
                   value={agentForm.cost}
-                  onChange={(e) => setAgentForm({ ...agentForm, cost: Number(e.target.value) })}
+                  onChange={(e) => setAgentForm({ ...agentForm, cost: e.target.value })}
                   className="form-control"
+                  placeholder="e.g. 350000"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Loan Requirement (₹) *</label>
+                <input
+                  type="number"
+                  min="1000"
+                  max="50000000"
+                  value={agentForm.loanRequirement}
+                  onChange={(e) => setAgentForm({ ...agentForm, loanRequirement: e.target.value })}
+                  className="form-control"
+                  placeholder="e.g. 250000"
                   required
                 />
               </div>
@@ -697,15 +781,15 @@ export default function InputHub() {
                   onChange={(e) => setAgentForm({ ...agentForm, occupation: e.target.value })}
                   className="form-select"
                 >
+                  <option value="Small Business">Small Business / Enterprise</option>
                   <option value="Farmer">Farmer / Agriculture</option>
                   <option value="Artisan">Traditional Artisan</option>
                   <option value="Vendor">Street Vendor</option>
-                  <option value="Business">Small Business</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">GPS Location</label>
+                <label className="form-label">Location / State</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
                     type="text"
@@ -731,7 +815,9 @@ export default function InputHub() {
       <AgentReportModal
         isOpen={agentReportOpen}
         onClose={() => setAgentReportOpen(false)}
-        formData={agentForm}
+        validatedProfile={validatedProfile}
+        topSchemes={topSchemes}
+        rejectedSchemes={rejectedSchemes}
       />
     </div>
   );

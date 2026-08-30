@@ -33,6 +33,12 @@ export function AuthProvider({ children }) {
     return res;
   };
 
+  const demoLogin = async () => {
+    const res = await authService.demoLogin();
+    setUser(res.user);
+    return res;
+  };
+
   const register = async (userData) => {
     const res = await authService.register(userData);
     setUser(res.user);
@@ -45,7 +51,15 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isAuthenticated: !!user, 
+      login, 
+      demoLogin, 
+      register, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

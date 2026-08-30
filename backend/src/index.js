@@ -137,7 +137,7 @@ app.use(errorHandler);
 
 // Start Server
 if (require.main === module) {
-  app.listen(PORT, HOST, () => {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`====================================================`);
     console.log(`🚀 SchemeSetu Backend Server running successfully!`);
     console.log(`📡 URL: http://${HOST}:${PORT}`);
@@ -145,6 +145,25 @@ if (require.main === module) {
     console.log(`🩺 V1 Health: http://localhost:${PORT}/api/v1/health`);
     console.log(`====================================================`);
   });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ [PORT IN USE] Port ${PORT} is already being used by another process.`);
+      console.error(`💡 To free port ${PORT}, run: fuser -k ${PORT}/tcp or kill the existing node process.\n`);
+      process.exit(1);
+    } else {
+      console.error('❌ Server startup error:', err);
+      process.exit(1);
+    }
+  });
+
+  const handleShutdown = () => {
+    server.close(() => {
+      process.exit(0);
+    });
+  };
+  process.on('SIGINT', handleShutdown);
+  process.on('SIGTERM', handleShutdown);
 }
 
 module.exports = app;

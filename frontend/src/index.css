@@ -422,6 +422,35 @@ button, input, select, a.btn {
   background-color: rgba(255, 255, 255, 0.12);
 }
 
+.nav-link-voice {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #FCD34D;
+  font-weight: 600;
+}
+
+.nav-link-voice:hover {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+}
+
+.navbar-location-btn:hover,
+.navbar-location-btn:focus-visible {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  color: #FFFFFF !important;
+  border-color: #F59E0B !important;
+}
+
+@media (max-width: 580px) {
+  .navbar-location-text {
+    max-width: 95px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

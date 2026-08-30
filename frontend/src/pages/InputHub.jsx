@@ -20,8 +20,8 @@ import {
   RefreshCw 
 } from 'lucide-react';
 import { api } from '../services/api';
-import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
+import { useLocation } from '../context/LocationContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
 import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
 import { validateAgentProfile, evaluateAgentSchemes } from '../utils/agentValidationEngine';
@@ -30,6 +30,7 @@ import { formatIndianCurrency } from '../utils/numberValidator';
 export default function InputHub() {
   const navigate = useNavigate();
   const { lang, t } = useLanguage();
+  const { location, locationStatus, errorMessage: locationError, detectCurrentGPSLocation } = useLocation();
   const chatEndRef = useRef(null);
 
   // Mode Toggle: 'user' (Voice/Chat) vs 'agent' (Fast-Fill Form)
@@ -364,9 +365,19 @@ export default function InputHub() {
     }
   };
 
-  const handleGpsDetect = async () => {
-    const loc = await safeGetLocation();
-    setAgentForm({ ...agentForm, location: `Lat: ${loc.lat.toFixed(4)}, Lng: ${loc.lng.toFixed(4)}` });
+  useEffect(() => {
+    if (location && (location.district || location.state)) {
+      const locStr = location.district ? `${location.district}, ${location.state}` : location.state;
+      setAgentForm(prev => ({
+        ...prev,
+        location: locStr,
+        state: location.state || prev.state
+      }));
+    }
+  }, [location]);
+
+  const handleGpsDetect = () => {
+    detectCurrentGPSLocation();
   };
 
   return (
@@ -789,16 +800,42 @@ export default function InputHub() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Location / State</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ margin: 0 }}>Location / State *</label>
+                  {locationStatus === 'detecting' && (
+                    <span style={{ fontSize: '0.74rem', color: '#0284C7', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Loader2 size={12} className="animate-spin" /> Detecting GPS...
+                    </span>
+                  )}
+                  {locationStatus === 'detected' && location.isGPS && (
+                    <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 600 }}>
+                      ✓ GPS Detected
+                    </span>
+                  )}
+                  {locationStatus === 'denied' && (
+                    <span style={{ fontSize: '0.74rem', color: '#DC2626' }}>
+                      GPS Permission Denied
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
                     type="text"
                     value={agentForm.location}
-                    readOnly
+                    onChange={(e) => setAgentForm({ ...agentForm, location: e.target.value })}
                     className="form-control"
+                    placeholder="e.g. Hyderabad, Telangana"
+                    required
                   />
-                  <button type="button" onClick={handleGpsDetect} className="btn btn-secondary btn-sm" title="Detect GPS">
-                    <MapPin size={16} />
+                  <button 
+                    type="button" 
+                    onClick={handleGpsDetect} 
+                    className="btn btn-secondary btn-sm" 
+                    title="Detect Current GPS Location"
+                    style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    <MapPin size={15} style={{ color: location.isGPS ? '#059669' : '#D97706' }} />
+                    <span style={{ fontSize: '0.8rem' }}>GPS</span>
                   </button>
                 </div>
               </div>

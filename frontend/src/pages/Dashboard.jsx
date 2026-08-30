@@ -376,13 +376,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 6. VOICE ASSISTANCE CTA BANNER */}
+      {/* 6. CITIZEN ASSISTANCE & JANSAMARTH PORTAL SUPPORT */}
       <div 
         className="card" 
         style={{ 
-          background: 'linear-gradient(135deg, #1E3E62 0%, #0B192C 100%)', 
+          background: 'linear-gradient(135deg, #1E293B 0%, #0B192C 100%)', 
           color: '#FFFFFF', 
-          padding: '1.75rem', 
+          padding: '1.5rem 1.75rem', 
           borderRadius: '14px',
           display: 'flex',
           justifyContent: 'space-between',
@@ -393,22 +393,33 @@ export default function Dashboard() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Mic size={24} />
+          <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Building2 size={22} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.2rem', color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
-              Need help? Ask SchemeSetu AI Voice Assistant
+            <h3 style={{ fontSize: '1.1rem', color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
+              {t('citizenSupportTitle', 'JanSamarth & State Welfare Integration')}
             </h3>
-            <p style={{ color: '#94A3B8', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
-              Speak naturally in Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Marathi, or English.
+            <p style={{ color: '#94A3B8', fontSize: '0.85rem', margin: '0.2rem 0 0' }}>
+              {t('citizenSupportDesc', 'Direct nodal bank application verification, digital subsidy disbursement, and grievance redressal.')}
             </p>
           </div>
         </div>
 
-        <Link to="/input" className="btn btn-primary" style={{ background: '#F59E0B', color: '#0B192C', fontWeight: 800, borderColor: '#F59E0B' }}>
-          <Mic size={16} /> Open Voice Assistant
-        </Link>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link to="/locations" className="btn btn-outline btn-sm" style={{ borderColor: 'rgba(255,255,255,0.3)', color: '#FFFFFF' }}>
+            <MapPin size={14} /> Find Nearest Center
+          </Link>
+          <a 
+            href="https://www.jansamarth.in" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn btn-primary btn-sm" 
+            style={{ fontWeight: 700 }}
+          >
+            JanSamarth Portal →
+          </a>
+        </div>
       </div>
 
       {/* Location Radar Modal */}

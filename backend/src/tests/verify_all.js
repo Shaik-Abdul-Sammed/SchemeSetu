@@ -986,12 +986,12 @@ async function runAllTests() {
                       langFileContent.match(/const translations = ({[\s\S]*?});/);
     const transObj = eval('(' + langMatch[1] + ')');
     const enKeys = Object.keys(transObj.EN);
-    const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'];
+    const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
 
-    await test('All 8 supported languages (EN, HI, TE, TA, KN, ML, BN, MR) exist in dictionary', async () => {
+    await test('All 10 supported languages (EN, HI, TE, TA, KN, ML, BN, MR, GON, BHI) exist in dictionary', async () => {
       const langs = Object.keys(transObj);
-      assert.strictEqual(langs.length, 8);
-      assert(langs.includes('EN') && langs.includes('HI') && langs.includes('TE') && langs.includes('BN'));
+      assert.strictEqual(langs.length, 10);
+      assert(langs.includes('EN') && langs.includes('HI') && langs.includes('TE') && langs.includes('GON') && langs.includes('BHI'));
     });
 
     for (const lang of targetLangs) {

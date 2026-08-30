@@ -17,6 +17,8 @@ export default function AudioReaderButton({ textToRead, label }) {
       case 'ML': return 'ml-IN';
       case 'BN': return 'bn-IN';
       case 'MR': return 'mr-IN';
+      case 'GON': return 'hi-IN';
+      case 'BHI': return 'hi-IN';
       case 'EN':
       default: return 'en-IN';
     }

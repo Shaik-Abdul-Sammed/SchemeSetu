@@ -13,9 +13,11 @@ export default function LanguageSelectorIcon() {
     TE: { label: 'Telugu', native: 'తెలుగు', greeting: 'నమస్కారం! SchemeSetu కు స్వాగతం.', voiceLang: 'te-IN' },
     TA: { label: 'Tamil', native: 'தமிழ்', greeting: 'வணக்கம்! SchemeSetu-க்கு வரவேற்கிறோம்.', voiceLang: 'ta-IN' },
     KN: { label: 'Kannada', native: 'ಕನ್ನಡ', greeting: 'ನಮಸ್ಕಾರ! SchemeSetu ಗೆ ಸುಸ್ವಾಗತ.', voiceLang: 'kn-IN' },
-    ML: { label: 'Malayalam', native: 'മലയാളം', greeting: 'നമസ്കാരം! SchemeSetu-ലേക്ക് സ്വാగതം.', voiceLang: 'ml-IN' },
+    ML: { label: 'Malayalam', native: 'മലയാളം', greeting: 'നമസ്കാരം! SchemeSetu-ലേക്ക് സ്വാഗതം.', voiceLang: 'ml-IN' },
     BN: { label: 'Bengali', native: 'বাংলা', greeting: 'নমস্কার! SchemeSetu-তে স্বাগতম।', voiceLang: 'bn-IN' },
-    MR: { label: 'Marathi', native: 'मराठी', greeting: 'नमस्कार! SchemeSetu मध्ये आपले स्वागत आहे.', voiceLang: 'mr-IN' }
+    MR: { label: 'Marathi', native: 'मराठी', greeting: 'नमस्कार! SchemeSetu मध्ये आपले स्वागत आहे.', voiceLang: 'mr-IN' },
+    GON: { label: 'Gondi', native: 'गोंडी (గోండి)', greeting: 'सेवा जोहार! SchemeSetu मय तुमाना स्वागत आय।', voiceLang: 'hi-IN' },
+    BHI: { label: 'Bhili/Bhilodi', native: 'भीली / भीलोड़ी', greeting: 'जय जोहार! SchemeSetu मा तमारु स्वागत छे।', voiceLang: 'hi-IN' }
   };
 
   useEffect(() => {

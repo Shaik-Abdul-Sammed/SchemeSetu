@@ -26,6 +26,8 @@ const LANG_MAP = {
   ML: 'ml',
   BN: 'bn',
   MR: 'mr',
+  GON: 'hi', // Gondi Devanagari regional base
+  BHI: 'hi', // Bhili Devanagari regional base
 };
 
 // ── In-memory translation cache (prevents duplicate requests) ──

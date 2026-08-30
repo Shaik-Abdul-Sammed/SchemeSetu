@@ -14,7 +14,8 @@
     "state": "Telangana",
     "district": "Hyderabad",
     "bplStatus": "Yes",
-    "scenario": "SC manufacturing entrepreneur"
+    "scenario": "SC manufacturing entrepreneur - Eligible for PMEGP, MUDRA, Dalit Bandhu",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-002",
@@ -23,7 +24,7 @@
     "gender": "Male",
     "category": "SC",
     "annualIncome": 180000,
-    "education": "Diploma",
+    "education": "Diploma in Mechanical",
     "occupation": "Automobile Repair Service",
     "businessType": "Service Sector",
     "projectCost": 200000,
@@ -31,7 +32,8 @@
     "state": "Maharashtra",
     "district": "Nagpur",
     "bplStatus": "Yes",
-    "scenario": "SC service entrepreneur"
+    "scenario": "SC service entrepreneur - Eligible for MUDRA Kishore, PMEGP",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-003",
@@ -48,7 +50,8 @@
     "state": "Tamil Nadu",
     "district": "Chennai",
     "bplStatus": "Yes",
-    "scenario": "SC woman entrepreneur"
+    "scenario": "SC woman entrepreneur - Eligible for Stand-Up India, PMEGP (35% subsidy)",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-004",
@@ -65,7 +68,8 @@
     "state": "Telangana",
     "district": "Adilabad",
     "bplStatus": "Yes",
-    "scenario": "ST artisan"
+    "scenario": "ST artisan - Eligible for PM Vishwakarma, PMEGP",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-005",
@@ -82,7 +86,8 @@
     "state": "Madhya Pradesh",
     "district": "Mandla",
     "bplStatus": "No",
-    "scenario": "ST entrepreneur"
+    "scenario": "ST rural entrepreneur - Eligible for Stand-Up India, PMEGP",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-006",
@@ -99,7 +104,8 @@
     "state": "Andhra Pradesh",
     "district": "Guntur",
     "bplStatus": "Yes",
-    "scenario": "OBC entrepreneur"
+    "scenario": "OBC woman artisan - Eligible for PM Vishwakarma, MUDRA",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-007",
@@ -116,7 +122,8 @@
     "state": "Punjab",
     "district": "Ludhiana",
     "bplStatus": "No",
-    "scenario": "Farmer"
+    "scenario": "Farmer & Dairy - Eligible for PM-KISAN, MUDRA Kishore",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-008",
@@ -133,14 +140,15 @@
     "state": "Delhi",
     "district": "North Delhi",
     "bplStatus": "Yes",
-    "scenario": "Street vendor"
+    "scenario": "Street vendor - Eligible for PM SVANidhi",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-009",
     "name": "Abdul Hameed",
     "age": 38,
     "gender": "Male",
-    "category": "OBC",
+    "category": "Minority",
     "annualIncome": 210000,
     "education": "10th pass",
     "occupation": "Kirana & Provision Store",
@@ -150,7 +158,8 @@
     "state": "Karnataka",
     "district": "Bangalore Urban",
     "bplStatus": "No",
-    "scenario": "Small trader"
+    "scenario": "Minority small trader - Eligible for MUDRA Kishore",
+    "note": "DEMO DATA — NOT REAL"
   },
   {
     "id": "USER-010",
@@ -167,6 +176,187 @@
     "state": "Telangana",
     "district": "Rangareddy",
     "bplStatus": "No",
-    "scenario": "High-project-cost applicant"
+    "scenario": "High project cost applicant - Eligible for Commercial MSME loans",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-011",
+    "name": "Shanta Bai",
+    "age": 67,
+    "gender": "Female",
+    "category": "SC",
+    "annualIncome": 45000,
+    "education": "Illiterate",
+    "occupation": "Senior Citizen Dependent",
+    "businessType": "None",
+    "projectCost": 0,
+    "loanRequirement": 0,
+    "state": "Telangana",
+    "district": "Warangal",
+    "bplStatus": "Yes",
+    "scenario": "Senior citizen BPL - Eligible for IGNOAPS Old Age Pension, PM-JAY",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-012",
+    "name": "Ananya Mukherjee",
+    "age": 8,
+    "gender": "Female",
+    "category": "General",
+    "annualIncome": 350000,
+    "education": "Primary School",
+    "occupation": "Student",
+    "businessType": "None",
+    "projectCost": 0,
+    "loanRequirement": 0,
+    "state": "West Bengal",
+    "district": "Kolkata",
+    "bplStatus": "No",
+    "scenario": "Girl child under 10 - Eligible for Sukanya Samriddhi Yojana (SSY)",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-013",
+    "name": "Kiran Rathod",
+    "age": 20,
+    "gender": "Male",
+    "category": "SC",
+    "annualIncome": 140000,
+    "education": "Undergraduate (B.Sc 2nd Year)",
+    "occupation": "Student",
+    "businessType": "None",
+    "projectCost": 0,
+    "loanRequirement": 0,
+    "state": "Maharashtra",
+    "district": "Solapur",
+    "bplStatus": "Yes",
+    "scenario": "SC College Student - Eligible for Post-Matric SC Scholarship",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-014",
+    "name": "Meena Kumari",
+    "age": 31,
+    "gender": "Female",
+    "category": "OBC",
+    "annualIncome": 95000,
+    "education": "8th pass",
+    "occupation": "Poultry & Dairy Farmer",
+    "businessType": "Agriculture Allied",
+    "projectCost": 120000,
+    "loanRequirement": 90000,
+    "state": "Bihar",
+    "district": "Patna",
+    "bplStatus": "Yes",
+    "scenario": "Rural woman farmer - Eligible for MUDRA Shishu/Kishore, PM-KISAN",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-015",
+    "name": "Rajendra Prasad Paswan",
+    "age": 35,
+    "gender": "Male",
+    "category": "SC",
+    "annualIncome": 160000,
+    "education": "12th pass",
+    "occupation": "Leather Goods & Footwear Craft",
+    "businessType": "Manufacturing / Artisan",
+    "projectCost": 280000,
+    "loanRequirement": 200000,
+    "state": "Uttar Pradesh",
+    "district": "Kanpur Nagar",
+    "bplStatus": "Yes",
+    "scenario": "SC traditional artisan - Eligible for PM Vishwakarma, PMEGP (35% subsidy)",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-016",
+    "name": "Gurmeet Kaur",
+    "age": 29,
+    "gender": "Female",
+    "category": "General",
+    "annualIncome": 480000,
+    "education": "Post Graduate",
+    "occupation": "Digital Marketing & Design Agency",
+    "businessType": "Services",
+    "projectCost": 600000,
+    "loanRequirement": 500000,
+    "state": "Punjab",
+    "district": "Amritsar",
+    "bplStatus": "No",
+    "scenario": "Urban woman service entrepreneur - Eligible for Stand-Up India, MUDRA Tarun",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-017",
+    "name": "Naresh Gond",
+    "age": 33,
+    "gender": "Male",
+    "category": "ST",
+    "annualIncome": 110000,
+    "education": "5th pass",
+    "occupation": "Minor Forest Produce Collector",
+    "businessType": "Forestry & Non-Timber Produce",
+    "projectCost": 80000,
+    "loanRequirement": 50000,
+    "state": "Chhattisgarh",
+    "district": "Bastar",
+    "bplStatus": "Yes",
+    "scenario": "Tribal entrepreneur - Eligible for PM Vishwakarma, TRIFED initiatives",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-018",
+    "name": "Farzana Begum",
+    "age": 41,
+    "gender": "Female",
+    "category": "Minority",
+    "annualIncome": 130000,
+    "education": "10th pass",
+    "occupation": "Zardozi & Embroidery Work",
+    "businessType": "Textiles & Handicrafts",
+    "projectCost": 180000,
+    "loanRequirement": 120000,
+    "state": "Uttar Pradesh",
+    "district": "Varanasi",
+    "bplStatus": "Yes",
+    "scenario": "Minority woman artisan - Eligible for PM Vishwakarma, MUDRA Kishore",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-019",
+    "name": "Arjun Das (Ineligible - Age)",
+    "age": 16,
+    "gender": "Male",
+    "category": "SC",
+    "annualIncome": 50000,
+    "education": "10th studying",
+    "occupation": "Minor Apprentice",
+    "businessType": "Trading",
+    "projectCost": 100000,
+    "loanRequirement": 80000,
+    "state": "West Bengal",
+    "district": "Howrah",
+    "bplStatus": "Yes",
+    "scenario": "Underage Applicant - Ineligible for commercial loans, requires education scholarship",
+    "note": "DEMO DATA — NOT REAL"
+  },
+  {
+    "id": "USER-020",
+    "name": "Sunil Verma (Ineligible - High Income)",
+    "age": 39,
+    "gender": "Male",
+    "category": "General",
+    "annualIncome": 4500000,
+    "education": "MBA",
+    "occupation": "Real Estate Brokerage",
+    "businessType": "Real Estate Trading",
+    "projectCost": 15000000,
+    "loanRequirement": 10000000,
+    "state": "Haryana",
+    "district": "Gurugram",
+    "bplStatus": "No",
+    "scenario": "High Income & Ineligible Sector - Ineligible for subsidized welfare and PMEGP",
+    "note": "DEMO DATA — NOT REAL"
   }
 ]

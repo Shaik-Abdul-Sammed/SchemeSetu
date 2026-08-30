@@ -1,0 +1,9 @@
+FICTIONAL DEMONSTRATION DATA — NOT AN OFFICIAL DOCUMENT
+SchemeSetu Prototype Demo Reference Dataset for Smart India Hackathon 2026
+
+QUOTATION FOR FABRICATION MACHINERY
+Supplier: Deccan Machinery Pvt Ltd
+1. Heavy Duty Lathe Machine: Rs. 1,50,000
+2. MIG/TIG Welding Setup: Rs. 60,000
+3. Hydraulic Cutting Press: Rs. 40,000
+Total Machinery Quotation: Rs. 2,50,000

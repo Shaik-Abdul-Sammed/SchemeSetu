@@ -1242,6 +1242,80 @@ async function runAllTests() {
       }
     });
 
+    console.log('\n--- 21. RAG Multi-Document Engine & 30-Query Evaluation Benchmark (5 tests) ---');
+    await test('GET /api/v1/rag/status returns ready status and indexed chunks', async () => {
+      const res = await request('GET', '/api/v1/rag/status');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'READY');
+      assert(res.data.totalChunks >= 15);
+    });
+
+    await test('GET /api/v1/rag/query retrieves relevant citation metadata for PMEGP query', async () => {
+      const res = await request('GET', '/api/v1/rag/query?q=' + encodeURIComponent('PMEGP subsidy rate for SC'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.found, true);
+      assert(res.data.results.length > 0);
+      assert(res.data.results[0].docName.includes('pmegp'));
+      assert(res.data.results[0].relevanceScore > 0);
+    });
+
+    await test('GET /api/v1/rag/query handles completely out-of-scope query safely', async () => {
+      const res = await request('GET', '/api/v1/rag/query?q=' + encodeURIComponent('Flight ticket from Tokyo to Paris'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.found, false);
+      assert.strictEqual(res.data.results.length, 0);
+    });
+
+    await test('GET /api/v1/rag/evaluate runs 30 benchmark queries with high hit rate and precision', async () => {
+      const res = await request('GET', '/api/v1/rag/evaluate');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.totalQueries, 30);
+      assert(parseInt(res.data.hitRate, 10) >= 80);
+      assert(parseInt(res.data.noResultAccuracy, 10) >= 80);
+    });
+
+    await test('RAG evaluation results contain 30 individual test assertions', async () => {
+      const res = await request('GET', '/api/v1/rag/evaluate');
+      assert.strictEqual(res.data.evaluationDetails.length, 30);
+    });
+
+    console.log('\n--- 22. Centralized Audit Logging, Platform Stats & Dataset Integrity (5 tests) ---');
+    await test('GET /api/v1/admin/audit-logs returns sanitized operational logs without credentials', async () => {
+      const res = await request('GET', '/api/v1/admin/audit-logs');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.events.length > 0);
+      const str = JSON.stringify(res.data.events);
+      assert(!str.includes('password123'));
+    });
+
+    await test('GET /api/v1/admin/stats returns platform scheme counts and health status', async () => {
+      const res = await request('GET', '/api/v1/admin/stats');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.totalSchemes >= 15);
+      assert.strictEqual(res.data.supportedLanguages, 10);
+    });
+
+    await test('Schemes dataset contains at least 15 verified schemes with valid dataStatus', async () => {
+      const schemes = require('../data/schemesData');
+      assert(schemes.length >= 15);
+      schemes.forEach(s => {
+        assert(s.id && s.name && s.category && s.officialMinistry);
+        assert(['VERIFIED', 'DEMO', 'NEEDS_VERIFICATION', 'NOT_SPECIFIED'].includes(s.dataStatus));
+      });
+    });
+
+    await test('Sample users JSON file contains 20 distinct fictional applicant records', async () => {
+      const users = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../database/sample-data/sample-users.json'), 'utf8'));
+      assert.strictEqual(users.length, 20);
+    });
+
+    await test('Sample applications JSON file contains 20 lifecycle tracked applications', async () => {
+      const apps = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../database/sample-data/sample-applications.json'), 'utf8'));
+      assert.strictEqual(apps.length, 20);
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

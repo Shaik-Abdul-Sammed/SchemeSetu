@@ -1,11 +1,21 @@
-id,name,age,gender,category,annualIncome,education,occupation,businessType,projectCost,loanRequirement,state,district,bplStatus,scenario
-USER-001,Ramesh Kumar,32,Male,SC,240000,10th pass,Small Business Owner,Manufacturing / Fabrication,350000,250000,Telangana,Hyderabad,Yes,SC manufacturing entrepreneur
-USER-002,Suresh Chandra,29,Male,SC,180000,Diploma,Automobile Repair Service,Service Sector,200000,150000,Maharashtra,Nagpur,Yes,SC service entrepreneur
-USER-003,Priya Rani,34,Female,SC,150000,Graduate,Garment & Boutique Unit,Manufacturing,400000,300000,Tamil Nadu,Chennai,Yes,SC woman entrepreneur
-USER-004,Biram Soyam,27,Male,ST,120000,8th pass,Traditional Bamboo & Wood Artisan,Artisans & Handicrafts,150000,100000,Telangana,Adilabad,Yes,ST artisan
-USER-005,Devendra Marko,36,Male,ST,280000,12th pass,Organic Herbal Processing,Agri-Processing Enterprise,800000,600000,Madhya Pradesh,Mandla,No,ST entrepreneur
-USER-006,Lakshmi Devi,28,Female,OBC,180000,12th pass,Handloom Weaver & Micro Business,Handicrafts & Textiles,150000,100000,Andhra Pradesh,Guntur,Yes,OBC entrepreneur
-USER-007,Manpreet Singh,45,Male,General,320000,Graduate,Farmer / Dairy Entrepreneur,Agriculture Allied / Dairy,500000,400000,Punjab,Ludhiana,No,Farmer
-USER-008,Pooja Sharma,24,Female,General,90000,10th pass,Street Vendor / Food Cart,Retail / Food Stalls,25000,20000,Delhi,North Delhi,Yes,Street vendor
-USER-009,Abdul Hameed,38,Male,OBC,210000,10th pass,Kirana & Provision Store,Retail Trading,300000,200000,Karnataka,Bangalore Urban,No,Small trader
-USER-010,Vikramaditya Rao,42,Male,General,1200000,B.Tech,Precision Engineering Workshop,Medium Manufacturing,8000000,6000000,Telangana,Rangareddy,No,High-project-cost applicant
+id,name,age,gender,category,annualIncome,education,occupation,businessType,projectCost,loanRequirement,state,district,bplStatus,scenario,note
+USER-001,Ramesh Kumar,32,Male,SC,240000,10th pass,Small Business Owner,Manufacturing / Fabrication,350000,250000,Telangana,Hyderabad,Yes,SC manufacturing entrepreneur,DEMO DATA — NOT REAL
+USER-002,Suresh Chandra,29,Male,SC,180000,Diploma,Automobile Repair Service,Service Sector,200000,150000,Maharashtra,Nagpur,Yes,SC service entrepreneur,DEMO DATA — NOT REAL
+USER-003,Priya Rani,34,Female,SC,150000,Graduate,Garment & Boutique Unit,Manufacturing,400000,300000,Tamil Nadu,Chennai,Yes,SC woman entrepreneur,DEMO DATA — NOT REAL
+USER-004,Biram Soyam,27,Male,ST,120000,8th pass,Traditional Bamboo & Wood Artisan,Artisans & Handicrafts,150000,100000,Telangana,Adilabad,Yes,ST artisan,DEMO DATA — NOT REAL
+USER-005,Devendra Marko,36,Male,ST,280000,12th pass,Organic Herbal Processing,Agri-Processing Enterprise,800000,600000,Madhya Pradesh,Mandla,No,ST entrepreneur,DEMO DATA — NOT REAL
+USER-006,Lakshmi Devi,28,Female,OBC,180000,12th pass,Handloom Weaver & Micro Business,Handicrafts & Textiles,150000,100000,Andhra Pradesh,Guntur,Yes,OBC entrepreneur,DEMO DATA — NOT REAL
+USER-007,Manpreet Singh,45,Male,General,320000,Graduate,Farmer / Dairy Entrepreneur,Agriculture Allied / Dairy,500000,400000,Punjab,Ludhiana,No,Farmer,DEMO DATA — NOT REAL
+USER-008,Pooja Sharma,24,Female,General,90000,10th pass,Street Vendor / Food Cart,Retail / Food Stalls,25000,20000,Delhi,North Delhi,Yes,Street vendor,DEMO DATA — NOT REAL
+USER-009,Abdul Hameed,38,Male,Minority,210000,10th pass,Kirana & Provision Store,Retail Trading,300000,200000,Karnataka,Bangalore Urban,No,Small trader,DEMO DATA — NOT REAL
+USER-010,Vikramaditya Rao,42,Male,General,1200000,B.Tech,Precision Engineering Workshop,Medium Manufacturing,8000000,6000000,Telangana,Rangareddy,No,High-project-cost applicant,DEMO DATA — NOT REAL
+USER-011,Shanta Bai,67,Female,SC,45000,Illiterate,Senior Citizen Dependent,None,0,0,Telangana,Warangal,Yes,Senior citizen BPL,DEMO DATA — NOT REAL
+USER-012,Ananya Mukherjee,8,Female,General,350000,Primary School,Student,None,0,0,West Bengal,Kolkata,No,Girl child under 10,DEMO DATA — NOT REAL
+USER-013,Kiran Rathod,20,Male,SC,140000,Undergraduate,Student,None,0,0,Maharashtra,Solapur,Yes,SC College Student,DEMO DATA — NOT REAL
+USER-014,Meena Kumari,31,Female,OBC,95000,8th pass,Poultry & Dairy Farmer,Agriculture Allied,120000,90000,Bihar,Patna,Yes,Rural woman farmer,DEMO DATA — NOT REAL
+USER-015,Rajendra Prasad Paswan,35,Male,SC,160000,12th pass,Leather Goods & Footwear Craft,Manufacturing / Artisan,280000,200000,Uttar Pradesh,Kanpur Nagar,Yes,SC traditional artisan,DEMO DATA — NOT REAL
+USER-016,Gurmeet Kaur,29,Female,General,480000,Post Graduate,Digital Marketing Agency,Services,600000,500000,Punjab,Amritsar,No,Urban woman service entrepreneur,DEMO DATA — NOT REAL
+USER-017,Naresh Gond,33,Male,ST,110000,5th pass,Forest Produce Collector,Forestry,80000,50000,Chhattisgarh,Bastar,Yes,Tribal entrepreneur,DEMO DATA — NOT REAL
+USER-018,Farzana Begum,41,Female,Minority,130000,10th pass,Zardozi & Embroidery Work,Textiles & Handicrafts,180000,120000,Uttar Pradesh,Varanasi,Yes,Minority woman artisan,DEMO DATA — NOT REAL
+USER-019,Arjun Das (Ineligible - Age),16,Male,SC,50000,10th studying,Minor Apprentice,Trading,100000,80000,West Bengal,Howrah,Yes,Underage Applicant,DEMO DATA — NOT REAL
+USER-020,Sunil Verma (Ineligible - High Income),39,Male,General,4500000,MBA,Real Estate Brokerage,Real Estate Trading,15000000,10000000,Haryana,Gurugram,No,High Income & Ineligible Sector,DEMO DATA — NOT REAL

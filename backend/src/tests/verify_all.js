@@ -1204,12 +1204,12 @@ async function runAllTests() {
       assert(validRes.data.applicationId.startsWith('APP-'));
     });
 
-    console.log('\n--- 20. 1,500+ Translation Keys, Applications & Locations Module (5 tests) ---');
-    await test('languageStore.js contains >= 1,500 unique structured translation keys in EN', async () => {
-      assert(enKeys.length >= 1500, `Expected >= 1500 keys in EN, but got ${enKeys.length}`);
+    console.log('\n--- 20. 2,500+ Translation Keys, Applications & Locations Module (5 tests) ---');
+    await test('languageStore.js contains >= 2,500 unique structured translation keys in EN', async () => {
+      assert(enKeys.length >= 2500, `Expected >= 2500 keys in EN, but got ${enKeys.length}`);
     });
 
-    await test('All 10 languages have exact key parity with EN (>= 1500 keys each)', async () => {
+    await test('All 10 languages have exact key parity with EN (>= 2500 keys each)', async () => {
       const allLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
       for (const l of allLangs) {
         const lKeys = Object.keys(transObj[l] || {});

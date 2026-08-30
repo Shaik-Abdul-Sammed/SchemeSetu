@@ -4,6 +4,7 @@ import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import InstallAppBanner from './components/common/InstallAppBanner';
 import PWAInstallModal from './components/common/PWAInstallModal';
+import EntranceVoiceGreeting from './components/common/EntranceVoiceGreeting';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import MobileQuickNav from './components/common/MobileQuickNav';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -53,6 +54,7 @@ export default function App() {
         <Footer />
         <MobileQuickNav />
         <PWAInstallModal />
+        <EntranceVoiceGreeting />
       </div>
     </ErrorBoundary>
   );

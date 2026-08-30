@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Globe, Check, ChevronDown } from 'lucide-react';
+import { Globe, Check, ChevronDown, Volume2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function LanguageSelectorIcon() {
@@ -8,14 +8,14 @@ export default function LanguageSelectorIcon() {
   const dropdownRef = useRef(null);
 
   const languageLabels = {
-    EN: { label: 'English', native: 'English' },
-    HI: { label: 'Hindi', native: 'हिन्दी' },
-    TE: { label: 'Telugu', native: 'తెలుగు' },
-    TA: { label: 'Tamil', native: 'தமிழ்' },
-    KN: { label: 'Kannada', native: 'ಕನ್ನಡ' },
-    ML: { label: 'Malayalam', native: 'മലയാളം' },
-    BN: { label: 'Bengali', native: 'বাংলা' },
-    MR: { label: 'Marathi', native: 'मराठी' }
+    EN: { label: 'English', native: 'English', greeting: 'Welcome to SchemeSetu.', voiceLang: 'en-IN' },
+    HI: { label: 'Hindi', native: 'हिन्दी', greeting: 'नमस्ते! SchemeSetu में आपका स्वागत है।', voiceLang: 'hi-IN' },
+    TE: { label: 'Telugu', native: 'తెలుగు', greeting: 'నమస్కారం! SchemeSetu కు స్వాగతం.', voiceLang: 'te-IN' },
+    TA: { label: 'Tamil', native: 'தமிழ்', greeting: 'வணக்கம்! SchemeSetu-க்கு வரவேற்கிறோம்.', voiceLang: 'ta-IN' },
+    KN: { label: 'Kannada', native: 'ಕನ್ನಡ', greeting: 'ನಮಸ್ಕಾರ! SchemeSetu ಗೆ ಸುಸ್ವಾಗತ.', voiceLang: 'kn-IN' },
+    ML: { label: 'Malayalam', native: 'മലയാളം', greeting: 'നമസ്കാരം! SchemeSetu-ലേക്ക് സ്വാగതം.', voiceLang: 'ml-IN' },
+    BN: { label: 'Bengali', native: 'বাংলা', greeting: 'নমস্কার! SchemeSetu-তে স্বাগতম।', voiceLang: 'bn-IN' },
+    MR: { label: 'Marathi', native: 'मराठी', greeting: 'नमस्कार! SchemeSetu मध्ये आपले स्वागत आहे.', voiceLang: 'mr-IN' }
   };
 
   useEffect(() => {
@@ -28,8 +28,24 @@ export default function LanguageSelectorIcon() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const speakGreeting = (text, voiceLocale) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = voiceLocale || 'en-IN';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {}
+  };
+
   const handleSelect = (code) => {
     changeLanguage(code);
+    const meta = languageLabels[code];
+    if (meta) {
+      speakGreeting(meta.greeting, meta.voiceLang);
+    }
     setIsOpen(false);
   };
 
@@ -70,13 +86,13 @@ export default function LanguageSelectorIcon() {
             borderRadius: '12px',
             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)',
             zIndex: 9999,
-            minWidth: '180px',
+            minWidth: '185px',
             overflow: 'hidden',
             padding: '0.35rem'
           }}
         >
-          <div style={{ padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#94A3B8', borderBottom: '1px solid #1E293B', marginBottom: '0.25rem' }}>
-            🌐 Select Language
+          <div style={{ padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#94A3B8', borderBottom: '1px solid #1E293B', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Volume2 size={13} style={{ color: '#F59E0B' }} /> <span>Voice & Language</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

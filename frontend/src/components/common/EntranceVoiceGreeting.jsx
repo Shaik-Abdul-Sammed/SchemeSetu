@@ -1,34 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Globe, Sparkles, Check, ArrowRight, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Volume2, VolumeX, Globe, Sparkles, Check, ArrowRight, X, Mic } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function EntranceVoiceGreeting() {
-  const { lang, changeLanguage, availableLanguages, t } = useLanguage();
+  const { lang, changeLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const hasSpokenOnOpenRef = useRef(false);
 
   const languageCards = [
-    { code: 'HI', name: 'हिन्दी', sub: 'Hindi', greeting: 'नमस्ते! SchemeSetu में आपका स्वागत है।', voiceLang: 'hi-IN' },
-    { code: 'TE', name: 'తెలుగు', sub: 'Telugu', greeting: 'నమస్కారం! SchemeSetu కు స్వాగతం.', voiceLang: 'te-IN' },
-    { code: 'TA', name: 'தமிழ்', sub: 'Tamil', greeting: 'வணக்கம்! SchemeSetu-க்கு வரவேற்கிறோம்.', voiceLang: 'ta-IN' },
-    { code: 'KN', name: 'ಕನ್ನಡ', sub: 'Kannada', greeting: 'ನಮಸ್ಕಾರ! SchemeSetu ಗೆ ಸುಸ್ವಾಗತ.', voiceLang: 'kn-IN' },
-    { code: 'ML', name: 'മലയാളം', sub: 'Malayalam', greeting: 'നമസ്കാരം! SchemeSetu-ലേക്ക് സ്വാഗതം.', voiceLang: 'ml-IN' },
-    { code: 'BN', name: 'বাংলা', sub: 'Bengali', greeting: 'নমস্কার! SchemeSetu-তে স্বাগতম।', voiceLang: 'bn-IN' },
-    { code: 'MR', name: 'मराठी', sub: 'Marathi', greeting: 'नमस्कार! SchemeSetu मध्ये आपले स्वागत आहे.', voiceLang: 'mr-IN' },
-    { code: 'EN', name: 'English', sub: 'Indian English', greeting: 'Welcome to SchemeSetu, India\'s AI Welfare Portal.', voiceLang: 'en-IN' }
+    { code: 'TE', name: 'తెలుగు', sub: 'Telugu', greeting: 'నమస్కారం! SchemeSetu కు స్వాగతం. మీ సంక్షేమ పథకాలను కనుగొనండి.', voiceLang: 'te-IN' },
+    { code: 'HI', name: 'हिन्दी', sub: 'Hindi', greeting: 'नमस्ते! SchemeSetu में आपका स्वागत है। सरकारी योजनाएं खोजें।', voiceLang: 'hi-IN' },
+    { code: 'TA', name: 'தமிழ்', sub: 'Tamil', greeting: 'வணக்கம்! SchemeSetu-க்கு வரவேற்கிறோம். அரசு திட்டங்களை கண்டறியுங்கள்.', voiceLang: 'ta-IN' },
+    { code: 'KN', name: 'ಕನ್ನಡ', sub: 'Kannada', greeting: 'ನಮಸ್ಕಾರ! SchemeSetu ಗೆ ಸುಸ್ವಾಗತ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಹುಡುಕಿ.', voiceLang: 'kn-IN' },
+    { code: 'ML', name: 'മലയാളം', sub: 'Malayalam', greeting: 'നമസ്കാരം! SchemeSetu-ലേക്ക് സ്വാഗതം. സർക്കാർ പദ്ധതികൾ കണ്ടെത്തുക.', voiceLang: 'ml-IN' },
+    { code: 'BN', name: 'বাংলা', sub: 'Bengali', greeting: 'নমস্কার! SchemeSetu-তে স্বাগতম। সরকারি স্কিমগুলি খুঁজুন।', voiceLang: 'bn-IN' },
+    { code: 'MR', name: 'मराठी', sub: 'Marathi', greeting: 'नमस्कार! SchemeSetu मध्ये आपले स्वागत आहे. सरकारी योजना शोधा.', voiceLang: 'mr-IN' },
+    { code: 'EN', name: 'English', sub: 'Indian English', greeting: 'Welcome to SchemeSetu, India\'s AI Citizen Welfare Discovery Portal.', voiceLang: 'en-IN' }
   ];
 
-  useEffect(() => {
-    // Show on initial session entrance if language selection hasn't been confirmed yet
-    const hasSeenGreeting = sessionStorage.getItem('schemesetu_entrance_greeted');
-    if (!hasSeenGreeting) {
-      setIsOpen(true);
-      sessionStorage.setItem('schemesetu_entrance_greeted', 'true');
-    }
-  }, []);
-
   const speakText = (text, voiceLocale) => {
-    if (!('speechSynthesis' in window)) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -36,7 +28,6 @@ export default function EntranceVoiceGreeting() {
       utterance.rate = 0.92;
       utterance.pitch = 1.0;
 
-      // Find suitable voice if available
       const voices = window.speechSynthesis.getVoices();
       const matchedVoice = voices.find(v => v.lang === voiceLocale || v.lang.startsWith(voiceLocale?.split('-')[0]));
       if (matchedVoice) {
@@ -53,16 +44,32 @@ export default function EntranceVoiceGreeting() {
     }
   };
 
-  const handleInitialVoicePlay = () => {
-    speakText('Namaste! Welcome to SchemeSetu. Please select your preferred language.', 'hi-IN');
+  const handleInitialVoiceGreeting = () => {
+    speakText('Namaste! Welcome to SchemeSetu. Please select your preferred language. नमस्ते! अपनी भाषा चुनें। నమస్కారం! మీ భాషను ఎంచుకోండి.', 'hi-IN');
   };
+
+  useEffect(() => {
+    const hasSeenGreeting = sessionStorage.getItem('schemesetu_entrance_greeted');
+    if (!hasSeenGreeting) {
+      setIsOpen(true);
+      sessionStorage.setItem('schemesetu_entrance_greeted', 'true');
+
+      // Attempt automatic speech greeting on mount
+      if (!hasSpokenOnOpenRef.current) {
+        hasSpokenOnOpenRef.current = true;
+        setTimeout(() => {
+          handleInitialVoiceGreeting();
+        }, 500);
+      }
+    }
+  }, []);
 
   const handleSelectLanguage = (item) => {
     changeLanguage(item.code);
     speakText(item.greeting, item.voiceLang);
     setTimeout(() => {
       setIsOpen(false);
-    }, 600);
+    }, 700);
   };
 
   if (!isOpen) return null;
@@ -73,8 +80,9 @@ export default function EntranceVoiceGreeting() {
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(11, 25, 44, 0.82)',
+        backgroundColor: 'rgba(11, 25, 44, 0.85)',
         backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
@@ -87,9 +95,9 @@ export default function EntranceVoiceGreeting() {
         style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '20px',
-          maxWidth: '560px',
+          maxWidth: '580px',
           width: '100%',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.1)'
         }}
@@ -105,7 +113,7 @@ export default function EntranceVoiceGreeting() {
               position: 'absolute',
               top: '1rem',
               right: '1rem',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.12)',
               border: 'none',
               borderRadius: '50%',
               width: '32px',
@@ -116,13 +124,13 @@ export default function EntranceVoiceGreeting() {
               alignItems: 'center',
               justifyContent: 'center'
             }}
-            aria-label="Close language greeting modal"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #F59E0B, #D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0B192C', fontWeight: 800, fontSize: '1.3rem' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #F59E0B, #D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0B192C', fontWeight: 800, fontSize: '1.4rem' }}>
               से
             </div>
             <div>
@@ -130,23 +138,24 @@ export default function EntranceVoiceGreeting() {
                 Welcome to SchemeSetu
               </h2>
               <p style={{ fontSize: '0.85rem', color: '#CBD5E1', margin: 0 }}>
-                AI-Powered Government Scheme & Welfare Discovery
+                AI-Powered Citizen Scheme & Welfare Discovery
               </p>
             </div>
           </div>
 
-          <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.5rem 0.85rem', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.85rem', color: '#FCD34D', fontWeight: 600 }}>
-              🔊 Voice Welcome Greeting
+          {/* Voice Prompt Action Pill */}
+          <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.5rem 0.85rem', borderRadius: '10px' }}>
+            <span style={{ fontSize: '0.85rem', color: '#FCD34D', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Volume2 size={16} /> Voice Assistant Greeting
             </span>
             <button
-              onClick={handleInitialVoicePlay}
+              onClick={handleInitialVoiceGreeting}
               style={{
                 backgroundColor: isSpeaking ? '#DC2626' : '#F59E0B',
                 color: isSpeaking ? '#FFFFFF' : '#0B192C',
                 border: 'none',
                 borderRadius: '6px',
-                padding: '0.3rem 0.75rem',
+                padding: '0.35rem 0.85rem',
                 fontSize: '0.78rem',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -156,18 +165,18 @@ export default function EntranceVoiceGreeting() {
               }}
             >
               {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
-              <span>{isSpeaking ? 'Stop Voice' : 'Play Voice Greeting'}</span>
+              <span>{isSpeaking ? 'Stop Voice' : '🔊 Play Voice Prompt'}</span>
             </button>
           </div>
         </div>
 
-        {/* Language Grid */}
+        {/* Language Selection Grid */}
         <div style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem', textAlign: 'center' }}>
-            Select Your Preferred Language / अपनी भाषा चुनें / మీ భాషను ఎంచుకోండి
+          <h3 style={{ fontSize: '1.02rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem', textAlign: 'center' }}>
+            Choose Your Language / अपनी भाषा चुनें / మీ భాషను ఎంచుకోండి
           </h3>
-          <p style={{ fontSize: '0.82rem', color: '#64748B', textAlign: 'center', marginBottom: '1.25rem' }}>
-            SchemeSetu will translate the entire application and speak voice assistance in your chosen language.
+          <p style={{ fontSize: '0.82rem', color: '#64748B', textAlign: 'center', marginBottom: '1.25rem', lineHeight: 1.4 }}>
+            Click any language to hear the voice greeting and switch the entire SchemeSetu platform.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(115px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -181,7 +190,7 @@ export default function EntranceVoiceGreeting() {
                     backgroundColor: isSelected ? '#EFF6FF' : '#F8FAFC',
                     border: `2px solid ${isSelected ? '#2563EB' : '#E2E8F0'}`,
                     borderRadius: '12px',
-                    padding: '0.75rem 0.5rem',
+                    padding: '0.85rem 0.5rem',
                     textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
@@ -198,7 +207,7 @@ export default function EntranceVoiceGreeting() {
                     if (!isSelected) e.currentTarget.style.borderColor = '#E2E8F0';
                   }}
                 >
-                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: isSelected ? '#1D4ED8' : '#0F172A' }}>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: isSelected ? '#1D4ED8' : '#0F172A' }}>
                     {item.name}
                   </span>
                   <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 500 }}>
@@ -221,9 +230,9 @@ export default function EntranceVoiceGreeting() {
                 setIsOpen(false);
               }}
               className="btn btn-primary"
-              style={{ padding: '0.65rem 2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{ padding: '0.65rem 2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}
             >
-              <span>Continue to SchemeSetu</span> <ArrowRight size={16} />
+              <span>Continue / आगे बढ़ें / కొనసాగించండి</span> <ArrowRight size={16} />
             </button>
           </div>
         </div>

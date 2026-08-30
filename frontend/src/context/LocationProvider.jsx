@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LocationContext } from './useLocation';
 import { MOCK_PARTNERS } from '../data/mock/partners';
 
-// Standard Indian State/UT centroids and major district centers
+// Standard Indian State/UT centroids and major district centers for offline fallback
 export const INDIAN_LOCATIONS = [
   { state: 'Telangana', district: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
   { state: 'Andhra Pradesh', district: 'Amaravati / Vijayawada', lat: 16.5062, lng: 80.6480 },
@@ -40,19 +40,25 @@ export function LocationProvider({ children }) {
     return {
       lat: null,
       lng: null,
+      accuracy: null,
+      timestamp: null,
       state: '',
       district: '',
       address: '',
       isGPS: false,
-      isDemo: false
+      isDemo: false,
+      accuracyWarning: ''
     };
   });
 
   const [nearbyPartners, setNearbyPartners] = useState(MOCK_PARTNERS);
 
-  // Haversine formula to compute distance in km
+  // Haversine formula to compute distance in km using genuine coordinates
   const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    if (lat1 === null || lat1 === undefined || lon1 === null || lon1 === undefined ||
+        lat2 === null || lat2 === undefined || lon2 === null || lon2 === undefined) {
+      return null;
+    }
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -64,15 +70,20 @@ export function LocationProvider({ children }) {
     return Math.round(R * c * 10) / 10;
   }, []);
 
+  // Dynamically sort assistance centers based on real distance to user's coordinates
   const refreshPartnerDistances = useCallback((lat, lng) => {
-    if (!lat || !lng) {
+    if (lat === null || lat === undefined || lng === null || lng === undefined) {
       setNearbyPartners(MOCK_PARTNERS);
       return;
     }
     const updated = MOCK_PARTNERS.map(p => ({
       ...p,
-      distanceKm: calculateDistance(lat, lng, p.latitude || p.lat, p.longitude || p.lng) || p.distanceKm
-    })).sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999));
+      distanceKm: calculateDistance(lat, lng, p.latitude || p.lat, p.longitude || p.lng)
+    })).sort((a, b) => {
+      const distA = a.distanceKm !== null ? a.distanceKm : 9999;
+      const distB = b.distanceKm !== null ? b.distanceKm : 9999;
+      return distA - distB;
+    });
     setNearbyPartners(updated);
   }, [calculateDistance]);
 
@@ -84,10 +95,15 @@ export function LocationProvider({ children }) {
     }
   }, [refreshPartnerDistances]);
 
-  // Reverse Geocoding with fallback to nearest known state/district
+  // Reverse Geocoding: Uses OpenStreetMap Nominatim with offline fallback to nearest known centroid
   const reverseGeocode = useCallback(async (lat, lng) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         const address = data.address || {};
@@ -97,15 +113,16 @@ export function LocationProvider({ children }) {
           return {
             state: state || 'Telangana',
             district: district || 'Hyderabad',
-            address: data.display_name || `${district}, ${state}`
+            address: data.display_name || `${district}, ${state}`,
+            source: 'online'
           };
         }
       }
     } catch (e) {
-      console.warn("Reverse geocode network error, using nearest coordinate math:", e);
+      // Graceful offline fallback
     }
 
-    // Nearest centroid fallback math
+    // Nearest known centroid calculation
     let closest = INDIAN_LOCATIONS[0];
     let minD = Infinity;
     for (const item of INDIAN_LOCATIONS) {
@@ -118,34 +135,50 @@ export function LocationProvider({ children }) {
     return {
       state: closest.state,
       district: closest.district,
-      address: `${closest.district}, ${closest.state}`
+      address: `${closest.district}, ${closest.state} (Near Centroid Reference)`,
+      source: 'offline_centroid'
     };
   }, [calculateDistance]);
 
-  // Explicit User-Initiated GPS Geolocation
-  const detectCurrentGPSLocation = useCallback(() => {
-    if (!('geolocation' in navigator)) {
+  // Real Browser Geolocation API
+  const detectCurrentGPSLocation = useCallback((forceFresh = false) => {
+    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       setLocationStatus('unsupported');
-      setErrorMessage('Geolocation is not supported by your browser.');
+      setErrorMessage('GPS location is not supported by this browser.');
       return;
     }
 
     setLocationStatus('detecting');
     setErrorMessage('');
 
+    const geoOptions = {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: forceFresh ? 0 : 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
+        const timestamp = pos.timestamp || Date.now();
         const details = await reverseGeocode(latitude, longitude);
+
+        let accuracyWarning = '';
+        if (accuracy && accuracy > 1000) {
+          accuracyWarning = `GPS accuracy is low (±${Math.round(accuracy)} m). Move to an open area and try again.`;
+        }
 
         const gpsLoc = {
           lat: latitude,
           lng: longitude,
+          accuracy: accuracy ? Math.round(accuracy) : null,
+          timestamp,
           state: details.state,
           district: details.district,
           address: details.address,
           isGPS: true,
-          isDemo: false
+          isDemo: false,
+          accuracyWarning
         };
 
         setLocation(gpsLoc);
@@ -156,32 +189,45 @@ export function LocationProvider({ children }) {
       },
       (err) => {
         let status = 'unavailable';
-        let msg = 'Unable to determine your GPS location. You can select your state manually.';
+        let msg = 'Your device could not determine the current location.';
+        
         if (err.code === 1) { // PERMISSION_DENIED
           status = 'denied';
-          msg = 'Location permission was denied. You can select your state or district manually.';
+          msg = 'Location permission was denied. Enable location access in your browser settings.';
+        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+          status = 'unavailable';
+          msg = 'Your device could not determine the current location.';
         } else if (err.code === 3) { // TIMEOUT
           status = 'timeout';
-          msg = 'Location request timed out. Please try again or select manually.';
+          msg = 'GPS detection timed out. Please try again.';
         }
+
         setLocationStatus(status);
         setErrorMessage(msg);
         localStorage.setItem('schemesetu_location_status', status);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      geoOptions
     );
   }, [reverseGeocode, refreshPartnerDistances]);
+
+  // Refresh Location Action: Forces a fresh GPS reading
+  const refreshLocation = useCallback(() => {
+    detectCurrentGPSLocation(true);
+  }, [detectCurrentGPSLocation]);
 
   // Demo Location Setup (Specifically for SIH Hackathon Evaluation)
   const setDemoLocation = useCallback((stateName = 'Tamil Nadu', districtName = 'Chennai') => {
     const demoLoc = {
       lat: 13.0827,
       lng: 80.2707,
+      accuracy: 10,
+      timestamp: Date.now(),
       state: stateName,
       district: districtName,
       address: `${districtName}, ${stateName} (Demo Location)`,
       isGPS: false,
-      isDemo: true
+      isDemo: true,
+      accuracyWarning: ''
     };
     setLocation(demoLoc);
     setLocationStatus('demo');
@@ -196,11 +242,14 @@ export function LocationProvider({ children }) {
     const manualLoc = {
       lat: match.lat,
       lng: match.lng,
+      accuracy: null,
+      timestamp: Date.now(),
       state: match.state,
       district: match.district,
       address: `${match.district}, ${match.state}`,
       isGPS: false,
-      isDemo: false
+      isDemo: false,
+      accuracyWarning: ''
     };
     setLocation(manualLoc);
     setLocationStatus('detected');
@@ -216,6 +265,7 @@ export function LocationProvider({ children }) {
       errorMessage, 
       updateLocation, 
       detectCurrentGPSLocation, 
+      refreshLocation,
       setDemoLocation, 
       setManualLocation, 
       nearbyPartners, 

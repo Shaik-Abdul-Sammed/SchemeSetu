@@ -11,7 +11,10 @@ import {
   AlertCircle, 
   Sparkles, 
   Info,
-  ExternalLink 
+  RefreshCw,
+  Clock,
+  Compass,
+  AlertTriangle
 } from 'lucide-react';
 import PartnerDetailsModal from './PartnerDetailsModal';
 
@@ -21,6 +24,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
     locationStatus, 
     errorMessage, 
     detectCurrentGPSLocation, 
+    refreshLocation,
     setDemoLocation, 
     setManualLocation, 
     nearbyPartners, 
@@ -40,21 +44,26 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(5, 12, 26, 0.85)',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
-      zIndex: 10000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem'
-    }}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(5, 12, 26, 0.85)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        zIndex: 10000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="location-radar-title"
+    >
       <div className="card" style={{
         width: '100%',
         maxWidth: '860px',
@@ -92,7 +101,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
               <Radio size={22} className="animate-pulse" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.25rem', color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
+              <h2 id="location-radar-title" style={{ fontSize: '1.25rem', color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
                 {t('locationSetup', 'SchemeSetu Location Radar')}
               </h2>
               <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
@@ -102,6 +111,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             style={{
               background: 'none',
@@ -121,6 +131,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
 
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', flexGrow: 1 }}>
+          
           {/* Geolocation Detection Actions */}
           <div style={{
             display: 'grid',
@@ -129,19 +140,21 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
             marginBottom: '1.25rem'
           }}>
             <button
-              onClick={detectCurrentGPSLocation}
+              type="button"
+              onClick={() => detectCurrentGPSLocation(true)}
               disabled={locationStatus === 'detecting'}
               className="btn btn-primary"
               style={{ justifyContent: 'center', fontWeight: 600 }}
             >
               <Navigation size={18} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
               {locationStatus === 'detecting' 
-                ? t('detectingLocation', '📍 Detecting location...') 
+                ? t('detectingLocation', '📍 Detecting GPS...') 
                 : t('useMyLocation', 'Use Current GPS Geolocation')}
             </button>
 
             <button
-              onClick={() => setDemoLocation('Tamil Nadu')}
+              type="button"
+              onClick={() => setDemoLocation('Tamil Nadu', 'Chennai')}
               className="btn btn-secondary"
               style={{ justifyContent: 'center', borderColor: '#F59E0B', color: '#FCD34D' }}
             >
@@ -181,7 +194,27 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
             }}>
               <AlertCircle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
               <div>
-                <strong>Location Permission Denied:</strong> {errorMessage || 'Location permission was denied. You can search or select your state/district manually.'}
+                <strong>Location Permission Denied:</strong> {errorMessage || 'Location permission was denied. Enable location access in your browser settings or select manually.'}
+              </div>
+            </div>
+          )}
+
+          {locationStatus === 'unavailable' && (
+            <div style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '10px',
+              padding: '0.85rem 1rem',
+              color: '#FCA5A5',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontSize: '0.85rem',
+              marginBottom: '1.25rem'
+            }}>
+              <AlertCircle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+              <div>
+                <strong>Position Unavailable:</strong> {errorMessage || 'Your device could not determine the current location.'}
               </div>
             </div>
           )}
@@ -201,53 +234,93 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
             }}>
               <AlertCircle size={18} style={{ color: '#F59E0B', flexShrink: 0 }} />
               <div>
-                <strong>GPS Timeout:</strong> Location request timed out. Please retry or select your state manually from the dropdown above.
+                <strong>GPS Timeout:</strong> GPS detection timed out. Please try again or select your state manually.
               </div>
             </div>
           )}
 
-          {/* Current Location Display Card */}
+          {/* Current Location Display & Accuracy Card */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
             backgroundColor: '#1E293B',
-            padding: '0.85rem 1.15rem',
-            borderRadius: '10px',
+            padding: '1rem 1.25rem',
+            borderRadius: '12px',
             marginBottom: '1.5rem',
-            fontSize: '0.88rem',
-            border: '1px solid #334155',
-            flexWrap: 'wrap',
-            gap: '0.5rem'
+            border: '1px solid #334155'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#38BDF8' }}>
-              <MapPin size={18} />
-              <span style={{ color: '#FFFFFF', fontWeight: 600 }}>
-                {location.isDemo 
-                  ? `Demo Location: ${location.district}, ${location.state} (Prototype data)`
-                  : location.isGPS 
-                    ? `Current Location: ${location.district}, ${location.state}`
-                    : location.state 
-                      ? `Selected State: ${location.district}, ${location.state}`
-                      : 'Location not set (Select State or Click GPS)'}
-              </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#38BDF8' }}>
+                <MapPin size={18} />
+                <span style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>
+                  {location.isDemo 
+                    ? `Demo Location: ${location.district}, ${location.state}`
+                    : location.isGPS 
+                      ? `Current Location: ${location.district || ''}, ${location.state || ''}`
+                      : location.state 
+                        ? `Selected State: ${location.district || ''}, ${location.state}`
+                        : 'Location not set (Select State or Click GPS)'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {location.isGPS && (
+                  <button
+                    type="button"
+                    onClick={refreshLocation}
+                    className="btn btn-secondary btn-xs"
+                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderColor: '#38BDF8', color: '#38BDF8' }}
+                    title="Refresh GPS Coordinates"
+                  >
+                    <RefreshCw size={12} /> Refresh Location
+                  </button>
+                )}
+                {location.isGPS && (
+                  <span style={{ color: '#10B981', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                    <ShieldCheck size={14} /> Live GPS Detected
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {location.isGPS && (
-                <span style={{ color: '#10B981', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-                  <ShieldCheck size={14} /> Live GPS Detected
-                </span>
-              )}
-              {location.isDemo && (
-                <span style={{ color: '#F59E0B', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(245, 158, 11, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-                  <Sparkles size={14} /> Predefined Demo
-                </span>
-              )}
-            </div>
+            {/* Coordinates & Accuracy Details */}
+            {location.lat !== null && location.lng !== null && (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                gap: '0.5rem', 
+                fontSize: '0.8rem', 
+                color: '#94A3B8',
+                paddingTop: '0.5rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <div>
+                  <span style={{ color: '#64748B' }}>Latitude:</span> <strong>{Number(location.lat).toFixed(4)}° N</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748B' }}>Longitude:</span> <strong>{Number(location.lng).toFixed(4)}° E</strong>
+                </div>
+                {location.accuracy !== null && (
+                  <div>
+                    <span style={{ color: '#64748B' }}>Accuracy:</span> <strong style={{ color: location.accuracy <= 100 ? '#34D399' : '#FBBF24' }}>±{location.accuracy} m</strong>
+                  </div>
+                )}
+                {location.timestamp && (
+                  <div>
+                    <span style={{ color: '#64748B' }}>Updated:</span> <strong>{new Date(location.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Low Accuracy Warning */}
+            {location.accuracyWarning && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#FCD34D', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <AlertTriangle size={14} />
+                <span>{location.accuracyWarning}</span>
+              </div>
+            )}
           </div>
 
-          {/* Mapped Partners List with Prototype Disclaimer */}
+          {/* Mapped Partners List */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -255,7 +328,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
                   {t('empanelledBranches', 'Empanelled Bank Branches & CSC Centers')}
                 </h3>
                 <span style={{ fontSize: '0.7rem', color: '#94A3B8', backgroundColor: '#334155', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                  Prototype / Demo locations
+                  Sorted by actual distance
                 </span>
               </div>
               <span style={{ fontSize: '0.8rem', color: '#38BDF8', backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 700 }}>
@@ -295,8 +368,8 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
                       </span>
                       <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38BDF8' }}>
                         {partner.distanceKm !== null && partner.distanceKm !== undefined
-                          ? `${partner.distanceKm} km`
-                          : (location.lat && location.lng ? 'Calculated' : 'Demo center')}
+                          ? `${partner.distanceKm} km away`
+                          : 'Calculated upon GPS'}
                       </span>
                     </div>
 
@@ -332,7 +405,12 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
           alignItems: 'center',
           backgroundColor: '#0B192C'
         }}>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ minWidth: '160px', justifyContent: 'center' }}>
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="btn btn-secondary btn-sm" 
+            style={{ minWidth: '160px', justifyContent: 'center' }}
+          >
             {t('closeBtn', 'Done / Set Radar')}
           </button>
         </div>

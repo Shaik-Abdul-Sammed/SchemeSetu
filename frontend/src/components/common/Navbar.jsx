@@ -15,21 +15,22 @@ import {
   X, 
   LayoutDashboard,
   FileCheck,
-  Mic,
-  Users,
-  MessageSquare,
-  Settings,
-  Download,
-  ChevronDown,
+  Bot,
   MapPin,
-  Navigation
+  Navigation,
+  ChevronDown,
+  Scale,
+  Calculator,
+  MessageSquare,
+  Users,
+  Settings,
+  AlertCircle
 } from 'lucide-react';
 
-export default function Navbar({ onOpenVoiceAssistant }) {
+export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { lang, t } = useLanguage();
-  const { location, locationStatus, detectCurrentGPSLocation } = useLocation();
-  const { isInstalled, triggerInstall } = usePWA();
+  const { location, locationStatus } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -61,7 +62,10 @@ export default function Navbar({ onOpenVoiceAssistant }) {
     if (location.state) {
       return location.state;
     }
-    return t('selectLocation', 'Set Location');
+    if (locationStatus === 'denied' || locationStatus === 'unavailable') {
+      return t('setLocation', 'Set Location');
+    }
+    return t('detectLocation', 'Detect Location');
   };
 
   return (
@@ -81,23 +85,23 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             </div>
           </Link>
 
-          {/* 2. NAVBAR CONTROLS (DESKTOP & MOBILE HEADER RIGHT) */}
+          {/* 2. RIGHT-SIDE CONTROLS (LOCATION ICON + MOBILE LANG + HAMBURGER) */}
           <div className="nav-controls-right" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             
-            {/* Direct Visible Location / GPS Badge */}
+            {/* ONE CLEARLY VISIBLE LOCATION / GPS BADGE */}
             <button
               type="button"
               onClick={() => setLocationModalOpen(true)}
               className="navbar-location-btn"
-              title={location.address ? `Location: ${location.address}` : 'Click to update current location or GPS'}
+              title={location.address ? `Current Location: ${location.address}` : 'Current Location'}
               aria-label={`Current Location: ${getLocationDisplayText()}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
                 backgroundColor: location.isGPS ? 'rgba(5, 150, 105, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                color: location.isGPS ? '#34D399' : '#CBD5E1',
-                border: `1px solid ${location.isGPS ? '#059669' : 'rgba(255, 255, 255, 0.2)'}`,
+                color: location.isGPS ? '#34D399' : (locationStatus === 'denied' || locationStatus === 'unavailable' ? '#FCA5A5' : '#CBD5E1'),
+                border: `1px solid ${location.isGPS ? '#059669' : (locationStatus === 'denied' ? '#EF4444' : 'rgba(255, 255, 255, 0.2)')}`,
                 padding: '0.35rem 0.75rem',
                 borderRadius: '20px',
                 fontSize: '0.82rem',
@@ -109,6 +113,8 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             >
               {locationStatus === 'detecting' ? (
                 <Navigation size={14} className="animate-spin" style={{ color: '#38BDF8' }} />
+              ) : locationStatus === 'denied' || locationStatus === 'unavailable' ? (
+                <AlertCircle size={14} style={{ color: '#EF4444' }} />
               ) : (
                 <MapPin size={14} style={{ color: location.isGPS ? '#34D399' : '#F59E0B' }} />
               )}
@@ -127,12 +133,12 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               )}
             </button>
 
-            {/* Mobile-Only Language Icon */}
+            {/* Mobile Language Selector */}
             <div className="mobile-only-lang">
               <LanguageSelectorIcon />
             </div>
 
-            {/* Mobile Menu Toggle Button */}
+            {/* Mobile Menu Button */}
             <button 
               className="mobile-menu-btn" 
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -143,8 +149,10 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             </button>
           </div>
 
-          {/* 3. DESKTOP & MOBILE NAVIGATION LINKS */}
+          {/* 3. PRIMARY & COMPACT NAVIGATION LINKS */}
           <nav className={`nav-links ${mobileOpen ? 'open' : ''}`} aria-label="Main Navigation">
+            
+            {/* Primary Nav Item 1: Home */}
             <NavLink 
               to="/" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
@@ -153,61 +161,43 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               {t('home', 'Home')}
             </NavLink>
 
+            {/* Primary Nav Item 2: Schemes */}
             <NavLink 
               to="/schemes" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
               onClick={() => setMobileOpen(false)}
             >
-              <Building2 size={16} /> {t('exploreSchemes', 'Schemes')}
+              <Building2 size={15} /> {t('exploreSchemes', 'Schemes')}
             </NavLink>
 
-            <NavLink 
-              to="/eligibility" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              <Sparkles size={16} /> {t('checkEligibility', 'Eligibility')}
-            </NavLink>
-
-            <button 
-              type="button"
-              onClick={() => {
-                setMobileOpen(false);
-                if (onOpenVoiceAssistant) onOpenVoiceAssistant();
-                else navigate('/input');
-              }} 
-              className="nav-link nav-link-voice"
-              title="Open Voice Assistant"
-              aria-label="Open SchemeSetu AI Voice Assistant"
-            >
-              <Mic size={16} style={{ color: '#F59E0B' }} /> {t('voiceAssistant', 'Voice AI')}
-            </button>
-
-            <NavLink 
-              to="/compare" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              {t('compare', 'Compare')}
-            </NavLink>
-
+            {/* Primary Nav Item 3: Applications */}
             <NavLink 
               to="/applications" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
               onClick={() => setMobileOpen(false)}
             >
-              <FileCheck size={16} /> {t('applications', 'Applications')}
+              <FileCheck size={15} /> {t('applications', 'Applications')}
             </NavLink>
 
+            {/* Primary Nav Item 4: Assistance Centers */}
             <NavLink 
               to="/locations" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
               onClick={() => setMobileOpen(false)}
             >
-              <MapPin size={16} /> {t('partners', 'Locations')}
+              <MapPin size={15} /> {t('partners', 'Assistance')}
             </NavLink>
 
-            {/* Desktop More Menu for Secondary Portals */}
+            {/* Primary Nav Item 5: Agent / Intake Hub */}
+            <NavLink 
+              to="/input" 
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+              onClick={() => setMobileOpen(false)}
+            >
+              <Bot size={15} style={{ color: '#F59E0B' }} /> {t('agentMode', 'Agent')}
+            </NavLink>
+
+            {/* SECONDARY FEATURES GROUPED UNDER "MORE ▼" */}
             <div className="more-menu-container" style={{ position: 'relative' }} ref={moreRef}>
               <button
                 type="button"
@@ -216,10 +206,10 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                 style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                 aria-expanded={moreOpen}
                 aria-haspopup="true"
-                aria-label="More Navigation Options"
+                aria-label="More Options"
               >
                 <span>{t('moreMenu', 'More')}</span>
-                <ChevronDown size={14} style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                <ChevronDown size={13} style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
 
               {moreOpen && (
@@ -233,7 +223,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                     borderRadius: '12px',
                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                     zIndex: 9999,
-                    minWidth: '200px',
+                    minWidth: '220px',
                     padding: '0.4rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -242,13 +232,43 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                   role="menu"
                 >
                   <NavLink
+                    to="/eligibility"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                    role="menuitem"
+                  >
+                    <Sparkles size={15} style={{ color: '#F59E0B' }} /> {t('checkEligibility', 'Check Eligibility')}
+                  </NavLink>
+
+                  <NavLink
+                    to="/compare"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                    role="menuitem"
+                  >
+                    <Scale size={15} style={{ color: '#38BDF8' }} /> {t('compare', 'Compare Schemes')}
+                  </NavLink>
+
+                  <NavLink
+                    to="/results"
+                    className="nav-link"
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
+                    role="menuitem"
+                  >
+                    <Calculator size={15} style={{ color: '#A78BFA' }} /> {t('calculateEMI', 'EMI Calculator')}
+                  </NavLink>
+
+                  <NavLink
                     to="/community"
                     className="nav-link"
                     style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
                     role="menuitem"
                   >
-                    <MessageSquare size={16} style={{ color: '#38BDF8' }} /> {t('community', 'Community Forum')}
+                    <MessageSquare size={15} style={{ color: '#38BDF8' }} /> {t('community', 'Community Forum')}
                   </NavLink>
 
                   <NavLink
@@ -258,7 +278,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                     onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
                     role="menuitem"
                   >
-                    <Users size={16} style={{ color: '#4ADE80' }} /> {t('vle', 'VLE Agent Portal')}
+                    <Users size={15} style={{ color: '#4ADE80' }} /> {t('vle', 'VLE Agent Portal')}
                   </NavLink>
 
                   <NavLink
@@ -268,7 +288,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                     onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
                     role="menuitem"
                   >
-                    <Settings size={16} style={{ color: '#CBD5E1' }} /> {t('admin', 'Admin Portal')}
+                    <Settings size={15} style={{ color: '#CBD5E1' }} /> {t('admin', 'Admin Portal')}
                   </NavLink>
                 </div>
               )}
@@ -279,24 +299,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               <LanguageSelectorIcon />
             </div>
 
-            {/* Install App Button */}
-            {!isInstalled && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  triggerInstall();
-                }}
-                className="btn btn-secondary btn-sm navbar-install-btn"
-                title="Install SchemeSetu Web App"
-                aria-label="Install SchemeSetu App"
-              >
-                <Download size={14} />
-                <span style={{ fontSize: '0.82rem' }}>{t('installAppBtn', 'Install App')}</span>
-              </button>
-            )}
-
-            {/* Auth Login / Dashboard */}
+            {/* Auth Profile / Login */}
             {isAuthenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <NavLink 
@@ -304,7 +307,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                   onClick={() => setMobileOpen(false)}
                 >
-                  <LayoutDashboard size={16} /> {t('dashboard', 'Dashboard')}
+                  <LayoutDashboard size={15} /> {t('dashboard', 'Dashboard')}
                 </NavLink>
                 <button 
                   type="button"
@@ -341,7 +344,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
         </div>
       </header>
 
-      {/* Snapchat Location Setup Radar Modal */}
+      {/* Location Modal */}
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}

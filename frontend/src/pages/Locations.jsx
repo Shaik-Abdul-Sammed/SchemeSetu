@@ -18,85 +18,45 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useLocation } from '../context/LocationContext';
 import { MOCK_PARTNERS } from '../data/mock/partners';
-import { safeGetLocation } from '../utils/capacitor';
-
-// Haversine distance calculation in km
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-  const R = 6371; // Earth radius in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(1);
-}
 
 export default function Locations() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { 
+    location, 
+    locationStatus, 
+    errorMessage, 
+    detectCurrentGPSLocation, 
+    refreshLocation, 
+    nearbyPartners,
+    calculateDistance
+  } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
-  const [userCoords, setUserCoords] = useState(null);
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [gpsError, setGpsError] = useState(null);
   const [selectedCenter, setSelectedCenter] = useState(null);
 
-  // Attempt optional GPS detect
-  const handleDetectGps = async () => {
-    setGpsLoading(true);
-    setGpsError(null);
-    try {
-      const loc = await safeGetLocation();
-      if (loc && loc.lat && loc.lng) {
-        setUserCoords({ lat: loc.lat, lng: loc.lng });
-      } else {
-        setGpsError('Geolocation unavailable. Please search manually by state or district.');
-      }
-    } catch (e) {
-      setGpsError('Location permission denied or unavailable.');
-    } finally {
-      setGpsLoading(false);
-    }
+  // Attempt GPS detect via centralized location service
+  const handleDetectGps = () => {
+    detectCurrentGPSLocation(true);
   };
 
-  // Filter and compute distances
-  const filteredPartners = MOCK_PARTNERS.map(partner => {
-    let dist = partner.distanceKm;
-    if (userCoords && partner.coordinates?.lat && partner.coordinates?.lng) {
-      const computed = calculateDistance(
-        userCoords.lat,
-        userCoords.lng,
-        partner.coordinates.lat,
-        partner.coordinates.lng
-      );
-      if (computed !== null) {
-        dist = parseFloat(computed);
-      }
-    }
-    return { ...partner, calculatedDistance: dist };
-  }).filter(partner => {
+  // Filter from dynamically sorted nearbyPartners from LocationContext
+  const filteredPartners = nearbyPartners.filter(partner => {
     const matchesSearch = 
       partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       partner.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (partner.district && partner.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (partner.supportedServices && partner.supportedServices.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
 
-    const matchesState = selectedState === 'All' || partner.address.includes(selectedState);
+    const matchesState = selectedState === 'All' || partner.address.includes(selectedState) || partner.state === selectedState;
     const matchesType = selectedType === 'All' || partner.type === selectedType;
 
     return matchesSearch && matchesState && matchesType;
   });
-
-  // Sort by calculated distance ascending if coordinates available
-  if (userCoords) {
-    filteredPartners.sort((a, b) => (a.calculatedDistance || 9999) - (b.calculatedDistance || 9999));
-  }
 
   const stateOptions = ['All', 'Telangana', 'Tamil Nadu', 'Andhra Pradesh', 'Maharashtra', 'Karnataka', 'Delhi'];
   const typeOptions = ['All', 'Public Sector Bank', 'Common Services Centre (CSC)', 'District Welfare Center', 'KVIC Facilitation Center'];
@@ -121,24 +81,24 @@ export default function Locations() {
           <button
             type="button"
             onClick={handleDetectGps}
-            disabled={gpsLoading}
+            disabled={locationStatus === 'detecting'}
             className="btn btn-primary"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
           >
-            <Navigation size={16} />
-            <span>{gpsLoading ? 'Detecting Location...' : t('loc_detectGps', 'Use Current GPS Location')}</span>
+            <Navigation size={16} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
+            <span>{locationStatus === 'detecting' ? 'Detecting GPS...' : t('loc_detectGps', 'Use Current GPS Location')}</span>
           </button>
 
-          {userCoords && (
+          {location.isGPS && location.lat !== null && location.lng !== null && (
             <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CheckCircle2 size={14} /> GPS Active (Lat: {userCoords.lat.toFixed(2)}, Lng: {userCoords.lng.toFixed(2)})
+              <CheckCircle2 size={14} /> GPS Active (Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}{location.accuracy ? `, ±${location.accuracy}m` : ''})
             </span>
           )}
         </div>
 
-        {gpsError && (
+        {errorMessage && locationStatus !== 'detected' && locationStatus !== 'idle' && (
           <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', color: '#991B1B', backgroundColor: '#FEF2F2', padding: '0.4rem 0.8rem', borderRadius: '8px', display: 'inline-block' }}>
-            {gpsError}
+            {errorMessage}
           </div>
         )}
       </div>

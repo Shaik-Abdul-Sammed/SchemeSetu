@@ -18,7 +18,8 @@ import {
   ChevronUp,
   ExternalLink,
   Phone,
-  Landmark
+  Landmark,
+  ArrowRight
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useLocation } from '../../context/LocationContext';
@@ -106,7 +107,7 @@ export default function AgentReportModal({
       <div 
         className="card" 
         style={{
-          maxWidth: '720px',
+          maxWidth: '680px',
           width: '100%',
           maxHeight: '90vh',
           backgroundColor: '#FFFFFF',
@@ -120,7 +121,7 @@ export default function AgentReportModal({
       >
         {/* Header */}
         <div style={{
-          padding: '1.25rem 1.5rem',
+          padding: '1.15rem 1.5rem',
           backgroundColor: '#0B192C',
           color: '#FFFFFF',
           display: 'flex',
@@ -129,16 +130,16 @@ export default function AgentReportModal({
           borderBottom: '2px solid #F59E0B'
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
               <span className="badge" style={{ backgroundColor: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 700 }}>
-                ✓ Validated Intake Result
+                ✓ Intake Result Verified
               </span>
               <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                Ref: SS-AGENT-{Date.now().toString().slice(-6)}
+                Ref: SS-AG-{Date.now().toString().slice(-6)}
               </span>
             </div>
-            <h2 id="agent-report-title" style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
-              Beneficiary Recommendation Summary
+            <h2 id="agent-report-title" style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+              Beneficiary Recommendation Dossier
             </h2>
           </div>
           <button 
@@ -153,121 +154,74 @@ export default function AgentReportModal({
         </div>
 
         {/* Scrollable Content */}
-        <div style={{ flexGrow: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ flexGrow: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
-          {/* 1. SHORT EXECUTIVE CONCLUSION */}
-          {primaryScheme ? (
+          {/* 1. PRIMARY RESULT SUMMARY */}
+          <div style={{
+            backgroundColor: primaryScheme ? '#F8FAFC' : '#FEF3C7',
+            borderRadius: '12px',
+            border: `1.5px solid ${primaryScheme ? '#E2E8F0' : '#FDE68A'}`,
+            padding: '1.15rem 1.25rem'
+          }}>
             <div style={{
-              backgroundColor: '#ECFDF5',
-              border: '1.5px solid #A7F3D0',
-              borderRadius: '12px',
-              padding: '1rem 1.25rem',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              color: primaryScheme ? '#0284C7' : '#92400E',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '0.75rem',
               display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.85rem'
+              alignItems: 'center',
+              gap: '0.35rem'
             }}>
-              <div style={{
-                backgroundColor: '#059669',
-                color: '#FFFFFF',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                marginTop: '2px'
-              }}>
-                <CheckCircle2 size={18} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Recommendation Result ({primaryMatch.matchScore || 95}% Match)
-                </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#065F46', margin: '0.2rem 0 0.3rem' }}>
-                  Eligible for {primaryScheme.name}
-                </h3>
-                <p style={{ fontSize: '0.86rem', color: '#047857', margin: 0, lineHeight: 1.4 }}>
-                  {primaryMatch.whyRecommended || `Beneficiary meets demographic, income, and sector criteria with maximum government financial incentives.`}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div style={{ backgroundColor: '#FEF3C7', border: '1.5px solid #FDE68A', borderRadius: '12px', padding: '1rem 1.25rem', color: '#92400E' }}>
-              <AlertTriangle size={20} style={{ marginBottom: '0.35rem' }} />
-              <strong>No matching scheme found for the provided criteria.</strong>
-            </div>
-          )}
-
-          {/* 2. KEY HIGHLIGHTS (3-5 BULLET POINTS) */}
-          <div style={{ backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>
-              Key Scheme Parameters & Financials
+              <CheckCircle2 size={15} style={{ color: primaryScheme ? '#059669' : '#D97706' }} /> RESULT
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-              
-              {/* Point 1: Scheme & Department */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                <Building2 size={18} style={{ color: '#0284C7', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block' }}>Department / Ministry:</span>
-                  <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{primaryScheme?.department || primaryScheme?.officialMinistry || 'Government of India'}</strong>
-                </div>
-              </div>
-
-              {/* Point 2: Sanction & Subsidy */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                <Award size={18} style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block' }}>Loan & Capital Subsidy:</span>
-                  <strong style={{ fontSize: '0.88rem', color: '#059669' }}>
-                    {formatIndianCurrency(validatedProfile.loanRequirement || validatedProfile.projectCost)} 
-                    {subsidyPercent > 0 ? ` (${subsidyPercent}% Subsidy: ~${formatIndianCurrency(subsidyAmount)})` : ' (Collateral Free)'}
+            {primaryScheme ? (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.9rem' }}>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• Eligibility:</span>
+                  <strong style={{ color: '#059669' }}>Eligible ({primaryMatch.matchScore || 95}% Match Score)</strong>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• Scheme:</span>
+                  <strong style={{ color: '#0F172A' }}>{primaryScheme.name}</strong>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• Benefit:</span>
+                  <strong style={{ color: '#059669' }}>
+                    {formatIndianCurrency(validatedProfile.loanRequirement || validatedProfile.projectCost)}
+                    {subsidyPercent > 0 ? ` (${subsidyPercent}% Subsidy: ~${formatIndianCurrency(subsidyAmount)})` : ' (Collateral Free Loan)'}
                   </strong>
-                </div>
-              </div>
-
-              {/* Point 3: Estimated Monthly EMI */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                <TrendingUp size={18} style={{ color: '#D97706', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block' }}>Estimated Monthly EMI:</span>
-                  <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• EMI:</span>
+                  <strong style={{ color: '#0F172A' }}>
                     {estimatedEmi > 0 ? `${formatIndianCurrency(estimatedEmi)}/month (@ ${interestRate}% p.a.)` : 'Direct Grant / Zero EMI'}
                   </strong>
-                </div>
-              </div>
-
-              {/* Point 4: Nearest Assistance Node */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                <Landmark size={18} style={{ color: '#7C3AED', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block' }}>Nearest Assistance Center:</span>
-                  <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>
-                    {nearestPartner?.name || 'Lead District Bank Branch'} 
-                    {nearestPartner?.distanceKm !== undefined ? ` (${nearestPartner.distanceKm} km)` : ''}
+                </li>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• Nearest Center:</span>
+                  <strong style={{ color: '#0F172A' }}>{nearestPartner?.name || 'Lead District Bank Branch'}</strong>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span style={{ color: '#64748B', minWidth: '110px', fontSize: '0.82rem' }}>• Distance:</span>
+                  <strong style={{ color: '#0284C7' }}>
+                    {nearestPartner?.distanceKm !== null && nearestPartner?.distanceKm !== undefined ? `${nearestPartner.distanceKm} km away` : 'Calculated via GPS'}
                   </strong>
-                </div>
+                </li>
+              </ul>
+            ) : (
+              <div style={{ color: '#92400E', fontSize: '0.88rem' }}>
+                • Eligibility: Needs Verification — No matching scheme met the exact filter parameters.
               </div>
-
-              {/* Point 5: Mandatory Documents */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', gridColumn: '1 / -1' }}>
-                <FileText size={18} style={{ color: '#475569', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block' }}>Mandatory Documents Required:</span>
-                  <strong style={{ fontSize: '0.86rem', color: '#0F172A' }}>
-                    {primaryScheme?.documentsRequired?.slice(0, 4).join(', ') || 'Aadhaar Card, Community Certificate, Detailed Project Report (DPR)'}
-                  </strong>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* 3. RECOMMENDED NEXT ACTION */}
+          {/* 2. NEXT ACTION */}
           <div style={{
             backgroundColor: '#EFF6FF',
-            border: '1px solid #BFDBFE',
+            border: '1.5px solid #BFDBFE',
             borderRadius: '12px',
             padding: '1rem 1.25rem',
             display: 'flex',
@@ -277,13 +231,14 @@ export default function AgentReportModal({
             gap: '0.75rem'
           }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: '#1E40AF', fontWeight: 700, textTransform: 'uppercase' }}>
-                Recommended Next Step
+              <div style={{ fontSize: '0.72rem', color: '#1E40AF', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                NEXT ACTION
               </div>
-              <p style={{ fontSize: '0.88rem', color: '#1E3A8A', margin: '0.2rem 0 0', fontWeight: 500 }}>
-                {primaryMatch?.nextAction || 'Prepare project report and submit application via the official government portal or nearest partner branch.'}
+              <p style={{ fontSize: '0.88rem', color: '#1E3A8A', margin: '0.2rem 0 0', fontWeight: 600 }}>
+                {primaryMatch?.nextAction || 'Submit Project DPR and Caste Certificate through JanSamarth or visit nearest partner branch.'}
               </p>
             </div>
+
             {primaryScheme?.officialApplicationPortal && (
               <a
                 href={primaryScheme.officialApplicationPortal}
@@ -297,7 +252,7 @@ export default function AgentReportModal({
             )}
           </div>
 
-          {/* 4. EXPANDABLE TECHNICAL DETAILS SECTION */}
+          {/* 3. EXPANDABLE "VIEW DETAILS ▼" SECTION */}
           <div>
             <button
               type="button"
@@ -307,7 +262,7 @@ export default function AgentReportModal({
                 border: 'none',
                 color: '#0284C7',
                 fontSize: '0.84rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -316,15 +271,14 @@ export default function AgentReportModal({
               }}
               aria-expanded={showTechnicalDetails}
             >
-              <span>{showTechnicalDetails ? 'Hide Detailed Technical Analysis' : 'View Detailed Technical Analysis & Criteria Breakdown'}</span>
-              {showTechnicalDetails ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              <span>{showTechnicalDetails ? 'View Details ▲' : 'View Details ▼'}</span>
             </button>
 
             {showTechnicalDetails && (
-              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 
-                {/* Beneficiary Demographics */}
-                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#334155' }}>
+                {/* Applicant Demographics */}
+                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#334155' }}>
                   <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: '#0F172A' }}>Applicant Parameters:</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.35rem' }}>
                     <div>Name: <strong>{validatedProfile.name}</strong></div>
@@ -336,10 +290,18 @@ export default function AgentReportModal({
                   </div>
                 </div>
 
-                {/* Criteria Match Factors */}
+                {/* Required Documents */}
+                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem' }}>
+                  <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem' }}>Mandatory Documents Checklist:</div>
+                  <div style={{ color: '#475569' }}>
+                    {primaryScheme?.documentsRequired?.join(', ') || 'Aadhaar Card, Community/Caste Certificate, Detailed Project Report (DPR), Bank Account Proof'}
+                  </div>
+                </div>
+
+                {/* Matched Reasoning */}
                 {primaryMatch?.matchedCriteria && primaryMatch.matchedCriteria.length > 0 && (
-                  <div style={{ backgroundColor: '#F0FDF4', padding: '0.85rem', borderRadius: '8px', border: '1px solid #DCFCE7', fontSize: '0.82rem' }}>
-                    <div style={{ fontWeight: 700, color: '#166534', marginBottom: '0.35rem' }}>Matched Criteria:</div>
+                  <div style={{ backgroundColor: '#F0FDF4', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #DCFCE7', fontSize: '0.82rem' }}>
+                    <div style={{ fontWeight: 700, color: '#166534', marginBottom: '0.35rem' }}>Matched Suitability Factors:</div>
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#15803D' }}>
                       {primaryMatch.matchedCriteria.map((c, i) => <li key={i}>{c}</li>)}
                     </ul>
@@ -347,8 +309,8 @@ export default function AgentReportModal({
                 )}
 
                 {/* Official Source & Verification Note */}
-                <div style={{ fontSize: '0.76rem', color: '#64748B', lineHeight: 1.4 }}>
-                  <strong>Verification Note:</strong> Algorithmic suitability estimation based on official guidelines from {primaryScheme?.officialMinistry || 'Government of India'}. Final sanction is subject to physical verification by the financing institution.
+                <div style={{ fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4, padding: '0.25rem 0' }}>
+                  <strong>Official Authority:</strong> {primaryScheme?.officialMinistry || primaryScheme?.department || 'Government of India'}. Final sanction and disbursement are subject to physical verification by the financing bank.
                 </div>
               </div>
             )}
@@ -357,7 +319,7 @@ export default function AgentReportModal({
 
         {/* Footer Actions */}
         <div style={{
-          padding: '1rem 1.5rem',
+          padding: '0.85rem 1.5rem',
           backgroundColor: '#F8FAFC',
           borderTop: '1px solid #E2E8F0',
           display: 'flex',

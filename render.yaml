@@ -1,0 +1,60 @@
+# SchemeSetu — Render Blueprint Deployment Configuration
+# Smart India Hackathon 2026 (SIH26092)
+
+services:
+  # ==========================================
+  # 1. Backend Web Service (Node.js / Express)
+  # ==========================================
+  - type: web
+    name: schemesetu-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: schemesetu-frontend
+          property: host
+
+  # ==========================================
+  # 2. Frontend Static Site (React / Vite SPA)
+  # ==========================================
+  - type: web
+    name: schemesetu-frontend
+    runtime: static
+    rootDir: frontend
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: schemesetu-backend
+          property: host
+          transformation: https://%s/api/v1

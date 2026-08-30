@@ -999,12 +999,50 @@ async function runAllTests() {
 
     await test('Translation fallback function returns English value for unknown language', async () => {
       const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
-      assert.strictEqual(t('UNKNOWN', 'brandTitle'), 'SANGASETU');
+      assert.strictEqual(t('UNKNOWN', 'brandTitle'), 'SchemeSetu');
     });
 
     await test('Translation fallback function returns key string for completely non-existent key', async () => {
       const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
       assert.strictEqual(t('EN', 'nonExistentKey123'), 'nonExistentKey123');
+    });
+
+    console.log('\n--- 16. Translation API & Health Check Endpoints (6 tests) ---');
+    await test('GET /api/v1/health returns status OK and uptime', async () => {
+      const res = await request('GET', '/api/v1/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+      assert(typeof res.data.uptimeSeconds === 'number');
+    });
+
+    await test('GET /api/health alias returns status OK', async () => {
+      const res = await request('GET', '/api/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+    });
+
+    await test('POST /api/v1/translate rejects missing targetLang with 400', async () => {
+      const res = await request('POST', '/api/v1/translate', { text: 'Hello' });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/translate with EN target returns original text directly', async () => {
+      const res = await request('POST', '/api/v1/translate', { text: 'SchemeSetu Portal', targetLang: 'EN' });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.translated, 'SchemeSetu Portal');
+    });
+
+    await test('POST /api/v1/translate batch mode with EN target returns original array', async () => {
+      const res = await request('POST', '/api/v1/translate', { texts: ['Apply Now', 'View Details'], targetLang: 'EN' });
+      assert.strictEqual(res.status, 200);
+      assert.deepStrictEqual(res.data.translated, ['Apply Now', 'View Details']);
+    });
+
+    await test('GET /api/v1/translate/cache-stats returns valid cache statistics', async () => {
+      const res = await request('GET', '/api/v1/translate/cache-stats');
+      assert.strictEqual(res.status, 200);
+      assert(typeof res.data.cacheSize === 'number');
+      assert.strictEqual(res.data.maxCacheSize, 2000);
     });
 
     console.log('\n========================================');

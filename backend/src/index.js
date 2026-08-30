@@ -30,6 +30,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // CORS configuration for frontend integration
 const allowedOrigins = [
@@ -40,11 +41,19 @@ const allowedOrigins = [
   'http://127.0.0.1:5173'
 ];
 
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
+}
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN.replace(/\/$/, ''));
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.onrender.com')) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
     return callback(null, true);
   },
   credentials: true,
@@ -60,7 +69,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 function healthCheckHandler(req, res) {
   return res.status(200).json({
     status: 'OK',
-    message: 'SchemeSetu Backend is running',
+    service: 'SchemeSetu Backend API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
   });
 }
@@ -125,10 +137,10 @@ app.use(errorHandler);
 
 // Start Server
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  app.listen(PORT, HOST, () => {
     console.log(`====================================================`);
     console.log(`🚀 SchemeSetu Backend Server running successfully!`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`📡 URL: http://${HOST}:${PORT}`);
     console.log(`🩺 Health: http://localhost:${PORT}/api/health`);
     console.log(`🩺 V1 Health: http://localhost:${PORT}/api/v1/health`);
     console.log(`====================================================`);

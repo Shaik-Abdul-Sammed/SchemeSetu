@@ -12,7 +12,7 @@ import {
   MOCK_RECOMMENDATIONS 
 } from '../data/mock';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '/api/v1' : 'http://localhost:5000/api/v1');
 
 // Haversine distance calculator helper for partner proximity
 function calculateDistance(lat1, lon1, lat2, lon2) {

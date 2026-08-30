@@ -2,18 +2,19 @@ import React from 'react';
 import { FileText, Download, Printer, CheckCircle2, Award, User, MapPin, X } from 'lucide-react';
 import { api } from '../../services/api';
 
-export default function AgentReportModal({ isOpen, onClose, agentData, recommendedScheme }) {
+export default function AgentReportModal({ isOpen, onClose, agentData, formData, recommendedScheme }) {
+  const data = agentData || formData || {};
   if (!isOpen) return null;
 
   const handleDownload = async () => {
     try {
       await api.post('/documents/generate', {
         scheme: recommendedScheme,
-        applicant: agentData
+        applicant: data
       });
-      alert(`Agent Report PDF generated for ${agentData.name || 'Beneficiary'}`);
+      alert(`Agent Report PDF generated for ${data.name || 'Beneficiary'}`);
     } catch (e) {
-      alert(`Agent Report PDF generated for ${agentData.name || 'Beneficiary'}`);
+      alert(`Agent Report PDF generated for ${data.name || 'Beneficiary'}`);
     }
   };
 
@@ -37,10 +38,10 @@ export default function AgentReportModal({ isOpen, onClose, agentData, recommend
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.88rem', color: '#334155' }}>
             <div><strong>Agent Reference:</strong> AG-101 (CSC Center)</div>
             <div><strong>Registration Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
-            <div><strong>Beneficiary Name:</strong> {agentData.name || 'Ramesh Kumar'}</div>
-            <div><strong>Age & Income:</strong> {agentData.age || 32} yrs | ₹{(agentData.income || 240000).toLocaleString('en-IN')}/yr</div>
-            <div><strong>Project Category:</strong> {agentData.projectType || 'Manufacturing'}</div>
-            <div><strong>Location:</strong> {agentData.location || 'Chennai, TN'}</div>
+            <div><strong>Beneficiary Name:</strong> {data.name || 'Ramesh Kumar'}</div>
+            <div><strong>Age & Income:</strong> {data.age || 32} yrs | ₹{(data.income || 240000).toLocaleString('en-IN')}/yr</div>
+            <div><strong>Project Category:</strong> {data.projectType || 'Manufacturing'}</div>
+            <div><strong>Location:</strong> {data.location || 'Chennai, TN'}</div>
           </div>
         </div>
 
@@ -53,7 +54,7 @@ export default function AgentReportModal({ isOpen, onClose, agentData, recommend
             {recommendedScheme?.name || 'Pradhan Mantri Mudra Yojana (PMMY) - Kishore'}
           </h3>
           <p style={{ fontSize: '0.88rem', color: '#047857', margin: 0 }}>
-            Sanction Limit: ₹{(agentData.cost || 350000).toLocaleString('en-IN')} | Subsidy Status: SC Priority Beneficiary Eligible.
+            Sanction Limit: ₹{(data.cost || 350000).toLocaleString('en-IN')} | Subsidy Status: SC Priority Beneficiary Eligible.
           </p>
         </div>
 

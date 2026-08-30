@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { translateText, translateBatch } from '../services/translateService';
 
 const translations = {
   "EN": {
@@ -2946,27 +2947,51 @@ export function LanguageProvider({ children }) {
     return localStorage.getItem('schemesetu_lang') || 'EN';
   });
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang.toLowerCase();
+    }
+  }, [lang]);
+
   const changeLanguage = (newLang) => {
     if (translations[newLang]) {
       setLang(newLang);
       localStorage.setItem('schemesetu_lang', newLang);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = newLang.toLowerCase();
+      }
     }
   };
 
   const t = (key, fallback) => {
+    if (!key) return fallback || '';
     const current = translations[lang] || translations.EN;
-    if (current && current[key] !== undefined) {
+    if (current && current[key] !== undefined && current[key] !== '') {
       return current[key];
     }
     const en = translations.EN;
-    if (en && en[key] !== undefined) {
+    if (en && en[key] !== undefined && en[key] !== '') {
       return en[key];
     }
     return fallback !== undefined ? fallback : key;
   };
 
+  /**
+   * Helper for translating arbitrary dynamic strings (e.g. backend descriptions, external API data)
+   */
+  const translateDynamic = async (text) => {
+    if (!text || lang === 'EN') return text;
+    return await translateText(text, lang);
+  };
+
   return (
-    <LanguageContext.Provider value={{ lang, changeLanguage, t, availableLanguages: Object.keys(translations) }}>
+    <LanguageContext.Provider value={{ 
+      lang, 
+      changeLanguage, 
+      t, 
+      translateDynamic, 
+      availableLanguages: Object.keys(translations) 
+    }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -2979,3 +3004,4 @@ export function useLanguage() {
   }
   return context;
 }
+

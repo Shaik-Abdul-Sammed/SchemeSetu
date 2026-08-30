@@ -34,7 +34,7 @@ router.get('/saved-schemes', authenticateToken, (req, res) => {
   const userId = getUserId(req);
   const savedIds = savedSchemesMap[userId] || [];
   const saved = schemesData.filter(s => savedIds.includes(s.id));
-  return res.status(200).json({ success: true, count: saved.length, data: saved });
+  return res.status(200).json({ success: true, count: saved.length, data: saved, savedSchemes: saved });
 });
 
 // POST /api/v1/user/saved-schemes - Toggle Bookmark Protected
@@ -73,7 +73,7 @@ router.post('/saved-schemes', authenticateToken, (req, res) => {
 router.get('/applications', authenticateToken, (req, res) => {
   const userId = getUserId(req);
   const apps = userApplicationsMap[userId] || [];
-  return res.status(200).json({ success: true, count: apps.length, data: apps });
+  return res.status(200).json({ success: true, count: apps.length, data: apps, applications: apps });
 });
 
 // POST /api/v1/user/applications - Submit Application Protected
@@ -106,13 +106,14 @@ router.post('/applications', authenticateToken, (req, res) => {
   return res.status(201).json({
     success: true,
     message: "Application recorded successfully.",
-    data: newApp
+    data: newApp,
+    application: newApp
   });
 });
 
 // GET /api/v1/user/notifications - Protected
 router.get('/notifications', authenticateToken, (req, res) => {
-  return res.status(200).json({ success: true, data: userNotifications });
+  return res.status(200).json({ success: true, count: userNotifications.length, data: userNotifications, notifications: userNotifications });
 });
 
 module.exports = router;

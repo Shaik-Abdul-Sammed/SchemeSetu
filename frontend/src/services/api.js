@@ -12,7 +12,24 @@ import {
   MOCK_RECOMMENDATIONS 
 } from '../data/mock';
 
-const BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '/api/v1' : 'http://localhost:5000/api/v1');
+export function getApiBaseUrl() {
+  let envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (envUrl) {
+    if (!envUrl.startsWith('http://') && !envUrl.startsWith('https://') && !envUrl.startsWith('/')) {
+      envUrl = `https://${envUrl}`;
+    }
+    if (!envUrl.endsWith('/api/v1') && !envUrl.endsWith('/api/v1/')) {
+      envUrl = envUrl.replace(/\/$/, '') + '/api/v1';
+    }
+    return envUrl.replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '/api/v1';
+  }
+  return 'http://localhost:5000/api/v1';
+}
+
+const BASE_URL = getApiBaseUrl();
 
 // Haversine distance calculator helper for partner proximity
 function calculateDistance(lat1, lon1, lat2, lon2) {

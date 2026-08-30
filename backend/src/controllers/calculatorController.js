@@ -6,7 +6,11 @@ const { isPositiveNumber, isNonNegativeNumber } = require('../utils/validators')
  */
 function calculateEmi(req, res, next) {
   try {
-    const { principal, annualRate, tenureMonths, moratoriumMonths = 0 } = req.body || {};
+    const body = req.body || {};
+    const principal = body.principal;
+    const annualRate = body.annualRate !== undefined ? body.annualRate : (body.annualInterestRate !== undefined ? body.annualInterestRate : body.interestRate);
+    const tenureMonths = body.tenureMonths;
+    const moratoriumMonths = body.moratoriumMonths !== undefined ? body.moratoriumMonths : 0;
 
     // Validation
     if (principal === undefined || !isPositiveNumber(principal)) {
@@ -19,7 +23,7 @@ function calculateEmi(req, res, next) {
     if (annualRate === undefined || !isNonNegativeNumber(annualRate)) {
       return res.status(400).json({
         success: false,
-        error: 'Validation failed: annualRate is required and must be a non-negative number.'
+        error: 'Validation failed: annualRate (or annualInterestRate / interestRate) is required and must be a non-negative number.'
       });
     }
 

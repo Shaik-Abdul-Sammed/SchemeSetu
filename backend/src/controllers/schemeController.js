@@ -120,7 +120,10 @@ async function recommendSchemes(req, res, next) {
 
     if (eligibleSchemes.length === 0) {
       return res.status(200).json({
+        success: true,
         recommendations: [],
+        schemes: [],
+        data: [],
         totalEligible: 0,
         message: 'No eligible schemes found for the provided criteria'
       });
@@ -135,7 +138,10 @@ async function recommendSchemes(req, res, next) {
     const top3 = rankedSchemes.slice(0, 3);
 
     return res.status(200).json({
+      success: true,
       recommendations: top3,
+      schemes: top3,
+      data: top3,
       totalEligible: scoredSchemes.length,
       message: 'Eligible schemes found successfully'
     });

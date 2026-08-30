@@ -57,4 +57,3 @@ services:
           type: web
           name: schemesetu-backend
           property: host
-          transformation: https://%s/api/v1

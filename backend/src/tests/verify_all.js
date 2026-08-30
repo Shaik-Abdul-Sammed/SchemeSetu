@@ -1316,6 +1316,83 @@ async function runAllTests() {
       assert.strictEqual(apps.length, 20);
     });
 
+    console.log('\n--- 23. GPS Location Pipeline, Coordinate Integrity & No-Fallback Regression (7 tests) ---');
+    await test('GPS coordinates for IIIT RK Valley / Vempalli (14.3396, 78.5818) are passed without swap', async () => {
+      const { haversineDistance, isValidCoordinate } = require('../utils/haversine');
+      const lat = 14.3396;
+      const lng = 78.5818;
+      assert.strictEqual(isValidCoordinate(lat, lng), true);
+      assert.strictEqual(isValidCoordinate(lng, lat), true); // Both in range, but order matters
+      // Distance from IIIT RK Valley to Vempalli CSC (14.3725, 78.4552)
+      const d1 = haversineDistance(lat, lng, 14.3725, 78.4552);
+      assert(d1 > 10 && d1 < 20, `Distance should be ~14km, got ${d1}`);
+      // Swapping coordinates produces invalid distance or out-of-range error
+      const dSwapped = haversineDistance(lng, lat, 78.4552, 14.3725);
+      assert.notStrictEqual(d1, dSwapped);
+    });
+
+    await test('POST /api/v1/partners/nearest returns Vempalli centers first for IIIT RK Valley coords', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 14.3396,
+        lng: 78.5818,
+        maxDistance: 50
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.partners.length >= 2, 'Should find at least 2 partners within 50km');
+      assert.strictEqual(res.data.partners[0].district, 'YSR Kadapa');
+      assert(res.data.partners[0].name.includes('Vempalli'));
+      assert(res.data.partners[0].distanceKm < 20);
+    });
+
+    await test('POST /api/v1/partners/nearest never substitutes distant Chittoor for Vempalli coords', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 14.3396,
+        lng: 78.5818,
+        maxDistance: 500
+      });
+      assert.strictEqual(res.status, 200);
+      // Closest center must be in YSR Kadapa, NOT Chittoor or Chennai
+      assert.strictEqual(res.data.partners[0].district, 'YSR Kadapa');
+    });
+
+    await test('POST /api/v1/partners/nearest rejects missing or NaN coordinates without fallback', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', { lat: 'invalid', lng: 78.5818 });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.data.success, false);
+      assert(res.data.error.includes('Validation failed'));
+    });
+
+    await test('Location coordinate validation strictly rejects out-of-range latitude (>90 or <-90)', () => {
+      const { isValidCoordinate } = require('../utils/haversine');
+      assert.strictEqual(isValidCoordinate(90.1, 78.5818), false);
+      assert.strictEqual(isValidCoordinate(-90.1, 78.5818), false);
+      assert.strictEqual(isValidCoordinate(14.3396, 180.1), false);
+      assert.strictEqual(isValidCoordinate(14.3396, -180.1), false);
+    });
+
+    await test('Distance calculation is symmetric and yields 0 for identical coordinates', () => {
+      const { haversineDistance } = require('../utils/haversine');
+      const d = haversineDistance(14.3396, 78.5818, 14.3396, 78.5818);
+      assert.strictEqual(d, 0);
+      const d1 = haversineDistance(14.3396, 78.5818, 17.3850, 78.4867);
+      const d2 = haversineDistance(17.3850, 78.4867, 14.3396, 78.5818);
+      assert.strictEqual(d1, d2);
+      assert(d1 > 330 && d1 < 350, `Distance to Hyderabad should be ~339km, got ${d1}`);
+    });
+
+    await test('Partners database includes verified centers in YSR Kadapa with valid coordinates', () => {
+      const dataService = require('../services/dataService');
+      const partners = dataService.getPartners();
+      const kadapaPartners = partners.filter(p => p.district === 'YSR Kadapa');
+      assert(kadapaPartners.length >= 2, 'Must have at least 2 verified partners in YSR Kadapa');
+      kadapaPartners.forEach(p => {
+        assert(p.coordinates && typeof p.coordinates.lat === 'number' && typeof p.coordinates.lng === 'number');
+        assert(p.coordinates.lat > 14.0 && p.coordinates.lat < 15.0);
+        assert(p.coordinates.lng > 78.0 && p.coordinates.lng < 79.0);
+      });
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

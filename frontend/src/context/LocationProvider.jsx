@@ -185,12 +185,25 @@ export function LocationProvider({ children }) {
 
   /**
    * Reverse Geocoding:
-   * 1. Tries OpenStreetMap Nominatim with actual GPS lat/lng (4s timeout).
-   * 2. If online succeeds, uses the actual returned address fields — NEVER substitutes defaults.
-   * 3. If offline or Nominatim fails, falls back to nearest known centroid from INDIAN_LOCATIONS.
-   * 4. If nearest centroid is >50 km away, flags the result as unverified.
+   * 1. Logs exact REVERSE GEOCODER INPUT.
+   * 2. Tries OpenStreetMap Nominatim with actual GPS lat/lng (4s timeout).
+   * 3. Logs exact REVERSE GEOCODER OUTPUT.
+   * 4. If online succeeds, uses the actual returned address fields — NEVER substitutes defaults.
+   * 5. If offline or Nominatim fails, falls back to nearest known centroid from INDIAN_LOCATIONS.
+   * 6. If nearest centroid is >50 km away, flags the result as unverified.
    */
   const reverseGeocode = useCallback(async (lat, lng) => {
+    console.log('\n==============================');
+    console.log('REVERSE GEOCODER INPUT');
+    console.log(`latitude = ${lat}`);
+    console.log(`longitude = ${lng}`);
+    console.log('==============================\n');
+
+    let outCity = '';
+    let outDistrict = '';
+    let outState = '';
+    let outCountry = 'India';
+
     // --- Attempt online reverse geocoding ---
     try {
       const controller = new AbortController();
@@ -206,17 +219,27 @@ export function LocationProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         const addr = data.address || {};
-        const state = addr.state || addr.region || '';
-        const district = addr.state_district || addr.county || addr.city || addr.town || addr.village || '';
-        const village = addr.village || addr.hamlet || addr.suburb || '';
+        outState = addr.state || addr.region || '';
+        outDistrict = addr.state_district || addr.county || addr.district || '';
+        outCity = addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || '';
+        outCountry = addr.country || 'India';
         const displayName = data.display_name || '';
 
-        // Build location string from whatever Nominatim returned — never substitute hardcoded defaults
-        if (state || district || village) {
+        console.log('\n==============================');
+        console.log('REVERSE GEOCODER OUTPUT (ONLINE)');
+        console.log(`city = ${outCity || '(none)'}`);
+        console.log(`district = ${outDistrict || '(none)'}`);
+        console.log(`state = ${outState || '(none)'}`);
+        console.log(`country = ${outCountry || '(none)'}`);
+        console.log('==============================\n');
+
+        if (outState || outDistrict || outCity) {
           return {
-            state: state,
-            district: district || village,
-            address: displayName || [village, district, state].filter(Boolean).join(', '),
+            city: outCity,
+            state: outState,
+            district: outDistrict || outCity,
+            country: outCountry,
+            address: displayName || [outCity, outDistrict, outState].filter(Boolean).join(', '),
             source: 'online',
             centroidDistanceKm: null,
             centroidTrusted: true
@@ -224,7 +247,7 @@ export function LocationProvider({ children }) {
         }
       }
     } catch (e) {
-      // Graceful offline fallback — do not throw
+      // Graceful offline fallback
     }
 
     // --- Offline fallback: find nearest centroid ---
@@ -239,9 +262,18 @@ export function LocationProvider({ children }) {
     }
 
     if (!closest) {
+      console.log('\n==============================');
+      console.log('REVERSE GEOCODER OUTPUT (NONE)');
+      console.log(`city = `);
+      console.log(`district = `);
+      console.log(`state = `);
+      console.log(`country = India`);
+      console.log('==============================\n');
       return {
+        city: '',
         state: '',
         district: '',
+        country: 'India',
         address: 'GPS detected, but address could not be determined.',
         source: 'none',
         centroidDistanceKm: null,
@@ -250,10 +282,23 @@ export function LocationProvider({ children }) {
     }
 
     const isTrusted = minD <= MAX_CENTROID_TRUST_DISTANCE_KM;
+    outDistrict = closest.district;
+    outState = closest.state;
+
+    console.log('\n==============================');
+    console.log('REVERSE GEOCODER OUTPUT (OFFLINE CENTROID)');
+    console.log(`city = ${outCity || '(none)'}`);
+    console.log(`district = ${outDistrict}`);
+    console.log(`state = ${outState}`);
+    console.log(`country = ${outCountry}`);
+    console.log(`centroidDistance = ${minD.toFixed(1)} km (trusted: ${isTrusted})`);
+    console.log('==============================\n');
 
     return {
-      state: closest.state,
-      district: closest.district,
+      city: '',
+      state: isTrusted ? closest.state : '',
+      district: isTrusted ? closest.district : '',
+      country: 'India',
       address: isTrusted
         ? `${closest.district}, ${closest.state} (Nearest Reference)`
         : `GPS detected (${lat.toFixed(4)}°, ${lng.toFixed(4)}°) — address could not be verified.`,
@@ -285,6 +330,21 @@ export function LocationProvider({ children }) {
         const { latitude, longitude, accuracy } = pos.coords;
         const timestamp = pos.timestamp || Date.now();
 
+        console.log('\n==============================');
+        console.log('GPS RAW RESULT');
+        console.log(`latitude = ${latitude}`);
+        console.log(`longitude = ${longitude}`);
+        console.log(`accuracy = ${accuracy} m`);
+        console.log(`timestamp = ${new Date(timestamp).toISOString()}`);
+        console.log('==============================\n');
+
+        console.log('\n==============================');
+        console.log('LOCATION STATE');
+        console.log(`latitude = ${latitude}`);
+        console.log(`longitude = ${longitude}`);
+        console.log(`accuracy = ${accuracy} m`);
+        console.log('==============================\n');
+
         // Store raw debug data FIRST, before any transformation
         const debugData = {
           rawLat: latitude,
@@ -299,8 +359,14 @@ export function LocationProvider({ children }) {
 
         const details = await reverseGeocode(latitude, longitude);
 
+        console.log('\n==============================');
+        console.log('PARTNER SEARCH INPUT');
+        console.log(`latitude = ${latitude}`);
+        console.log(`longitude = ${longitude}`);
+        console.log('==============================\n');
+
         // Update debug with reverse geocode results
-        debugData.reverseGeocodeResult = `${details.district || '(unknown district)'}, ${details.state || '(unknown state)'}`;
+        debugData.reverseGeocodeResult = `${details.district || details.city || '(unknown district)'}, ${details.state || '(unknown state)'}`;
         debugData.reverseGeocodeSource = details.source;
         debugData.centroidDistanceKm = details.centroidDistanceKm;
         debugData.centroidTrusted = details.centroidTrusted;
@@ -369,6 +435,59 @@ export function LocationProvider({ children }) {
     detectCurrentGPSLocation(true);
   }, [detectCurrentGPSLocation]);
 
+  // Development-Only Location Injection (For testing known coordinates across complete pipeline)
+  const injectTestCoordinates = useCallback(async (testLat, testLng, testAccuracy = 15) => {
+    console.log('\n[DEV TEST INJECTION] Tracing GPS pipeline with test coordinates:');
+    console.log(`latitude = ${testLat}`);
+    console.log(`longitude = ${testLng}`);
+    console.log(`accuracy = ${testAccuracy} m`);
+
+    const timestamp = Date.now();
+    const details = await reverseGeocode(testLat, testLng);
+
+    console.log('\n[DEV TEST INJECTION] Partner Search Input:');
+    console.log(`latitude = ${testLat}`);
+    console.log(`longitude = ${testLng}`);
+
+    const debugData = {
+      rawLat: testLat,
+      rawLng: testLng,
+      rawAccuracy: Math.round(testAccuracy),
+      rawTimestamp: new Date(timestamp).toISOString(),
+      reverseGeocodeResult: `${details.district || details.city || '(unknown district)'}, ${details.state || '(unknown state)'}`,
+      reverseGeocodeSource: `${details.source} (injected test)`,
+      centroidDistanceKm: details.centroidDistanceKm,
+      centroidTrusted: details.centroidTrusted
+    };
+    setGpsDebug(debugData);
+
+    let accuracyWarning = '';
+    if (testAccuracy > 1000) {
+      accuracyWarning = `GPS accuracy is low (±${Math.round(testAccuracy)} m). Move to an open area and try again.`;
+    }
+
+    const testLoc = {
+      lat: testLat,
+      lng: testLng,
+      accuracy: Math.round(testAccuracy),
+      timestamp,
+      state: details.state,
+      district: details.district,
+      address: details.address,
+      isGPS: true,
+      isDemo: false,
+      accuracyWarning,
+      geocodeSource: details.source,
+      centroidTrusted: details.centroidTrusted
+    };
+
+    setLocation(testLoc);
+    setLocationStatus('detected');
+    localStorage.setItem('schemesetu_location', JSON.stringify(testLoc));
+    localStorage.setItem('schemesetu_location_status', 'detected');
+    refreshPartnerDistances(testLat, testLng);
+  }, [reverseGeocode, refreshPartnerDistances]);
+
   // Demo Location Setup (Specifically for SIH Hackathon Evaluation)
   const setDemoLocation = useCallback((stateName = 'Tamil Nadu', districtName = 'Chennai') => {
     const match = INDIAN_LOCATIONS.find(loc =>
@@ -433,6 +552,7 @@ export function LocationProvider({ children }) {
       nearbyPartners, 
       calculateDistance, 
       gpsDebug,
+      injectTestCoordinates,
       INDIAN_LOCATIONS 
     }}>
       {children}

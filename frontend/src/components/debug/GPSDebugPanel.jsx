@@ -14,7 +14,7 @@ const DEV_MODE = true; // Set to false to hide in production
 
 export default function GPSDebugPanel() {
   const [expanded, setExpanded] = useState(false);
-  const { location, locationStatus, errorMessage, gpsDebug, refreshLocation } = useLocation();
+  const { location, locationStatus, errorMessage, gpsDebug, refreshLocation, injectTestCoordinates } = useLocation();
 
   if (!DEV_MODE) return null;
 
@@ -147,27 +147,72 @@ export default function GPSDebugPanel() {
               </div>
             )}
 
-            {/* Refresh Button */}
-            <button
-              onClick={refreshLocation}
-              disabled={locationStatus === 'detecting'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
-                background: '#1E293B',
-                color: '#E2E8F0',
-                border: '1px solid #475569',
-                borderRadius: '4px',
-                cursor: locationStatus === 'detecting' ? 'wait' : 'pointer',
-                fontSize: '10px',
-                fontFamily: 'monospace'
-              }}
-            >
-              <RefreshCw size={10} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
-              {locationStatus === 'detecting' ? 'Detecting...' : 'Force Refresh GPS'}
-            </button>
+            {/* Refresh Button & Test Injections */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <button
+                onClick={refreshLocation}
+                disabled={locationStatus === 'detecting'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  padding: '5px 10px',
+                  background: '#0284C7',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: locationStatus === 'detecting' ? 'wait' : 'pointer',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  fontFamily: 'monospace'
+                }}
+              >
+                <RefreshCw size={11} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
+                {locationStatus === 'detecting' ? 'Detecting Browser GPS...' : 'Trigger Real Browser GPS'}
+              </button>
+
+              {/* Dev Test Trace Injections (Phase 15 requirement) */}
+              <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed #334155' }}>
+                <div style={{ fontSize: '9px', color: '#94A3B8', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  🛠 Dev Pipeline Trace Tests:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                  <button
+                    onClick={() => injectTestCoordinates && injectTestCoordinates(14.3396, 78.5818, 15)}
+                    style={{
+                      background: '#1E293B',
+                      color: '#38BDF8',
+                      border: '1px solid #0284C7',
+                      borderRadius: '3px',
+                      padding: '3px 4px',
+                      fontSize: '9px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                    title="Inject IIIT RK Valley / Vempalli Coordinates (14.3396, 78.5818)"
+                  >
+                    📍 IIIT RK Valley
+                  </button>
+                  <button
+                    onClick={() => injectTestCoordinates && injectTestCoordinates(17.3850, 78.4867, 20)}
+                    style={{
+                      background: '#1E293B',
+                      color: '#FCD34D',
+                      border: '1px solid #D97706',
+                      borderRadius: '3px',
+                      padding: '3px 4px',
+                      fontSize: '9px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                    title="Inject Hyderabad Coordinates (17.3850, 78.4867)"
+                  >
+                    📍 Hyderabad
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

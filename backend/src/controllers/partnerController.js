@@ -71,6 +71,7 @@ function getNearestPartners(req, res, next) {
         partnersWithDistance.push({
           ...partner,
           distance,
+          distanceKm: distance,
           distanceText: `${distance.toFixed(2)} km`
         });
       }
@@ -87,6 +88,7 @@ function getNearestPartners(req, res, next) {
     const top5 = withinRangeList.slice(0, 5);
 
     return res.status(200).json({
+      success: true,
       partners: top5,
       totalFound,
       withinRange,

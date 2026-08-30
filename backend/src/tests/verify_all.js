@@ -1050,6 +1050,73 @@ async function runAllTests() {
       assert.strictEqual(res.data.maxCacheSize, 2000);
     });
 
+    console.log('\n--- 17. Demo Person Profiles & Data-Driven SC Financial Limits (5 tests) ---');
+    const demoDir = path.resolve(__dirname, '../../../database/sample-data/demo-person');
+    
+    await test('Demo SC Person JSON file exists and has valid schema', async () => {
+      const scJsonPath = path.join(demoDir, 'demo-person-sc-profile.json');
+      assert(fs.existsSync(scJsonPath), 'demo-person-sc-profile.json must exist');
+      const scData = JSON.parse(fs.readFileSync(scJsonPath, 'utf8'));
+      assert.strictEqual(scData.casteCategory, 'SC');
+      assert.strictEqual(typeof scData.annualIncome, 'number');
+      assert.strictEqual(typeof scData.projectCost, 'number');
+      assert.strictEqual(typeof scData.loanRequirement, 'number');
+    });
+
+    await test('Demo multiple profiles dataset exists with at least 5 records', async () => {
+      const multiJsonPath = path.join(demoDir, 'demo-person-multiple-profiles.json');
+      assert(fs.existsSync(multiJsonPath), 'demo-person-multiple-profiles.json must exist');
+      const multiData = JSON.parse(fs.readFileSync(multiJsonPath, 'utf8'));
+      assert(Array.isArray(multiData) && multiData.length >= 5);
+    });
+
+    await test('POST /api/v1/eligibility/check evaluates SC entrepreneur Ramesh Kumar with high match', async () => {
+      const payload = {
+        name: 'Ramesh Kumar',
+        age: 32,
+        gender: 'Male',
+        casteCategory: 'SC',
+        annualIncome: 240000,
+        occupation: 'Farmer',
+        state: 'Telangana',
+        projectCost: 350000,
+        loanRequirement: 250000,
+        bplStatus: 'Yes'
+      };
+      const res = await request('POST', '/api/v1/eligibility/check', payload);
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.eligibleSchemesCount > 0);
+      const top = res.data.results[0];
+      assert(top.matchScore >= 50);
+      assert(top.financialStatus.length > 0);
+    });
+
+    await test('POST /api/v1/eligibility/check marks oversized project cost as Exceeds Scheme Limit safely', async () => {
+      const payload = {
+        name: 'Test Excess Amount',
+        age: 35,
+        gender: 'Male',
+        casteCategory: 'SC',
+        annualIncome: 200000,
+        occupation: 'Farmer',
+        projectCost: 15000000, // 1.5 Cr exceeds normal Mudra caps
+        loanRequirement: 12000000
+      };
+      const res = await request('POST', '/api/v1/eligibility/check', payload);
+      assert.strictEqual(res.status, 200);
+      const mudra = res.data.results.find(r => r.scheme.id.includes('mudra'));
+      if (mudra) {
+        assert.strictEqual(mudra.financialStatus, 'Exceeds Scheme Limit');
+      }
+    });
+
+    await test('Downloads sample data directory contains demo person files', async () => {
+      const dlDir = '/home/user/Downloads/Sampledata/demo-person';
+      assert(fs.existsSync(path.join(dlDir, 'demo-person-sc-profile.json')));
+      assert(fs.existsSync(path.join(dlDir, 'demo-person-multiple-profiles.csv')));
+    });
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');

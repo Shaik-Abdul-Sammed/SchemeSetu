@@ -1,735 +1,587 @@
-/**
- * SchemeSetu Centralized Mock Dataset - Government Schemes
- * Prototype / Demo Dataset for SIH 2026
- */
-
-export const MOCK_SCHEMES = [
+export const mockSchemes = [
   {
-    id: 'scheme-001',
-    name: 'Pradhan Mantri Mudra Yojana (PMMY) - Tarun',
-    category: 'Micro/Small Enterprise Loan',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'trading', 'food processing', 'retail', 'agri-allied'],
-    department: 'Ministry of Finance / SIDBI',
-    interestRate: 8.5,
-    minLoan: 500000,
-    maxLoan: 1000000,
-    tenure: '60 months',
-    tenureMonths: 60,
-    moratorium: '6 months',
-    moratoriumMonths: 6,
-    beneficiary: 'Growing Micro & Small Entrepreneurs',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 1000000,
-    summary: 'Funding for established small businesses aiming for growth and expansion from ₹5 Lakhs up to ₹10 Lakhs without collateral requirement.',
-    description: 'Pradhan Mantri Mudra Yojana (PMMY) Tarun category provides credit support from ₹5,00,000 to ₹10,00,000 to growing enterprise units in manufacturing, trading, and services without requiring third-party collateral.',
-    benefits: 'Up to ₹10 Lakh collateral-free loan with competitive 8.5% interest rate and 6-month repayment moratorium.',
-    detailedBenefits: [
-      'Zero collateral or third-party guarantee required.',
-      'Flexible 60-month repayment tenure with 6-month initial moratorium.',
-      'Working capital overdraft facility via MUDRA Card.',
-      'Special concessional interest rates for SC/ST and women entrepreneurs.'
+    "id": "pm-kisan",
+    "name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    "shortName": "PM-KISAN",
+    "department": "Ministry of Agriculture and Farmers Welfare",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Agriculture & Farmers",
+    "beneficiary": "Small & Marginal Farmers",
+    "minAge": 18,
+    "maxAge": 75,
+    "maxIncome": 300000,
+    "gender": "All",
+    "occupation": "Farmer",
+    "sector": "Agriculture",
+    "summary": "Direct income support of ₹6,000 per year to all landholding farmer families across India.",
+    "benefits": "₹6,000 per year paid in 3 equal installments of ₹2,000 directly to bank accounts via DBT.",
+    "detailedBenefits": [
+      "Financial assistance of ₹6,000 per annum paid in three tranches of ₹2,000 each.",
+      "Direct Benefit Transfer (DBT) directly linked to Aadhaar-seeded bank account.",
+      "Completely centrally funded scheme covering all operational landholding farmer families."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 1000000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['10th pass', '12th pass', 'graduate', 'post graduate', 'diploma', 'any'],
-      locations: ['All India', 'Tamil Nadu', 'Andhra Pradesh', 'Telangana', 'Karnataka', 'Maharashtra', 'Delhi', 'Gujarat']
-    },
-    eligibilityCriteria: [
-      'Applicant must be an Indian citizen aged between 18 and 65 years.',
-      'Existing business track record or viable new business proposal.',
-      'Applicant must not be a defaulter with any commercial bank or NBFC.',
-      'Annual household income up to ₹10,00,000.'
+    "eligibilityCriteria": [
+      "Must be a farmer family owning cultivable land in their name as per state land records.",
+      "Covers landholding farmers irrespective of the size of their land holdings.",
+      "Excludes institutional landholders, active/retired government employees, and income tax payers."
     ],
-    documentsRequired: [
-      'Aadhaar Card / Voter ID (Identity Proof)',
-      'Proof of Business Address & Registration',
-      'Bank Account Statement for the last 6 months',
-      'Quotation for Machinery / Equipment (if applicable)',
-      'Caste Certificate for SC/ST category benefits'
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Proof of ownership of cultivable land (Khasra/Khatauni/RoR)",
+      "Aadhaar-linked Savings Bank Account Passbook",
+      "Active Mobile Number"
     ],
-    applicationProcess: [
-      'Step 1: Formulate project report with cost estimation.',
-      'Step 2: Approach nearest empanelled public/private sector bank or apply via SchemeSetu.',
-      'Step 3: Submit application with identity proof and business quotation.',
-      'Step 4: Loan appraisal and sanctioned disbursement within 7 to 10 days.'
+    "applicationProcess": [
+      "Visit the official PM-KISAN portal or nearest Common Service Centre (CSC).",
+      "Click on 'Farmers Corner' -> 'New Farmer Registration'.",
+      "Enter Aadhaar Number and select your State/District.",
+      "Fill land record details and bank account numbers.",
+      "Submit the application and verify through OTP sent to Aadhaar-registered mobile."
     ],
-    faqs: [
+    "officialUrl": "https://pmkisan.gov.in",
+    "faqs": [
       {
-        question: 'Is collateral required for Tarun loans?',
-        answer: 'No collateral or third-party security is required under the MUDRA scheme up to ₹10 Lakhs.'
+        "question": "Is there any restriction on landholding size for PM-KISAN?",
+        "answer": "No, the scheme covers all landholding farmer families subject to certain exclusion criteria."
       },
       {
-        question: 'Can new entrepreneurs apply for Tarun?',
-        answer: 'Yes, both new and existing entrepreneurs with viable project reports can apply.'
+        "question": "How are the installments credited?",
+        "answer": "Installments are credited directly to the bank account via Aadhaar Payment Bridge System (APBS)."
       }
     ],
-    officialUrl: 'https://www.mudra.org.in'
+    "tags": [
+      "farmer",
+      "agriculture",
+      "dbt",
+      "income support",
+      "pm kisan"
+    ]
   },
   {
-    id: 'scheme-002',
-    name: 'Pradhan Mantri Mudra Yojana (PMMY) - Kishore',
-    category: 'Micro Enterprise Loan',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'trading', 'food processing', 'handicrafts', 'textiles', 'retail'],
-    department: 'Ministry of Finance / National Credit Guarantee Trustee Company',
-    interestRate: 7.5,
-    minLoan: 50000,
-    maxLoan: 500000,
-    tenure: '60 months',
-    tenureMonths: 60,
-    moratorium: '6 months',
-    moratoriumMonths: 6,
-    beneficiary: 'Micro Entrepreneurs & Small Shop Owners',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 600000,
-    summary: 'Provides financial support from ₹50,000 up to ₹5 Lakhs for developing and growing micro enterprise units.',
-    description: 'MUDRA Kishore category caters to micro-entrepreneurs who have established operations and require seed/expansion capital between ₹50,000 and ₹5,00,000 for equipment purchase, stock inventory, or working capital.',
-    benefits: 'Collateral-free loan up to ₹5 Lakhs with 7.5% subsidized rate, 6-month moratorium, and Mudra Debit Card.',
-    detailedBenefits: [
-      'No collateral requirement for loans up to ₹5,00,000.',
-      'Subsidized annual interest rate of 7.5%.',
-      'Pre-approved credit line accessible through MUDRA RuPay Debit Card.',
-      'Repayment tenure up to 5 years.'
+    "id": "ayushman-bharat",
+    "name": "Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana (PM-JAY)",
+    "shortName": "PM-JAY",
+    "department": "National Health Authority, Ministry of Health and Family Welfare",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Healthcare & Health Insurance",
+    "beneficiary": "Low Income Families",
+    "minAge": 0,
+    "maxAge": 100,
+    "maxIncome": 250000,
+    "gender": "All",
+    "occupation": "Any",
+    "sector": "Health",
+    "summary": "Cashless health cover of up to ₹5 Lakh per family per year for secondary and tertiary care hospitalization.",
+    "benefits": "Free health insurance coverage of ₹5,00,000 per family annually across empanelled public and private hospitals.",
+    "detailedBenefits": [
+      "Coverage up to ₹5 Lakh per family per year on a family floater basis.",
+      "Cashless and paperless access to healthcare services at the point of service.",
+      "Covers pre-hospitalization (up to 3 days) and post-hospitalization (up to 15 days) expenses.",
+      "No restriction on family size, age, or gender."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 600000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['8th pass', '10th pass', '12th pass', 'graduate', 'diploma', 'any'],
-      locations: ['All India', 'Tamil Nadu', 'Andhra Pradesh', 'Telangana', 'Karnataka', 'Maharashtra', 'Delhi', 'Kerala', 'Uttar Pradesh']
-    },
-    eligibilityCriteria: [
-      'Citizen of India aged 18 years or older.',
-      'Proposed enterprise should fall under non-farm micro-business activity.',
-      'No prior default record with financial institutions.',
-      'Annual household income within eligible ceiling.'
+    "eligibilityCriteria": [
+      "Families listed under SECC 2011 database (Rural D1 to D7 categories & Urban occupational categories).",
+      "Families holding AB-PMJAY Golden Card / Ayushman Card.",
+      "All senior citizens aged 70 years and above (Ayushman Vaya Vandana Card extension)."
     ],
-    documentsRequired: [
-      'Aadhaar Card and PAN Card',
-      'Proof of Residence & Business Address',
-      'Last 6 months Bank Account Statement',
-      'Asset Quotation / Proforma Invoice from supplier',
-      'Passport size photographs'
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Ration Card / Family ID",
+      "Mobile Number for e-KYC verification"
     ],
-    applicationProcess: [
-      'Step 1: Check eligibility and download pre-filled application slip on SchemeSetu.',
-      'Step 2: Visit nearest partner bank branch or CSC Kendra.',
-      'Step 3: Document verification and KYC confirmation.',
-      'Step 4: Direct account disbursement and Mudra Card issuance.'
+    "applicationProcess": [
+      "Check eligibility on official PM-JAY portal or at empanelled hospital Ayushman Mitra desk.",
+      "Authenticate identity using Aadhaar e-KYC or Ration Card.",
+      "Generate Ayushman Card instantly upon verification.",
+      "Present Ayushman Card during hospital admission for cashless treatment."
     ],
-    faqs: [
+    "officialUrl": "https://pmjay.gov.in",
+    "faqs": [
       {
-        question: 'What is the processing fee for Kishore loans?',
-        answer: 'Most banks charge nil or minimal processing fees for Kishore category loans.'
+        "question": "Is there any cap on family size for Ayushman Bharat?",
+        "answer": "No, there is no limit on family size, age, or gender under PM-JAY."
+      },
+      {
+        "question": "Are pre-existing diseases covered?",
+        "answer": "Yes, all pre-existing medical conditions are covered from day one of enrollment."
       }
     ],
-    officialUrl: 'https://www.mudra.org.in'
+    "tags": [
+      "health",
+      "insurance",
+      "hospitalization",
+      "cashless",
+      "ayushman card"
+    ]
   },
   {
-    id: 'scheme-003',
-    name: 'Pradhan Mantri Mudra Yojana (PMMY) - Shishu',
-    category: 'Micro Enterprise Seed Loan',
-    level: 'Central',
-    projectTypes: ['retail', 'street vending', 'handicrafts', 'services', 'food processing', 'agri-allied'],
-    department: 'Department of Financial Services',
-    interestRate: 6.5,
-    minLoan: 10000,
-    maxLoan: 50000,
-    tenure: '36 months',
-    tenureMonths: 36,
-    moratorium: '3 months',
-    moratoriumMonths: 3,
-    beneficiary: 'Early-stage Small Entrepreneurs & Artisans',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 300000,
-    summary: 'Targeted at early-stage small entrepreneurs and street vendors needing startup working capital up to ₹50,000.',
-    description: 'MUDRA Shishu covers loans up to ₹50,000 for early-stage micro-business owners, shopkeepers, fruit/vegetable sellers, artisans, and service providers.',
-    benefits: 'Lowest 6.5% interest rate, zero processing fee, instant disbursement up to ₹50,000.',
-    detailedBenefits: [
-      'Zero processing fee and zero collateral.',
-      'Simplified one-page loan application process.',
-      'Moratorium period of 3 months before EMI starts.',
-      'Prompt repayment incentive of 2% interest subvention.'
+    "id": "pm-awas-yojana-urban",
+    "name": "Pradhan Mantri Awas Yojana - Housing for All",
+    "shortName": "PMAY",
+    "department": "Ministry of Housing and Urban Affairs / Ministry of Rural Development",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Housing & Shelter",
+    "beneficiary": "Homeless / Economically Weaker Section (EWS)",
+    "minAge": 21,
+    "maxAge": 70,
+    "maxIncome": 300000,
+    "gender": "All",
+    "occupation": "Any",
+    "sector": "Urban Development",
+    "summary": "Financial grant and credit-linked subsidy to construct pucca houses for homeless and low-income families.",
+    "benefits": "Financial assistance up to ₹2.50 Lakh for house construction or interest subsidy up to 6.5% on home loans.",
+    "detailedBenefits": [
+      "Financial grant of ₹1.5 Lakh to ₹2.5 Lakh for beneficiary-led individual house construction.",
+      "Credit-Linked Subsidy Scheme (CLSS) offering up to 6.5% interest subsidy on housing loans.",
+      "In-situ slum redevelopment with participation of private developers."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 300000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['none', 'primary', '8th pass', '10th pass', 'any'],
-      locations: ['All India', 'Tamil Nadu', 'Andhra Pradesh', 'Karnataka', 'Maharashtra', 'Delhi', 'West Bengal', 'Bihar', 'Rajasthan']
-    },
-    eligibilityCriteria: [
-      'Indian citizen starting or operating a micro business.',
-      'Loan requirement within ₹50,000.',
-      'Valid identity and address proof.'
+    "eligibilityCriteria": [
+      "Beneficiary family should not own a pucca house anywhere in India in their name.",
+      "Annual household income within EWS (up to ₹3 Lakh) or LIG (₹3 Lakh to ₹6 Lakh) bracket.",
+      "Female head of household co-ownership mandatory for land and home title."
     ],
-    documentsRequired: [
-      'Aadhaar Card / Ration Card',
-      'Passport size photograph',
-      'Bank Account details (Jan Dhan account eligible)'
+    "documentsRequired": [
+      "Aadhaar Card of all family members",
+      "Income Certificate / BPL Certificate",
+      "Property Ownership / Land Possession document",
+      "Bank Account Details",
+      "Affidavit confirming no pucca house ownership"
     ],
-    applicationProcess: [
-      'Step 1: Fill basic details on SchemeSetu voice or text wizard.',
-      'Step 2: Submit to nearest Bank Mitra / CSC VLE agent.',
-      'Step 3: Instant KYC and digital loan sanction.'
+    "applicationProcess": [
+      "Apply online through PMAY official portal or via local Gram Panchayat / Urban Local Body.",
+      "Submit Aadhaar number and fill socio-economic details.",
+      "Physical verification of land/site by municipal or rural authority.",
+      "Approval of grant and direct disbursement in 3 to 4 construction-stage linked tranches."
     ],
-    faqs: [
+    "officialUrl": "https://pmaymis.gov.in",
+    "faqs": [
       {
-        question: 'Can Jan Dhan account holders apply?',
-        answer: 'Yes, Pradhan Mantri Jan Dhan Yojana (PMJDY) account holders are fully eligible.'
+        "question": "Can unmarried individuals apply for PMAY?",
+        "answer": "PMAY defines a beneficiary family as husband, wife, and unmarried children. An adult earning member can be treated as a separate household if they don't own a pucca house."
       }
     ],
-    officialUrl: 'https://www.mudra.org.in'
+    "tags": [
+      "housing",
+      "pmay",
+      "home loan",
+      "subsidy",
+      "pucca house"
+    ]
   },
   {
-    id: 'scheme-004',
-    name: 'Prime Minister Employment Generation Programme (PMEGP)',
-    category: 'Credit-Linked Subsidy Scheme',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'food processing', 'agro-based industry', 'textiles', 'engineering'],
-    department: 'Ministry of Micro, Small and Medium Enterprises (MSME) / KVIC',
-    interestRate: 9.0,
-    minLoan: 100000,
-    maxLoan: 5000000,
-    tenure: '84 months',
-    tenureMonths: 84,
-    moratorium: '6 months',
-    moratoriumMonths: 6,
-    beneficiary: 'Unemployed Youth, SC/ST, Women & Rural Entrepreneurs',
-    minAge: 18,
-    maxAge: 60,
-    maxIncome: 800000,
-    summary: 'Credit-linked subsidy program to generate self-employment ventures with 15% to 35% government capital subsidy.',
-    description: 'PMEGP is a flagship credit-linked subsidy initiative administered by KVIC offering up to 35% capital subsidy for rural and special category (SC/ST/OBC/Women) entrepreneurs setting up manufacturing (up to ₹50 Lakhs) or service (up to ₹20 Lakhs) enterprises.',
-    benefits: '15% to 35% margin money government subsidy credited directly to beneficiary loan account.',
-    detailedBenefits: [
-      'Subsidies up to 35% for rural projects and SC/ST/Women beneficiaries.',
-      'Project loans up to ₹50 Lakhs for manufacturing and ₹20 Lakhs for services.',
-      'Only 5% to 10% beneficiary margin contribution required.',
-      'Free EDP skill training provided by MSME Development Institutes.'
+    "id": "pm-mudra-yojana",
+    "name": "Pradhan Mantri MUDRA Yojana (PMMY)",
+    "shortName": "PMMY MUDRA",
+    "department": "Department of Financial Services, Ministry of Finance",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Financial Services & Micro-Loans",
+    "beneficiary": "Micro Vendors / Small Business Owners",
+    "minAge": 18,
+    "maxAge": 65,
+    "maxIncome": 1000000,
+    "gender": "All",
+    "occupation": "Business",
+    "sector": "MSME",
+    "summary": "Collateral-free micro loans up to ₹20 Lakh for non-corporate, non-farm micro and small enterprises.",
+    "benefits": "Loans up to ₹20 Lakh with no collateral required across Shishu (up to ₹50,000), Kishore (₹50k-₹5L), Tarun (₹5L-₹10L), and Tarun Plus (₹10L-₹20L) categories.",
+    "detailedBenefits": [
+      "Shishu: Loans up to ₹50,000 for starting new micro business ventures.",
+      "Kishore: Loans above ₹50,000 and up to ₹5 Lakh for enterprise expansion.",
+      "Tarun & Tarun Plus: Loans above ₹5 Lakh up to ₹20 Lakh for established units.",
+      "Zero processing fees for Shishu and Kishore loans. MUDRA Card for working capital."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 800000,
-      minAge: 18,
-      maxAge: 60,
-      education: ['8th pass', '10th pass', '12th pass', 'graduate', 'post graduate', 'diploma'],
-      locations: ['All India', 'Andhra Pradesh', 'Tamil Nadu', 'Karnataka', 'Maharashtra', 'Madhya Pradesh', 'Odisha', 'Telangana']
-    },
-    eligibilityCriteria: [
-      'Any individual above 18 years of age.',
-      'At least VIII standard pass for projects costing above ₹10 Lakhs in manufacturing.',
-      'Self Help Groups (SHGs) and registered institutions are also eligible.',
-      'Must be a new project unit (expansion of existing units not covered under basic tier).'
+    "eligibilityCriteria": [
+      "Non-Farm Small/Micro Enterprises in manufacturing, trading, or service sectors.",
+      "Artisans, shopkeepers, fruit/vegetables vendors, small industrialists, food processors.",
+      "Applicant must have a viable business plan and clean credit history (no default)."
     ],
-    documentsRequired: [
-      'Project Detailed Project Report (DPR)',
-      'Aadhaar Card and Caste Certificate (for SC/ST subsidy claiming)',
-      'Educational Qualification Certificate (8th / 10th pass proof)',
-      'Rural Area Certificate from local authority (for 35% rural subsidy rate)',
-      'EDP Training Certificate (if already completed)'
+    "documentsRequired": [
+      "Identity Proof (Aadhaar / PAN / Voter ID)",
+      "Address Proof of Business & Applicant",
+      "Business Quotations / License / GST Registration (if applicable)",
+      "Bank statement of last 6 months",
+      "Passport size photographs"
     ],
-    applicationProcess: [
-      'Step 1: Submit online application on KVIC / SchemeSetu portal.',
-      'Step 2: Application vetting by District Task Force Committee (DTFC).',
-      'Step 3: Bank branch appraisal and sanction.',
-      'Step 4: Margin money subsidy lock-in for 3 years, then adjusted against principal.'
+    "applicationProcess": [
+      "Prepare business plan and loan requirement details.",
+      "Visit any public/private commercial bank, RRB, or apply online via JanSamarth portal.",
+      "Fill MUDRA loan application form selecting appropriate category (Shishu/Kishore/Tarun).",
+      "Submit documents; loan sanctioned within 7-14 working days without collateral."
     ],
-    faqs: [
+    "officialUrl": "https://www.mudra.org.in",
+    "faqs": [
       {
-        question: 'What is the maximum subsidy amount for SC/ST beneficiaries in rural areas?',
-        answer: 'Special category beneficiaries (SC/ST/OBC/Women/PwD) receive 35% subsidy in rural areas and 25% in urban areas.'
+        "question": "Is collateral required for MUDRA loans?",
+        "answer": "No collateral or third-party guarantee is required for loans under PMMY."
       }
     ],
-    officialUrl: 'https://www.kviconline.gov.in/pmegpeportal'
+    "tags": [
+      "mudra",
+      "loan",
+      "business",
+      "msme",
+      "collateral free"
+    ],
+    "minLoan": 10000,
+    "maxLoan": 2000000,
+    "maxProjectCost": 2000000,
+    "interestRate": 8.5,
+    "tenureMonths": 60,
+    "moratoriumMonths": 6
   },
   {
-    id: 'scheme-005',
-    name: 'PM SVANidhi (Street Vendor\'s AtmaNirbhar Nidhi)',
-    category: 'Working Capital Microcredit',
-    level: 'Central',
-    projectTypes: ['street vending', 'food stall', 'retail', 'services', 'food processing', 'handicrafts'],
-    department: 'Ministry of Housing and Urban Affairs (MoHUA) / SIDBI',
-    interestRate: 7.0,
-    minLoan: 10000,
-    maxLoan: 50000,
-    tenure: '12 months',
-    tenureMonths: 12,
-    moratorium: '0 months',
-    moratoriumMonths: 0,
-    beneficiary: 'Urban & Peri-Urban Street Vendors',
-    minAge: 18,
-    maxAge: 70,
-    maxIncome: 250000,
-    summary: 'Special micro-credit facility providing affordable collateral-free working capital loans with 7% interest subsidy on digital repayment.',
-    description: 'PM SVANidhi provides working capital loans of ₹10,000 (1st tranche), ₹20,000 (2nd tranche), and ₹50,000 (3rd tranche) to street vendors with 7% annual interest subsidy and monthly cashbacks for digital transactions.',
-    benefits: 'Collateral-free working capital up to ₹50,000 with 7% interest subsidy and up to ₹1,200 annual digital transaction cashback.',
-    detailedBenefits: [
-      'Tiered credit growth: ₹10,000 → ₹20,000 → ₹50,000 on timely repayment.',
-      '7% annual interest subsidy directly credited via DBT to bank account.',
-      'Cashback up to ₹100 per month for UPI/digital payments received.',
-      'No collateral or processing fee.'
+    "id": "pm-vishwakarma",
+    "name": "PM Vishwakarma Scheme",
+    "shortName": "PM Vishwakarma",
+    "department": "Ministry of Micro, Small and Medium Enterprises (MSME)",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Skills & Craftsmanship",
+    "beneficiary": "Traditional Artisans & Craftspeople",
+    "minAge": 18,
+    "maxAge": 70,
+    "maxIncome": 400000,
+    "gender": "All",
+    "occupation": "Artisan",
+    "sector": "Skill Development",
+    "summary": "End-to-end support including PM Vishwakarma Certificate, skill training, ₹15,000 toolkit digital incentive, and collateral-free credit support up to ₹3 Lakh at 5% interest.",
+    "benefits": "Collateral-free credit up to ₹3 Lakh at concessional interest rate of 5%, ₹15,000 toolkit incentive, and stipend during skill training.",
+    "detailedBenefits": [
+      "PM Vishwakarma Certificate and ID Card granting official recognition.",
+      "Basic skill training of 5-7 days and Advanced training of 15 days with ₹500/day stipend.",
+      "Toolkit incentive of ₹15,000 credited via e-RUPI / digital voucher.",
+      "Collateral-free enterprise credit up to ₹1 Lakh (Tranche 1) and ₹2 Lakh (Tranche 2) at 5% interest rate."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 250000,
-      minAge: 18,
-      maxAge: 70,
-      education: ['none', 'primary', 'any'],
-      locations: ['All India', 'Andhra Pradesh', 'Tamil Nadu', 'Karnataka', 'Maharashtra', 'Delhi', 'Gujarat', 'Telangana', 'Uttar Pradesh']
-    },
-    eligibilityCriteria: [
-      'Street vendors possessing Certificate of Vending / Identity Card issued by Urban Local Bodies (ULBs).',
-      'Vendors who have been left out in survey but have Letter of Recommendation (LoR).',
-      'Vendors operating in surrounding peri-urban or rural areas.'
+    "eligibilityCriteria": [
+      "Artisan or craftsman working with hands and tools in one of 18 traditional trades (e.g. Carpenter, Blacksmith, Goldsmith, Potter, Weaver, Sculptor, Cobbler, Tailor).",
+      "Minimum age 18 years on date of registration.",
+      "Only one member per family eligible. Beneficiary should not have availed loans under PMEGP or MUDRA in last 5 years."
     ],
-    documentsRequired: [
-      'Aadhaar Card / Voter Card',
-      'Vending Certificate / Identity Card / Letter of Recommendation (LoR)',
-      'Bank Account Number (linked to Aadhaar)'
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Aadhaar-linked Mobile Number",
+      "Bank Account Details",
+      "Ration Card"
     ],
-    applicationProcess: [
-      'Step 1: Check mobile number linkage with Aadhaar.',
-      'Step 2: Submit loan request via SchemeSetu portal or Urban Local Body / CSC counter.',
-      'Step 3: Instant digital loan sanction and direct bank transfer.'
+    "applicationProcess": [
+      "Visit nearest Common Service Centre (CSC) with Aadhaar and mobile.",
+      "Biometric registration and verification by CSC operator.",
+      "3-step verification: Gram Panchayat/ULB level, District Implementation Committee, and Screening Committee.",
+      "Issue of PM Vishwakarma digital certificate and sanction of toolkit voucher."
     ],
-    faqs: [
+    "officialUrl": "https://pmvishwakarma.gov.in",
+    "faqs": [
       {
-        question: 'Is collateral needed for PM SVANidhi?',
-        answer: 'No collateral is required for any loan tranche under PM SVANidhi.'
+        "question": "Which trades are covered under PM Vishwakarma?",
+        "answer": "18 traditional trades including Carpenter, Boat Maker, Armourer, Blacksmith, Hammer and Tool Kit Maker, Locksmith, Goldsmith, Potter, Sculptor, Cobbler, Mason, Basket/Mat/Broom Maker, Doll & Toy Maker, Barber, Garland Maker, Washerman, Tailor, and Fishing Net Maker."
       }
     ],
-    officialUrl: 'https://pmsvanidhi.mohua.gov.in'
+    "tags": [
+      "artisan",
+      "vishwakarma",
+      "craftsman",
+      "toolkit",
+      "5 percent loan"
+    ],
+    "minLoan": 100000,
+    "maxLoan": 300000,
+    "maxProjectCost": 300000,
+    "interestRate": 5,
+    "tenureMonths": 30,
+    "moratoriumMonths": 3
   },
   {
-    id: 'scheme-006',
-    name: 'Stand-Up India Scheme for SC/ST & Women',
-    category: 'SC/ST & Women Entrepreneurship Loan',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'trading', 'food processing', 'agri-business'],
-    department: 'Department of Financial Services / SIDBI / NABARD',
-    interestRate: 8.0,
-    minLoan: 1000000,
-    maxLoan: 10000000,
-    tenure: '84 months',
-    tenureMonths: 84,
-    moratorium: '18 months',
-    moratoriumMonths: 18,
-    beneficiary: 'Scheduled Caste (SC), Scheduled Tribe (ST) & Women Entrepreneurs',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 1500000,
-    summary: 'Facilitates bank loans between ₹10 Lakhs and ₹1 Crore to SC/ST and women entrepreneurs for greenfield enterprises.',
-    description: 'The Stand-Up India scheme facilitates bank loans between ₹10 Lakhs and ₹1 Crore to at least one SC or ST borrower and at least one woman borrower per bank branch for setting up greenfield manufacturing, services, agri-allied, or trading enterprises.',
-    benefits: 'Composite loan up to ₹1 Crore with credit guarantee coverage and 18-month moratorium.',
-    detailedBenefits: [
-      'Bank loans from ₹10 Lakhs to ₹1 Crore covering up to 85% of total project cost.',
-      'Generous moratorium period up to 18 months.',
-      'Credit Guarantee Scheme for Stand-Up India (CGSUI) provides sovereign loan security.',
-      'Handholding support via SIDBI Stand-Up India portal & local Lead District Managers.'
+    "id": "post-matric-scholarship",
+    "name": "Post-Matric Scholarship Scheme for SC/ST/OBC Students",
+    "shortName": "Post-Matric Scholarship",
+    "department": "Ministry of Social Justice and Empowerment / Ministry of Tribal Affairs",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Education & Scholarships",
+    "beneficiary": "SC / ST / OBC Students",
+    "minAge": 14,
+    "maxAge": 35,
+    "maxIncome": 250000,
+    "gender": "All",
+    "occupation": "Student",
+    "sector": "Social Justice",
+    "summary": "Financial scholarship covering 100% compulsory non-refundable fees and monthly maintenance allowance for post-secondary education.",
+    "benefits": "Full tuition fee reimbursement + annual academic maintenance allowance up to ₹13,500 per year directly disbursed into bank accounts.",
+    "detailedBenefits": [
+      "Complete reimbursement of compulsory non-refundable course fees charged by recognized institutions.",
+      "Maintenance allowance up to ₹13,500/year for hostellers and ₹7,000/year for day scholars.",
+      "Additional allowance for disabled students and study tours."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 1500000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['10th pass', '12th pass', 'graduate', 'diploma', 'any'],
-      locations: ['All India', 'Tamil Nadu', 'Andhra Pradesh', 'Karnataka', 'Maharashtra', 'Delhi', 'Punjab', 'Haryana', 'Telangana']
-    },
-    eligibilityCriteria: [
-      'SC/ST and/or woman entrepreneur above 18 years of age.',
-      'Loan applicable for greenfield projects (first-time venture in manufacturing, services, agri-allied or trading).',
-      'In non-individual enterprises, at least 51% shareholding & controlling stake must be held by SC/ST or woman.',
-      'Borrower should not be in default with any bank or financial institution.'
+    "eligibilityCriteria": [
+      "Belong to Scheduled Caste (SC), Scheduled Tribe (ST), or Other Backward Classes (OBC).",
+      "Enrolled in Post-Matriculation or Post-Secondary courses (Class 11 to Ph.D.) in recognized institutions.",
+      "Annual family income must not exceed ₹2.50 Lakh (for SC/ST) or ₹1.50 Lakh (for OBC)."
     ],
-    documentsRequired: [
-      'Identity & Address Proof (Aadhaar, Passport, Voter ID)',
-      'SC/ST Caste Certificate issued by competent government authority',
-      'Detailed Project Feasibility Report (DPR) with cash-flow projection',
-      'Land / Lease documents for factory / business premise',
-      'Partnership deed or incorporation certificate (if applicable)'
+    "documentsRequired": [
+      "Cast Certificate issued by competent authority",
+      "Income Certificate of parents/guardian",
+      "Mark sheets of previous qualifying examinations",
+      "Fee receipt and Bonafide Certificate from educational institution",
+      "Aadhaar Card & Bank Passbook copy"
     ],
-    applicationProcess: [
-      'Step 1: Register on SchemeSetu / Stand-Up India portal with DPR.',
-      'Step 2: Application routed to designated local commercial bank branch.',
-      'Step 3: Branch appraisal, credit guarantee linkage, and sanction letter issuance.',
-      'Step 4: Staged fund release against project milestone implementation.'
+    "applicationProcess": [
+      "Register on National Scholarship Portal (NSP) or State Scholarship Portal.",
+      "Upload caste certificate, income proof, and mark sheet.",
+      "Submit application; verification conducted by Institute Verification Officer and District Nodal Officer.",
+      "Direct Benefit Transfer (DBT) credited directly into student's Aadhaar-seeded bank account."
     ],
-    faqs: [
+    "officialUrl": "https://scholarships.gov.in",
+    "faqs": [
       {
-        question: 'Can an existing business owner apply under Stand-Up India?',
-        answer: 'The scheme is specifically intended for greenfield (new) ventures. Existing businesses can apply under PMMY Tarun or CGTMSE.'
+        "question": "Can students studying in private colleges apply?",
+        "answer": "Yes, provided the institution and course are recognized by UGC, AICTE, or government regulatory bodies."
       }
     ],
-    officialUrl: 'https://www.standupmitra.in'
+    "tags": [
+      "scholarship",
+      "education",
+      "student",
+      "sc st obc",
+      "tuition fee"
+    ]
   },
   {
-    id: 'scheme-007',
-    name: 'Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)',
-    category: 'Agriculture & Rural Development',
-    level: 'Central',
-    projectTypes: ['agriculture', 'horticulture', 'dairy', 'poultry', 'agri-allied'],
-    department: 'Ministry of Agriculture and Farmers Welfare',
-    interestRate: 4.0,
-    minLoan: 10000,
-    maxLoan: 300000,
-    tenure: '36 months',
-    tenureMonths: 36,
-    moratorium: '6 months',
-    moratoriumMonths: 6,
-    beneficiary: 'Small and Marginal Farmer Families',
-    minAge: 18,
-    maxAge: 75,
-    maxIncome: 400000,
-    summary: 'Direct income support of ₹6,000 per year and access to subsidized Kisan Credit Card (KCC) loans up to ₹3 Lakhs.',
-    description: 'PM-KISAN provides direct income support of ₹6,000 per year in three equal installments of ₹2,000 directly into bank accounts of cultivable landholding farmer families, plus seamless linkage to Kisan Credit Card agricultural loans at 4% subsidized interest rate.',
-    benefits: '₹6,000 annual direct DBT grant + up to ₹3 Lakh KCC loan at 4% subsidized interest.',
-    detailedBenefits: [
-      'Direct DBT credit of ₹2,000 every four months directly into Aadhaar-linked bank accounts.',
-      'Concessional Kisan Credit Card (KCC) loan access at 4% effective interest rate.',
-      'Coverage against crop loss under PM Fasal Bima Yojana integration.',
-      'Zero paper verification through digital land record integration.'
+    "id": "pm-svanidhi",
+    "name": "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)",
+    "shortName": "PM SVANidhi",
+    "department": "Ministry of Housing and Urban Affairs",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Financial Services & Micro-Loans",
+    "beneficiary": "Street Vendors / Hawkers",
+    "minAge": 18,
+    "maxAge": 65,
+    "maxIncome": 200000,
+    "gender": "All",
+    "occupation": "Vendor",
+    "sector": "Urban Development",
+    "summary": "Micro-credit scheme providing working capital collateral-free loans up to ₹50,000 with 7% interest subsidy and cashback on digital transactions.",
+    "benefits": "Tranche 1 loan of ₹10,000, Tranche 2 loan of ₹20,000, and Tranche 3 loan of ₹50,000 with 7% interest subsidy and ₹1,200 annual digital cashback.",
+    "detailedBenefits": [
+      "Working capital loan starting at ₹10,000 without collateral for 1-year tenure.",
+      "7% interest subsidy credited directly to bank account on timely repayment.",
+      "Enhanced loan limit of ₹20,000 (2nd tranche) and ₹50,000 (3rd tranche) on early repayment.",
+      "Cashback up to ₹100 per month (₹1,200/year) on conducting digital sales."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 400000,
-      minAge: 18,
-      maxAge: 75,
-      education: ['none', 'primary', 'any'],
-      locations: ['All India', 'Andhra Pradesh', 'Telangana', 'Karnataka', 'Tamil Nadu', 'Maharashtra', 'Uttar Pradesh', 'Bihar', 'Madhya Pradesh']
-    },
-    eligibilityCriteria: [
-      'Small and marginal farmer families with cultivable agricultural land registered in their name.',
-      'Institutional landholders and high-income taxpayer families are excluded.',
-      'Valid Aadhaar and bank account seeded with Aadhaar.'
+    "eligibilityCriteria": [
+      "Street vendors engaged in vending in urban areas on or before March 24, 2020.",
+      "Vendors possessing Certificate of Vending / Identity Card issued by Urban Local Bodies (ULBs).",
+      "Vendors identified in ULB survey or holding Letter of Recommendation (LoR)."
     ],
-    documentsRequired: [
-      'Aadhaar Card',
-      'Landholding Ownership Documents / RoR (Record of Rights)',
-      'Bank Account Passbook / Statement',
-      'Self-declaration certificate'
+    "documentsRequired": [
+      "Vending Certificate / Identity Card / Letter of Recommendation (LoR)",
+      "Aadhaar Card",
+      "Voter ID / Driving License",
+      "Bank Account Passbook"
     ],
-    applicationProcess: [
-      'Step 1: Check status via SchemeSetu portal or PM-KISAN official site.',
-      'Step 2: Submit land record and Aadhaar eKYC via OTP or biometric CSC.',
-      'Step 3: State nodal officer verification.',
-      'Step 4: Installment disbursement directly to bank account.'
+    "applicationProcess": [
+      "Check vending status at local Urban Local Body (ULB) or PM SVANidhi portal.",
+      "Apply online on PM SVANidhi portal or visit nearest Common Service Centre / Bank.",
+      "Fill simple 1-page digital loan application form.",
+      "Loan disbursed directly into bank account within 10 days."
     ],
-    faqs: [
+    "officialUrl": "https://pmsvanidhi.mohua.gov.in",
+    "faqs": [
       {
-        question: 'Is eKYC mandatory for PM-KISAN?',
-        answer: 'Yes, Aadhaar-based OTP eKYC or biometric eKYC at CSC centers is mandatory.'
+        "question": "Is collateral required for PM SVANidhi loan?",
+        "answer": "No, the loan is completely collateral-free."
       }
     ],
-    officialUrl: 'https://pmkisan.gov.in'
+    "tags": [
+      "street vendor",
+      "svanidhi",
+      "micro loan",
+      "cashback",
+      "interest subsidy"
+    ],
+    "minLoan": 10000,
+    "maxLoan": 50000,
+    "maxProjectCost": 50000,
+    "interestRate": 7,
+    "tenureMonths": 12,
+    "moratoriumMonths": 0
   },
   {
-    id: 'scheme-008',
-    name: 'PM Vishwakarma Scheme',
-    category: 'Traditional Artisans & Craftspeople Support',
-    level: 'Central',
-    projectTypes: ['handicrafts', 'carpentry', 'blacksmith', 'pottery', 'tailoring', 'sculpting', 'services'],
-    department: 'Ministry of MSME / Ministry of Skill Development and Entrepreneurship',
-    interestRate: 5.0,
-    minLoan: 100000,
-    maxLoan: 300000,
-    tenure: '30 months',
-    tenureMonths: 30,
-    moratorium: '3 months',
-    moratoriumMonths: 3,
-    beneficiary: 'Traditional Artisans and Craftspeople (18 Recognized Trades)',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 400000,
-    summary: 'End-to-end support for traditional artisans with skill training, ₹15,000 toolkit incentive, and collateral-free loans up to ₹3 Lakhs at 5% interest.',
-    description: 'PM Vishwakarma provides comprehensive institutional support to traditional artisans and craftspeople working with hands and tools across 18 trades including carpenters, blacksmiths, goldsmiths, potters, sculptors, cobblers, masons, basket weavers, and tailors.',
-    benefits: '₹15,000 modern toolkit grant + ₹3 Lakh collateral-free loan at 5% interest + ₹500/day training stipend.',
-    detailedBenefits: [
-      'PM Vishwakarma Certificate and ID card providing national artisan recognition.',
-      'Basic (5-7 days) and Advanced (15 days) skill training with ₹500 per day stipend.',
-      '₹15,000 e-voucher grant for purchasing modern toolkits.',
-      'Collateral-free enterprise loan: ₹1 Lakh (Tranche 1) and ₹2 Lakhs (Tranche 2) at 5% concessional interest.',
-      'Digital transaction incentive of ₹1 per transaction for up to 100 transactions/month.'
+    "id": "nsap-old-age-pension",
+    "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS - NSAP)",
+    "shortName": "IGNOAPS Old Age Pension",
+    "department": "Ministry of Rural Development",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Social Security & Pension",
+    "beneficiary": "Senior Citizens (60+ BPL)",
+    "minAge": 60,
+    "maxAge": 100,
+    "maxIncome": 100000,
+    "gender": "All",
+    "occupation": "Senior Citizen",
+    "sector": "Social Justice",
+    "summary": "Monthly social security pension for BPL senior citizens aged 60 years and above.",
+    "benefits": "Monthly pension of ₹400 to ₹1,000+ per month (Central + State top-up) directly disbursed via DBT.",
+    "detailedBenefits": [
+      "Central contribution of ₹200/month for persons aged 60 to 79 years, supplemented by State contribution (totaling ₹1,000 to ₹3,000/month depending on state).",
+      "Central contribution increased to ₹500/month for senior citizens aged 80 years and above.",
+      "Direct credit to beneficiary bank/post office account on 1st of every month."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 400000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['none', 'primary', '8th pass', '10th pass', 'any'],
-      locations: ['All India', 'Tamil Nadu', 'Andhra Pradesh', 'Telangana', 'Karnataka', 'Maharashtra', 'Odisha', 'Rajasthan', 'Uttar Pradesh']
-    },
-    eligibilityCriteria: [
-      'Artisan or craftsperson working with their hands and tools in one of the 18 family-based traditional trades.',
-      'Minimum age of 18 years on the date of registration.',
-      'Should not have availed loans under PMEGP, PM SVANidhi, or MUDRA in the past 5 years for the same trade.',
-      'Only one member per family is eligible to receive benefits.'
+    "eligibilityCriteria": [
+      "Applicant must be 60 years of age or older.",
+      "Must belong to a household living Below Poverty Line (BPL) as per central/state guidelines.",
+      "Must have valid BPL card or certificate from competent authority."
     ],
-    documentsRequired: [
-      'Aadhaar Card and Mobile linked to Aadhaar',
-      'Bank Account details',
-      'Ration Card / Family Declaration',
-      'Trade / Skill self-declaration'
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Age Proof (Birth Certificate / Voter ID / School Certificate)",
+      "BPL Ration Card / Income Certificate",
+      "Bank or Post Office Passbook"
     ],
-    applicationProcess: [
-      'Step 1: Biometric-based registration at local CSC Kendra or via SchemeSetu.',
-      'Step 2: Three-step verification: Gram Panchayat / ULB level, District Implementation Committee, and Screening Committee.',
-      'Step 3: Skill verification, toolkit voucher issuance, and loan disbursement.'
+    "applicationProcess": [
+      "Submit application to Social Welfare Officer / Block Development Officer (BDO) or Gram Panchayat office.",
+      "Verification of age and BPL status by local authorities.",
+      "Approval and sanction order issued by District Collector / Social Welfare Board.",
+      "Monthly pension credited via Direct Benefit Transfer."
     ],
-    faqs: [
+    "officialUrl": "https://nsap.nic.in",
+    "faqs": [
       {
-        question: 'Which trades are covered under PM Vishwakarma?',
-        answer: '18 trades: Carpenter, Boat Maker, Armourer, Blacksmith, Hammer & Tool Kit Maker, Locksmith, Sculptor, Goldsmith, Potter, Cobbler, Mason, Basket/Mat/Broom Maker, Doll & Toy Maker, Barber, Garland Maker, Washerman, Tailor, and Fishing Net Maker.'
+        "question": "Does the pension amount vary across states?",
+        "answer": "Yes, central government provides base pension, and state governments add matching/top-up funds (e.g. Telangana, AP, UP provide up to ₹2,500-₹3,000/month)."
       }
     ],
-    officialUrl: 'https://pmvishwakarma.gov.in'
+    "tags": [
+      "pension",
+      "old age",
+      "senior citizen",
+      "bpl",
+      "nsap"
+    ]
   },
   {
-    id: 'scheme-009',
-    name: 'Credit Guarantee Fund Trust for Micro & Small Enterprises (CGTMSE)',
-    category: 'Credit Guarantee Scheme',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'trading', 'technology', 'food processing', 'engineering'],
-    department: 'Ministry of MSME / SIDBI',
-    interestRate: 8.75,
-    minLoan: 500000,
-    maxLoan: 50000000,
-    tenure: '84 months',
-    tenureMonths: 84,
-    moratorium: '12 months',
-    moratoriumMonths: 12,
-    beneficiary: 'Micro & Small Business Enterprises (MSEs)',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 2500000,
-    summary: 'Provides sovereign credit guarantee coverage up to ₹5 Crores to banks to facilitate collateral-free business loans.',
-    description: 'CGTMSE enables collateral-free credit facilities (term loan and working capital) up to ₹500 Lakhs to new and existing Micro and Small Enterprises by providing up to 85% guarantee cover to lending Member Lending Institutions (MLIs).',
-    benefits: 'Collateral-free commercial bank credit up to ₹5 Crores with 75% to 85% government guarantee cover.',
-    detailedBenefits: [
-      'Credit guarantee cover up to 85% for micro-enterprises and SC/ST/women-owned units.',
-      'Covers both Term Loans and Working Capital credit facilities.',
-      'Reduced annual guarantee fees for aspirational districts and marginalized entrepreneurs.',
-      'Enables high-scale business expansion without pledging physical land/property.'
+    "id": "sukanya-samriddhi",
+    "name": "Sukanya Samriddhi Yojana (SSY)",
+    "shortName": "Sukanya Samriddhi",
+    "department": "Department of Posts / Ministry of Finance",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Women & Child Welfare",
+    "beneficiary": "Girls (0-10 years)",
+    "minAge": 0,
+    "maxAge": 10,
+    "maxIncome": 1000000,
+    "gender": "Female",
+    "occupation": "Any",
+    "sector": "Women & Child",
+    "summary": "Government-backed high-interest savings scheme for girl child with 8.2% interest rate and Section 80C tax benefits.",
+    "benefits": "Highest government interest rate of 8.2% per annum, compound annually, with full EEE (Exempt-Exempt-Exempt) tax exemption.",
+    "detailedBenefits": [
+      "High guaranteed interest rate (8.2% per annum for Q2 2026).",
+      "Minimum deposit of ₹250 up to maximum ₹1,500,000 per financial year.",
+      "Tax deduction under Section 80C up to ₹1.5 Lakh per year.",
+      "Partial withdrawal up to 50% allowed for higher education once girl reaches age 18.",
+      "Maturity after 21 years from account opening date."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 2500000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['10th pass', '12th pass', 'graduate', 'diploma', 'any'],
-      locations: ['All India']
-    },
-    eligibilityCriteria: [
-      'New or existing Micro and Small Enterprises (MSEs) engaged in manufacturing or service activities.',
-      'Valid Udyam Registration Certificate.',
-      'Bank appraisal approval for credit facility.'
+    "eligibilityCriteria": [
+      "Account can be opened by natural or legal guardian for a girl child below age 10.",
+      "Maximum 2 girl child accounts allowed per family (triplets/twins exception).",
+      "Girl child must be a resident Indian citizen."
     ],
-    documentsRequired: [
-      'Udyam Registration Certificate',
-      'Audited Financial Statements (for existing units) / Project Report (new units)',
-      'Income Tax Returns & GST returns',
-      'KYC documents of Promoters/Directors'
+    "documentsRequired": [
+      "Girl Child's Birth Certificate",
+      "Identity & Address Proof of Parent/Guardian (Aadhaar / PAN)",
+      "Passport size photos of child and guardian"
     ],
-    applicationProcess: [
-      'Step 1: Prepare business plan and obtain Udyam registration.',
-      'Step 2: Apply for business credit at any scheduled commercial bank or NBFC.',
-      'Step 3: Bank sanctions loan and applies to CGTMSE trust for guarantee coverage.'
+    "applicationProcess": [
+      "Visit any Post Office branch or authorized public/private bank.",
+      "Fill SSY Account Opening Form (Form-1).",
+      "Submit child's birth certificate and guardian's KYC documents.",
+      "Make initial deposit (minimum ₹250) in cash/cheque; passbook issued."
     ],
-    faqs: [
+    "officialUrl": "https://www.indiapost.gov.in",
+    "faqs": [
       {
-        question: 'What is the guarantee fee for CGTMSE?',
-        answer: 'Annual guarantee fees range between 0.37% and 1.35% depending on loan size, with special discounts for SC/ST, women, and Northeastern region entrepreneurs.'
+        "question": "What is the current interest rate for SSY?",
+        "answer": "The scheme offers an attractive government-backed interest rate of 8.2% per annum compounded annually."
       }
     ],
-    officialUrl: 'https://www.cgtmse.in'
+    "tags": [
+      "girl child",
+      "sukanya samriddhi",
+      "savings",
+      "tax free",
+      "high interest"
+    ]
   },
   {
-    id: 'scheme-010',
-    name: 'PM Formalisation of Micro food processing Enterprises (PMFME)',
-    category: 'Food Processing & Agribusiness Subsidy',
-    level: 'Central',
-    projectTypes: ['food processing', 'agro-industry', 'packaging', 'baking', 'spices', 'beverages'],
-    department: 'Ministry of Food Processing Industries (MoFPI)',
-    interestRate: 8.0,
-    minLoan: 200000,
-    maxLoan: 10000000,
-    tenure: '84 months',
-    tenureMonths: 84,
-    moratorium: '12 months',
-    moratoriumMonths: 12,
-    beneficiary: 'Micro Food Processing Entrepreneurs, SHGs & FPOs',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 1200000,
-    summary: '35% capital credit-linked subsidy up to ₹10 Lakhs for modernizing micro food processing units under One District One Product (ODOP).',
-    description: 'PMFME provides financial, technical, and business support for the upgradation of micro food processing enterprises, providing 35% credit-linked capital subsidy up to ₹10 Lakhs per unit, with priority for One District One Product (ODOP) produce.',
-    benefits: '35% capital subsidy up to ₹10 Lakhs + ₹40,000 seed capital for SHG members + brand marketing support.',
-    detailedBenefits: [
-      'Credit-linked capital subsidy @ 35% of eligible project cost with max ceiling of ₹10 Lakhs.',
-      'Seed capital grant of ₹40,000 per SHG member for working capital and small tools.',
-      'Technical training and mentorship on food safety standards (FSSAI) and packaging.',
-      'Marketing & branding financial support up to 50% for ODOP product lines.'
+    "id": "stand-up-india",
+    "name": "Stand Up India Scheme for Women & SC/ST Entrepreneurs",
+    "shortName": "Stand Up India",
+    "department": "Department of Financial Services, Ministry of Finance",
+    "level": "Central",
+    "state": "Pan-India",
+    "category": "Business & Entrepreneurship",
+    "beneficiary": "Women & SC/ST Entrepreneurs",
+    "minAge": 18,
+    "maxAge": 65,
+    "maxIncome": 1500000,
+    "gender": "All",
+    "occupation": "Business",
+    "sector": "MSME",
+    "summary": "Bank loans between ₹10 Lakh and ₹1 Crore for setting up greenfield enterprises by SC/ST or Women borrowers.",
+    "benefits": "Bank loan from ₹10 Lakh up to ₹1 Crore covering up to 85% of total project cost for new business ventures.",
+    "detailedBenefits": [
+      "Composite loan (inclusive of term loan and working capital) between ₹10 Lakh and ₹1 Crore.",
+      "Covered under Credit Guarantee Scheme for Stand Up India Loans (CGSIL).",
+      "Repayable in 7 years with a maximum moratorium period of 18 months.",
+      "Handholding support via Stand Up India portal (mentorship, EDP training)."
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 1200000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['8th pass', '10th pass', 'graduate', 'diploma', 'any'],
-      locations: ['All India', 'Andhra Pradesh', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Maharashtra', 'Punjab', 'Kerala', 'Gujarat']
-    },
-    eligibilityCriteria: [
-      'Individual micro food processing unit with at least 1-2 workers.',
-      'Existing unit should be currently operational.',
-      'Beneficiary contribution of at least 10% of project cost.',
-      'Willingness to achieve FSSAI standards and GST compliance.'
+    "eligibilityCriteria": [
+      "Applicant must belong to SC/ST category OR be a Woman entrepreneur.",
+      "Age above 18 years.",
+      "Project must be a Greenfield enterprise (first-time venture in manufacturing, services, agriculture-allied, or trading sector).",
+      "In non-individual enterprises, 51% shareholding and controlling stake must be held by SC/ST or Woman entrepreneur."
     ],
-    documentsRequired: [
-      'Aadhaar and PAN Card',
-      'Bank Account Statements for 6 months',
-      'Electricity Bill / Rental Agreement of processing facility',
-      'Quotation for food processing machinery from authorized supplier',
-      'FSSAI registration / application receipt (if available)'
+    "documentsRequired": [
+      "Aadhaar Card & PAN Card",
+      "Caste Certificate (for SC/ST applicants)",
+      "Project Profile / Business Feasibility Report",
+      "Proof of Business Premise (Ownership/Lease)",
+      "Bank Account Statement of last 6 months"
     ],
-    applicationProcess: [
-      'Step 1: Submit application on PMFME national portal.',
-      'Step 2: District Resource Person (DRP) assists in DPR preparation.',
-      'Step 3: Bank sanctions project loan and claims 35% subsidy from MoFPI.'
+    "applicationProcess": [
+      "Register on Stand Up India portal (www.standupmitra.in) or visit nearest Scheduled Commercial Bank branch.",
+      "Create profile and choose handholding support agency if required.",
+      "Submit detailed project report and loan application form.",
+      "Bank processes loan application and sanctions within 2-4 weeks."
     ],
-    faqs: [
+    "officialUrl": "https://www.standupmitra.in",
+    "faqs": [
       {
-        question: 'Can new food processing units apply for PMFME?',
-        answer: 'Yes, new units setting up ODOP food processing lines are eligible for credit-linked capital subsidy.'
+        "question": "Can an existing business apply for Stand Up India loan?",
+        "answer": "No, Stand Up India is specifically for Greenfield (new) ventures."
       }
     ],
-    officialUrl: 'https://pmfme.mofpi.gov.in'
-  },
-  {
-    id: 'scheme-011',
-    name: 'National SC-ST Hub (NSSH) Scheme',
-    category: 'SC/ST Entrepreneurship Support',
-    level: 'Central',
-    projectTypes: ['manufacturing', 'services', 'trading', 'food processing', 'engineering', 'textiles'],
-    department: 'Ministry of MSME / NSIC',
-    interestRate: 7.0,
-    minLoan: 100000,
-    maxLoan: 5000000,
-    tenure: '60 months',
-    tenureMonths: 60,
-    moratorium: '6 months',
-    moratoriumMonths: 6,
-    beneficiary: 'SC and ST Micro & Small Entrepreneurs',
-    minAge: 18,
-    maxAge: 65,
-    maxIncome: 1500000,
-    summary: 'Special credit subsidies, free tender bidding, and 25% capital subsidy on plant & machinery for SC/ST enterprises.',
-    description: 'National SC-ST Hub (NSSH) is set up to provide professional support to Scheduled Caste and Scheduled Tribe entrepreneurs to fulfill government public procurement mandates (4% mandatory procurement from SC/ST MSEs by Central Public Sector Enterprises).',
-    benefits: '25% Special Credit Linked Capital Subsidy (SCLCSS) on machinery + 100% reimbursement on government tender fees.',
-    detailedBenefits: [
-      '25% capital subsidy on plant and machinery purchase up to ₹25 Lakhs subsidy ceiling.',
-      '100% fee reimbursement for GeM (Government e-Marketplace) registration and tender fees.',
-      'Free testing fee reimbursement up to ₹1 Lakh at NABL accredited labs.',
-      'Special technical handholding and vendor development meets with CPSEs.'
+    "tags": [
+      "women entrepreneur",
+      "sc st",
+      "business loan",
+      "standup india",
+      "greenfield"
     ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 1500000,
-      minAge: 18,
-      maxAge: 65,
-      education: ['8th pass', '10th pass', '12th pass', 'graduate', 'diploma', 'any'],
-      locations: ['All India']
-    },
-    eligibilityCriteria: [
-      'Enterprise must be registered as Micro or Small under Udyam Registration.',
-      '100% ownership by SC/ST in sole proprietorship, or at least 51% shareholding by SC/ST in partnership/private limited.',
-      'Valid SC/ST caste certificate issued by authorized government officer.'
-    ],
-    documentsRequired: [
-      'Udyam Registration Certificate',
-      'Caste Certificate of all SC/ST Partners/Directors',
-      'Machinery Tax Invoices & Bank Loan Sanction Letter',
-      'CA Certificate on Plant and Machinery Investment'
-    ],
-    applicationProcess: [
-      'Step 1: Register on National SC-ST Hub portal via SchemeSetu.',
-      'Step 2: Submit subsidy claim within specified timeline of machine installation.',
-      'Step 3: Verification by NSIC nodal branch and direct DBT subsidy credit.'
-    ],
-    faqs: [
-      {
-        question: 'What is the public procurement target from SC/ST MSEs?',
-        answer: 'Central Ministries and CPSEs are mandated to procure a minimum of 4% of their total annual procurement from SC/ST enterprises.'
-      }
-    ],
-    officialUrl: 'https://www.scsthub.in'
-  },
-  {
-    id: 'scheme-012',
-    name: 'Ayushman Bharat PM-JAY (Healthcare & Wellness)',
-    category: 'Healthcare & Health Insurance',
-    level: 'Central',
-    projectTypes: ['healthcare', 'social-welfare', 'services'],
-    department: 'National Health Authority (NHA) / Ministry of Health and Family Welfare',
-    interestRate: 0.0,
-    minLoan: 0,
-    maxLoan: 500000,
-    tenure: '12 months (Renewable)',
-    tenureMonths: 12,
-    moratorium: '0 months',
-    moratoriumMonths: 0,
-    beneficiary: 'Vulnerable Rural & Urban Families, BPL, SC/ST',
-    minAge: 0,
-    maxAge: 100,
-    maxIncome: 250000,
-    summary: 'World\'s largest health assurance scheme providing cashless hospital treatment cover up to ₹5 Lakhs per family per year.',
-    description: 'Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (PM-JAY) provides health cover of ₹5,00,000 per family per year for secondary and tertiary care hospitalization across more than 29,000 empanelled public and private hospitals across India.',
-    benefits: '₹5,00,000 cashless health insurance cover per family per year with zero out-of-pocket hospital expenses.',
-    detailedBenefits: [
-      'Cashless and paperless access to healthcare services at point of care.',
-      'Covers up to 3 days of pre-hospitalization and 15 days of post-hospitalization expenses.',
-      'No restriction on family size, age, or gender.',
-      'All pre-existing medical conditions covered from day one.'
-    ],
-    eligibility: {
-      minIncome: 0,
-      maxIncome: 250000,
-      minAge: 0,
-      maxAge: 100,
-      education: ['none', 'primary', 'any'],
-      locations: ['All India']
-    },
-    eligibilityCriteria: [
-      'Families identified in Socio-Economic Caste Census (SECC 2011) database.',
-      'Active Ration Card / BPL card holders.',
-      'All senior citizens aged 70 years and above (universal coverage tier).'
-    ],
-    documentsRequired: [
-      'Aadhaar Card',
-      'Ration Card / PM-JAY Family ID',
-      'Ayushman Card (generated digitally at CSC)'
-    ],
-    applicationProcess: [
-      'Step 1: Verify eligibility by mobile number or Ration card on SchemeSetu / PM-JAY.',
-      'Step 2: Generate Ayushman PVC Card at any empanelled hospital or CSC center.',
-      'Step 3: Show Ayushman card at Ayushman Mitra desk for cashless admission.'
-    ],
-    faqs: [
-      {
-        question: 'Are diagnostic tests and medicines covered?',
-        answer: 'Yes, diagnostic procedures, ICU, surgery, medication, and post-discharge medicines are 100% covered.'
-      }
-    ],
-    officialUrl: 'https://pmjay.gov.in'
+    "minLoan": 1000000,
+    "maxLoan": 10000000,
+    "maxProjectCost": 10000000,
+    "interestRate": 7.5,
+    "tenureMonths": 84,
+    "moratoriumMonths": 18
   }
 ];
-
-export default MOCK_SCHEMES;
+export const MOCK_SCHEMES = mockSchemes;
+export default mockSchemes;

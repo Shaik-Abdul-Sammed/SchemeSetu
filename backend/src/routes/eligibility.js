@@ -98,9 +98,52 @@ router.post('/check', (req, res) => {
         matchReasons.push(`BPL Status confirmed, matching low-income target criteria.`);
       }
 
-      if (casteCategory && (casteCategory === 'SC' || casteCategory === 'ST' || casteCategory === 'OBC') && scheme.tags.includes('sc st obc')) {
-        score += 15;
-        matchReasons.push(`Social category '${casteCategory}' matches scholarship/reservation criteria.`);
+      // Social Category & SC Priority Boosts
+      if (casteCategory) {
+        const catUpper = String(casteCategory).toUpperCase();
+        if (catUpper === 'SC') {
+          if (scheme.id === 'dalit-bandhu' || scheme.id === 'stand-up-india' || (scheme.tags && scheme.tags.includes('sc st obc'))) {
+            score += 25;
+            matchReasons.push(`Scheduled Caste (SC) priority category directly matches specialized welfare grant/credit provisions.`);
+          }
+        } else if (catUpper === 'ST') {
+          if (scheme.id === 'pm-vishwakarma' || scheme.id === 'stand-up-india' || (scheme.tags && scheme.tags.includes('sc st obc'))) {
+            score += 20;
+            matchReasons.push(`Scheduled Tribe (ST) category matches specialized target subsidy criteria.`);
+          }
+        }
+      }
+
+      // Financial Limits (Loan / Project Cost) - Data Driven
+      const reqCost = Number(req.body.projectCost || req.body.loanRequirement || req.body.cost || 0);
+      let financialStatus = "Within Supported Range";
+      let financialDetails = {
+        requestedAmount: reqCost > 0 ? reqCost : null,
+        schemeMinLimit: scheme.minLoan !== undefined ? Number(scheme.minLoan) : null,
+        schemeMaxLimit: scheme.maxLoan !== undefined ? Number(scheme.maxLoan) : (scheme.maxBenefit || null)
+      };
+
+      if (reqCost > 0) {
+        const minL = financialDetails.schemeMinLimit !== null ? financialDetails.schemeMinLimit : 0;
+        const maxL = financialDetails.schemeMaxLimit !== null ? financialDetails.schemeMaxLimit : null;
+
+        if (maxL !== null && reqCost > maxL) {
+          financialStatus = "Exceeds Scheme Limit";
+          disqualifyReasons.push(`Requested amount ₹${reqCost.toLocaleString('en-IN')} exceeds the maximum scheme financial ceiling of ₹${maxL.toLocaleString('en-IN')}.`);
+          score -= 20;
+        } else if (minL > 0 && reqCost < minL) {
+          financialStatus = "Below Minimum Limit";
+          disqualifyReasons.push(`Requested amount ₹${reqCost.toLocaleString('en-IN')} is below the minimum required project size of ₹${minL.toLocaleString('en-IN')}.`);
+          score -= 15;
+        } else if (maxL !== null) {
+          financialStatus = "Eligible - Within Supported Range";
+          matchReasons.push(`Requested capital ₹${reqCost.toLocaleString('en-IN')} is within scheme limits (₹${minL.toLocaleString('en-IN')} to ₹${maxL.toLocaleString('en-IN')}).`);
+          score += 15;
+        } else {
+          financialStatus = "Limit not specified in available scheme data";
+        }
+      } else {
+        financialStatus = "No specific loan limit requested";
       }
 
       if (landOwner === 'Yes' && scheme.id === 'pm-kisan') {
@@ -110,20 +153,29 @@ router.post('/check', (req, res) => {
 
       // Normalize score between 0 and 100
       const finalScore = Math.max(0, Math.min(100, score));
-      const isEligible = finalScore >= 60 && disqualifyReasons.length === 0;
+      const isEligible = finalScore >= 55 && (disqualifyReasons.length === 0 || (disqualifyReasons.length === 1 && financialStatus === 'Exceeds Scheme Limit'));
 
-      let statusText = "High Match - Highly Recommended";
-      if (finalScore >= 80) statusText = "Highly Recommended";
-      else if (finalScore >= 60) statusText = "Potentially Eligible";
-      else if (finalScore >= 40) statusText = "Moderate Match";
-      else statusText = "Low Match / Criteria Mismatch";
+      let statusText = "Highly Recommended";
+      if (financialStatus === "Exceeds Scheme Limit") {
+        statusText = "Partially Eligible (Amount Exceeds Scheme Cap)";
+      } else if (finalScore >= 80) {
+        statusText = "Highly Recommended";
+      } else if (finalScore >= 60) {
+        statusText = "Potentially Eligible";
+      } else if (finalScore >= 40) {
+        statusText = "Moderate Match";
+      } else {
+        statusText = "Low Match / Criteria Mismatch";
+      }
 
       return {
         scheme,
         isEligible,
         matchScore: finalScore,
         eligibilityStatus: statusText,
-        disclaimer: "Based on the information provided, you may be eligible.",
+        financialStatus,
+        financialDetails,
+        disclaimer: "Based on the official scheme criteria, you may be eligible.",
         matchReasons,
         disqualifyReasons
       };
@@ -147,7 +199,9 @@ router.post('/check', (req, res) => {
       },
       totalEvaluated: schemesData.length,
       recommendationsCount: eligibleSchemes.length,
-      recommendations: results
+      eligibleSchemesCount: eligibleSchemes.length,
+      recommendations: results,
+      results: results
     });
   } catch (error) {
     return res.status(500).json({

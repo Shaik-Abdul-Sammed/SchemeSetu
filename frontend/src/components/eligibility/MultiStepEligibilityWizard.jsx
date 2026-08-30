@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   CheckCircle2, 
   ArrowLeft, 
@@ -12,33 +12,42 @@ import {
   FileCheck, 
   AlertCircle,
   ExternalLink,
-  Award
+  Award,
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { eligibilityService } from '../../services/eligibilityService';
 import { useLanguage } from '../../context/LanguageContext';
 import { sanitizeNumericInput, validateAndParseNumber, formatIndianCurrency } from '../../utils/numberValidator';
 import ErrorMessage from '../common/ErrorMessage';
+import ApplicationGuidanceModal from '../scheme/ApplicationGuidanceModal';
 
 export default function MultiStepEligibilityWizard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const totalSteps = 6;
+  const [activeGuidanceScheme, setActiveGuidanceScheme] = useState(null);
+
+  const prefilled = location.state?.prefilledData || {};
 
   const [formData, setFormData] = useState({
-    name: '',
-    age: 30,
-    gender: 'Male',
-    casteCategory: 'General',
-    disability: 'No',
-    maritalStatus: 'Married',
-    annualIncome: 180000,
-    bplStatus: 'Yes',
-    occupation: 'Farmer',
-    state: 'Pan-India',
-    areaType: 'Rural',
-    education: 'Secondary',
-    landOwner: 'Yes'
+    name: prefilled.name || '',
+    age: prefilled.age || 32,
+    gender: prefilled.gender || 'Male',
+    casteCategory: prefilled.casteCategory || prefilled.category || 'SC',
+    disability: prefilled.disability || 'No',
+    maritalStatus: prefilled.maritalStatus || 'Married',
+    annualIncome: prefilled.annualIncome || 240000,
+    bplStatus: prefilled.bplStatus || 'Yes',
+    occupation: prefilled.occupation || 'Farmer',
+    state: prefilled.state || 'Telangana',
+    areaType: prefilled.areaType || 'Rural',
+    education: prefilled.education || '10th pass',
+    landOwner: prefilled.landOwner || 'Yes',
+    projectCost: prefilled.projectCost || 350000,
+    loanRequirement: prefilled.loanRequirement || 250000
   });
 
   const [validationError, setValidationError] = useState('');
@@ -127,7 +136,7 @@ export default function MultiStepEligibilityWizard() {
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2.5rem' }}>
-          {recommendedList.map(({ scheme, isEligible, matchScore, eligibilityStatus, matchReasons, disqualifyReasons }) => (
+          {recommendedList.map(({ scheme, isEligible, matchScore, eligibilityStatus, financialStatus, financialDetails, matchReasons, disqualifyReasons }) => (
             <div key={scheme.id} className="card" style={{ borderLeft: `6px solid ${isEligible ? '#059669' : '#D97706'}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
@@ -150,6 +159,29 @@ export default function MultiStepEligibilityWizard() {
               </div>
 
               <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '1rem' }}>{scheme.summary}</p>
+
+              {/* Data-Driven Financial Limit Check Box */}
+              <div style={{ 
+                backgroundColor: financialStatus === 'Exceeds Scheme Limit' ? '#FEF3C7' : '#EFF6FF', 
+                border: `1px solid ${financialStatus === 'Exceeds Scheme Limit' ? '#FDE68A' : '#BFDBFE'}`, 
+                borderRadius: '8px', 
+                padding: '0.75rem 1rem', 
+                marginBottom: '1rem', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                flexWrap: 'wrap', 
+                gap: '0.5rem',
+                fontSize: '0.84rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: financialStatus === 'Exceeds Scheme Limit' ? '#92400E' : '#1E40AF' }}>
+                  {financialStatus === 'Exceeds Scheme Limit' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
+                  <span>Financial Status: {financialStatus || 'Within Limit'}</span>
+                </div>
+                <div style={{ color: '#334155', fontWeight: 500 }}>
+                  {scheme.maxLoan ? `Scheme Max Limit: ${formatIndianCurrency(scheme.maxLoan)}` : (scheme.maxBenefit ? `Benefit: ${formatIndianCurrency(scheme.maxBenefit)}` : 'Limit not specified in available scheme data')}
+                </div>
+              </div>
 
               <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
                 <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
@@ -177,20 +209,20 @@ export default function MultiStepEligibilityWizard() {
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
                 <button 
+                  type="button"
+                  onClick={() => setActiveGuidanceScheme(scheme)}
+                  className="btn btn-primary btn-sm"
+                  style={{ backgroundColor: '#059669', borderColor: '#059669', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <FileText size={14} /> {t('applyGuidance', 'Apply & Guidance Checklist')}
+                </button>
+
+                <button 
                   onClick={() => navigate(`/schemes/${scheme.id}`)}
                   className="btn btn-outline btn-sm"
                 >
                   {t('viewDetails', 'View Details & Required Documents')}
                 </button>
-
-                <a 
-                  href={scheme.officialUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="btn btn-primary btn-sm"
-                >
-                  {t('officialPortal', 'Apply on Official Portal')} <ExternalLink size={14} />
-                </a>
               </div>
             </div>
           ))}
@@ -201,6 +233,13 @@ export default function MultiStepEligibilityWizard() {
             {t('reEvaluateDifferent', 'Re-evaluate Eligibility with Different Profile')}
           </button>
         </div>
+
+        {/* Application Guidance Modal */}
+        <ApplicationGuidanceModal 
+          isOpen={!!activeGuidanceScheme} 
+          onClose={() => setActiveGuidanceScheme(null)} 
+          scheme={activeGuidanceScheme} 
+        />
       </div>
     );
   }

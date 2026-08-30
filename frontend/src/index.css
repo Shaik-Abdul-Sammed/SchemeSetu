@@ -673,9 +673,23 @@ button, input, select, a.btn {
   cursor: pointer;
 }
 
+.mobile-only-lang {
+  display: none;
+}
+
+.desktop-only-lang {
+  display: block;
+}
+
 @media (max-width: 868px) {
   body {
     padding-bottom: 80px;
+  }
+  .mobile-only-lang {
+    display: block;
+  }
+  .desktop-only-lang {
+    display: none;
   }
   .mobile-menu-btn {
     display: block;

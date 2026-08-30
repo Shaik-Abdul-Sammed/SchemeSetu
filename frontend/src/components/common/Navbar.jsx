@@ -65,13 +65,18 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <button 
-            className="mobile-menu-btn" 
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div className="mobile-only-lang">
+              <LanguageSelectorIcon />
+            </div>
+            <button 
+              className="mobile-menu-btn" 
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
 
           <nav className={`nav-links ${mobileOpen ? 'open' : ''}`}>
             <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)}>
@@ -186,8 +191,10 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Icon-Only Language Selector */}
-            <LanguageSelectorIcon />
+            {/* Icon-Only Language Selector (Desktop) */}
+            <div className="desktop-only-lang">
+              <LanguageSelectorIcon />
+            </div>
 
             {/* Install App Button */}
             {!isInstalled && (

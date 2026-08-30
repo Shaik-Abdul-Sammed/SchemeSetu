@@ -114,6 +114,23 @@ export default function Dashboard() {
               <ShieldCheck size={15} /> Verified Citizen Beneficiary
             </span>
 
+            {user?.isDemo && (
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '0.35rem', 
+                backgroundColor: '#FEF3C7', 
+                color: '#92400E', 
+                padding: '0.25rem 0.75rem', 
+                borderRadius: '9999px', 
+                fontSize: '0.8rem', 
+                fontWeight: 700,
+                border: '1px solid #F59E0B'
+              }}>
+                <Zap size={14} /> ⚡ Demo User Mode
+              </span>
+            )}
+
             <button 
               onClick={() => setLocationModalOpen(true)}
               style={{

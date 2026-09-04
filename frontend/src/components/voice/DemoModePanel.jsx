@@ -138,12 +138,12 @@ export default function DemoModePanel({
           {/* Live pipeline status */}
           <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #1E3E62' }}>
             <div style={{ color: '#94A3B8', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
-              LIVE PIPELINE
+              LIVE PIPELINE V4
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.75rem' }}>
               <PipelineRow label="📍 Location" value={locationState || 'Unknown'} />
               <PipelineRow label="🌐 Effective Lang" value={effectiveLang || 'EN'} highlight />
-              <PipelineRow label="🎤 Last Transcript" value={transcript ? transcript.substring(0, 30) + (transcript.length > 30 ? '…' : '') : 'Waiting…'} />
+              <PipelineRow label="🎤 Last Transcript" value={transcript ? transcript.substring(0, 25) + (transcript.length > 25 ? '…' : '') : 'Waiting…'} />
               <PipelineRow label="🔍 Detected Lang" value={detectedLabel} />
               <PipelineRow label="🎯 Intent" value={intent || '—'} highlight />
               <PipelineRow
@@ -151,6 +151,7 @@ export default function DemoModePanel({
                 value={confidence > 0 ? `${Math.round(confidence * 100)}%` : '—'}
                 color={confidence >= 0.75 ? '#6EE7B7' : confidence >= 0.5 ? '#FCD34D' : '#FCA5A5'}
               />
+              <PipelineRow label="🛡️ Source Hierarchy" value="1. Official Govt Portal (.gov.in)" full color="#6EE7B7" />
               {actionTaken && <PipelineRow label="⚡ Action" value={actionTaken} full />}
             </div>
           </div>

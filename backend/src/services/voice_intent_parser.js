@@ -469,6 +469,26 @@ const OCCUPATION_MAP = {
 function extractSlots(normalizedText) {
   const slots = {};
 
+  // Extract Name (e.g. "my name is ravi", "i am suresh", "నా పేరు రవి", "मेरा नाम रवि")
+  const nameMatch = normalizedText.match(/(?:my name is|i am|call me|నా పేరు|मेरा नाम)\s+([a-zA-Z\u0C00-\u0C7F\u0900-\u097F]+)/i);
+  if (nameMatch && nameMatch[1].length > 1 && !['farmer', 'student', 'from', 'here'].includes(nameMatch[1].toLowerCase())) {
+    slots.name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+  }
+
+  // Extract State
+  const STATES = [
+    'Andhra Pradesh', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Kerala',
+    'Maharashtra', 'Gujarat', 'Uttar Pradesh', 'Bihar', 'Madhya Pradesh',
+    'Rajasthan', 'West Bengal', 'Punjab', 'Delhi', 'Odisha', 'Haryana',
+    'Jharkhand', 'Chhattisgarh', 'Assam', 'Himachal Pradesh', 'Uttarakhand'
+  ];
+  for (const st of STATES) {
+    if (normalizedText.toLowerCase().includes(st.toLowerCase())) {
+      slots.state = st;
+      break;
+    }
+  }
+
   // Extract numeric values
   const amount = extractNumber(normalizedText);
   if (amount !== null && amount > 0) {

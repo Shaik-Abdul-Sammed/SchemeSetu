@@ -232,6 +232,7 @@ function normalizeScheme(raw, index) {
     : [String(rawLocations).trim()];
 
   return {
+    ...raw,
     id: String(id),
     name: String(name),
     category: String(category),
@@ -243,6 +244,7 @@ function normalizeScheme(raw, index) {
     moratoriumMonths,
     description: String(description),
     eligibility: {
+      ...(raw.eligibility || {}),
       minIncome,
       maxIncome,
       education,

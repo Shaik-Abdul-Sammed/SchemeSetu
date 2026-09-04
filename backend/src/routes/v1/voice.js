@@ -1,18 +1,19 @@
 /**
  * POST /api/v1/voice/parse
  * ─────────────────────────────────────────────────────────────────────────────
- * Unified voice processing endpoint.
+ * SchemeSetu V4 Unified Voice & Verification Endpoint
  *
  * Request body:
- *   { transcript, lang, lat?, lng?, schemeContext? }
+ *   { transcript, lang, lat?, lng?, userProfile?, schemeContext? }
  *
  * Response:
  *   {
  *     intent, confidence, action, slots,
- *     bankResults?,      // populated when intent === FIND_NEAREST_BANK
- *     responseText,      // English default (translate if lang !== 'EN')
- *     responseLang,      // final language of responseText
- *     detectedSlots,     // extracted amounts, occupation, projectType
+ *     userProfile,      // merged profile with newly extracted slots
+ *     verifiedFact?,    // Language-Independent Structured Fact Model
+ *     bankResults?,     // populated when intent === FIND_NEAREST_BANK
+ *     responseText,     // verified, source-backed natural language response
+ *     responseLang,     // language of responseText
  *   }
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -22,6 +23,7 @@ const express = require('express');
 const router = express.Router();
 const { parseVoiceIntent, extractSlots, normalizeTranscript } = require('../../services/voice_intent_parser');
 const dataService = require('../../services/dataService');
+const { verifySchemeFact } = require('../../services/verificationEngine');
 const { haversineDistance, isValidCoordinate } = require('../../utils/haversine');
 
 // ── Language → Google Translate code ────────────────────────────────────────
@@ -31,8 +33,6 @@ const LANG_TO_GOOGLE = {
 };
 
 // ── Multilingual response templates ─────────────────────────────────────────
-// Keeps frequently-used short strings out of the translate API to reduce
-// latency. The translate fallback handles anything not listed here.
 const BANK_RESPONSES = {
   EN: (banks) => banks.length > 0
     ? `The nearest relevant bank is ${banks[0].name}, approximately ${banks[0].distanceText} away at ${banks[0].address || 'nearby'}. ${banks.length > 1 ? `${banks.length - 1} more option${banks.length > 2 ? 's' : ''} found nearby.` : ''}`
@@ -45,8 +45,7 @@ const BANK_RESPONSES = {
     : '50 కి.మీ. దూరంలో బ్యాంక్ దొరకలేదు. మీ నగరం లేదా పిన్ కోడ్ నమోదు చేయండి.',
 };
 
-// ── Helper: translate via internal route (same process) ──────────────────────
-// This avoids an extra HTTP hop by requiring the translate service directly.
+// ── Helper: translate via google-translate-api ──────────────────────────────
 let _translateFn = null;
 function getTranslateFn() {
   if (!_translateFn) {
@@ -62,7 +61,7 @@ function getTranslateFn() {
         }
       };
     } catch {
-      _translateFn = async (text) => text; // module not available
+      _translateFn = async (text) => text;
     }
   }
   return _translateFn;
@@ -71,7 +70,7 @@ function getTranslateFn() {
 // ── POST /api/v1/voice/parse ─────────────────────────────────────────────────
 router.post('/parse', async (req, res) => {
   try {
-    const { transcript, lang = 'EN', lat, lng, schemeContext } = req.body || {};
+    const { transcript, lang = 'EN', lat, lng, userProfile = {}, schemeContext } = req.body || {};
 
     // Validate transcript
     if (!transcript || typeof transcript !== 'string' || transcript.trim().length === 0) {
@@ -84,11 +83,29 @@ router.post('/parse', async (req, res) => {
     const appLang = (String(lang).toUpperCase().trim().slice(0, 2)) || 'EN';
     const googleLang = LANG_TO_GOOGLE[appLang] || 'en';
 
-    // ── 1. Parse intent ──────────────────────────────────────────────────
+    // ── 1. Parse intent & extract slots ──────────────────────────────────
     const parsed = parseVoiceIntent(transcript);
-    const slots = extractSlots ? extractSlots(parsed.normalized || normalizeTranscript(transcript)) : {};
+    const extractedSlots = extractSlots ? extractSlots(parsed.normalized || normalizeTranscript(transcript)) : {};
 
-    // ── 2. Handle FIND_NEAREST_BANK ──────────────────────────────────────
+    // Merge extracted slots into profile context
+    const mergedProfile = {
+      ...userProfile,
+      name: extractedSlots.name || userProfile.name || '',
+      state: extractedSlots.state || userProfile.state || '',
+      occupation: extractedSlots.occupation || userProfile.occupation || '',
+      annualIncome: extractedSlots.income || userProfile.annualIncome || null,
+      cost: extractedSlots.cost || extractedSlots.amount || userProfile.cost || null,
+      projectType: extractedSlots.projectType || userProfile.projectType || '',
+    };
+
+    // ── 2. Run Verification Engine ───────────────────────────────────────
+    const verifiedFact = verifySchemeFact({
+      query: transcript,
+      schemeId: schemeContext,
+      userProfile: mergedProfile,
+    });
+
+    // ── 3. Handle FIND_NEAREST_BANK ──────────────────────────────────────
     let bankResults = null;
     let responseText = null;
 
@@ -100,12 +117,10 @@ router.post('/parse', async (req, res) => {
         const userLat = Number(lat);
         const userLng = Number(lng);
 
-        // Get all partners from data service
         const allPartners = dataService.getPartners();
         const eligible = allPartners.filter((p) => p.fundAvailable === true);
 
-        // Filter by scheme if slot says so
-        const schemeFilter = schemeContext || slots.projectType;
+        const schemeFilter = schemeContext || extractedSlots.projectType || mergedProfile.projectType;
         const filtered = schemeFilter
           ? eligible.filter((p) =>
               Array.isArray(p.schemes) &&
@@ -113,7 +128,6 @@ router.post('/parse', async (req, res) => {
             )
           : eligible;
 
-        // Compute distances and sort
         const withDist = filtered
           .map((p) => {
             const pLat = p.coordinates?.lat;
@@ -128,12 +142,9 @@ router.post('/parse', async (req, res) => {
 
         bankResults = withDist;
 
-        // Build voice response in user's language
         const templateFn = BANK_RESPONSES[appLang] || BANK_RESPONSES.EN;
         responseText = templateFn(withDist);
-
       } else {
-        // No coordinates — ask for location
         const locationPrompts = {
           EN: 'To find nearby banks, I need your location. Please allow location access or type your city name.',
           HI: 'नज़दीकी बैंक खोजने के लिए मुझे आपका स्थान चाहिए। कृपया लोकेशन एक्सेस दें या अपना शहर टाइप करें।',
@@ -144,43 +155,57 @@ router.post('/parse', async (req, res) => {
       }
     }
 
-    // ── 3. Generic response for other intents (translate if non-EN) ──────
+    // ── 4. Progressive Profile & Source-Backed Responses ────────────────
     if (!responseText) {
-      const genericResponses = {
-        NAVIGATE_SCHEMES: {
-          EN: 'Opening the schemes list for you.',
-          HI: 'आपके लिए योजनाओं की सूची खोल रहा हूँ।',
-          TE: 'మీ కోసం పథకాల జాబితా తెరుస్తున్నాను.',
-        },
-        DISCOVER_SCHEMES: {
-          EN: 'Let me find the best matching schemes for you.',
-          HI: 'मैं आपके लिए सबसे उपयुक्त योजनाएं खोज रहा हूँ।',
-          TE: 'మీకు సరిపోయే పథకాలను కనుగొంటున్నాను.',
-        },
-        CHECK_STATUS: {
-          EN: 'Opening your application status.',
-          HI: 'आपके आवेदन की स्थिति देख रहा हूँ।',
-          TE: 'మీ దరఖాస్తు స్థితిని చూపిస్తున్నాను.',
-        },
-        CHECK_ELIGIBILITY: {
-          EN: 'Let me check which schemes you qualify for.',
-          HI: 'देखते हैं आप किन योजनाओं के योग्य हैं।',
-          TE: 'మీకు ఏ పథకాలు వర్తిస్తాయో చూద్దాం.',
-        },
-      };
+      // Check if verifiedFact matches a specific scheme
+      if (verifiedFact && verifiedFact.verificationStatus !== 'uncertain') {
+        const greetingPrefix = mergedProfile.name ? `Hello ${mergedProfile.name}! ` : '';
+        const stateNote = mergedProfile.state ? `Based on guidelines for ${mergedProfile.state}, ` : '';
+        const rawEnResponse = `${greetingPrefix}${stateNote}${verifiedFact.schemeName}: ${verifiedFact.structuredFacts.benefitText} Verified via ${verifiedFact.source.title}.`;
 
-      const intentResponses = genericResponses[parsed.intent];
-      if (intentResponses) {
-        responseText = intentResponses[appLang] || intentResponses.EN;
-      } else if (googleLang !== 'en') {
-        // Fallback: translate English placeholder
-        const translateFn = getTranslateFn();
-        responseText = await translateFn(
-          `I understood you want to: ${parsed.intent.replace(/_/g, ' ').toLowerCase()}. Processing your request.`,
-          googleLang
-        );
+        if (googleLang !== 'en') {
+          const translateFn = getTranslateFn();
+          responseText = await translateFn(rawEnResponse, googleLang);
+        } else {
+          responseText = rawEnResponse;
+        }
       } else {
-        responseText = `Processing: ${parsed.intent.replace(/_/g, ' ').toLowerCase()}.`;
+        // Generic responses
+        const genericResponses = {
+          NAVIGATE_SCHEMES: {
+            EN: 'Opening the government schemes portal for you.',
+            HI: 'आपके लिए सरकारी योजनाओं का पोर्टल खोल रहा हूँ।',
+            TE: 'మీ కోసం ప్రభుత్వ పథకాల పోర్టల్ తెరుస్తున్నాను.',
+          },
+          DISCOVER_SCHEMES: {
+            EN: 'Finding verified government schemes matching your profile.',
+            HI: 'आपकी प्रोफ़ाइल से मेल खाने वाली सत्यापित सरकारी योजनाएं खोज रहा हूँ।',
+            TE: 'మీ ప్రొఫైల్‌కు సరిపోయే ధృవీకరించబడిన ప్రభుత్వ పథకాలను కనుగొంటున్నాను.',
+          },
+          CHECK_STATUS: {
+            EN: 'Opening your application tracking status.',
+            HI: 'आपके आवेदन की स्थिति देख रहा हूँ।',
+            TE: 'మీ దరఖాస్తు స్థితిని చూపిస్తున్నాను.',
+          },
+          CHECK_ELIGIBILITY: {
+            EN: 'Evaluating verified eligibility rules for your profile.',
+            HI: 'आपकी प्रोफ़ाइल के लिए सत्यापित पात्रता नियमों का मूल्यांकन कर रहा हूँ।',
+            TE: 'మీ ప్రొఫైల్ కోసం ధృవీకరించబడిన అర్హత నియమాలను పరిశీలిస్తున్నాను.',
+          },
+        };
+
+        const intentResp = genericResponses[parsed.intent];
+        if (intentResp) {
+          responseText = intentResp[appLang] || intentResp.EN;
+        } else if (googleLang !== 'en') {
+          const translateFn = getTranslateFn();
+          responseText = await translateFn(
+            `Processing request for ${parsed.intent.replace(/_/g, ' ').toLowerCase()}.`,
+            googleLang
+          );
+        } else {
+          responseText = `Processing request for ${parsed.intent.replace(/_/g, ' ').toLowerCase()}.`;
+        }
       }
     }
 
@@ -190,11 +215,11 @@ router.post('/parse', async (req, res) => {
       action: parsed.action,
       targetPage: parsed.targetPage,
       slots: {
-        ...slots,
-        amount: slots.amount || parsed.slots?.amount || null,
-        projectType: slots.projectType || parsed.slots?.projectType || null,
-        occupation: slots.occupation || parsed.slots?.occupation || null,
+        ...extractedSlots,
+        amount: extractedSlots.amount || parsed.slots?.amount || null,
       },
+      userProfile: mergedProfile,
+      verifiedFact,
       bankResults,
       responseText,
       responseLang: appLang,
@@ -209,7 +234,7 @@ router.post('/parse', async (req, res) => {
 
 // ── GET /api/v1/voice/health ─────────────────────────────────────────────────
 router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', version: '3.0', supportedLangs: ['EN', 'HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'] });
+  res.json({ status: 'ok', version: '4.0', verificationEngine: true, supportedLangs: ['EN', 'HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'] });
 });
 
 module.exports = router;

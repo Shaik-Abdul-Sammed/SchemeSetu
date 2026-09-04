@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { LocationProvider } from './context/LocationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { UserProfileProvider } from './context/UserProfileContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import './index.css';
 
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <LanguageProvider>
             <LocationProvider>
               <AuthProvider>
-                <App />
+                <UserProfileProvider>
+                  <App />
+                </UserProfileProvider>
               </AuthProvider>
             </LocationProvider>
           </LanguageProvider>

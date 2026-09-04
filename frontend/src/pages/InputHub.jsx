@@ -1,14 +1,13 @@
 /**
- * InputHub v3 — Multilingual + Location-Aware Voice Assistant
+ * InputHub v4 — Multilingual, Personalized & Verified Voice Assistant
  * ─────────────────────────────────────────────────────────────────────────────
  * Features:
- *  • Integrated useLanguageDetection (4-tier priority chain: explicit > STT detected > state default > EN)
- *  • Integrated VoiceLanguageBar for real-time status and language selection
- *  • Integrated DemoModePanel for SIH presentation overlay & pre-loaded test commands
- *  • Integrated LocationContext for GPS & state-level location aware routing
- *  • Calls backend POST /api/v1/voice/parse for intent parsing & multilingual translation
- *  • Handles FIND_NEAREST_BANK intent with real Haversine distance bank cards in chat
- *  • Smooth voice TTS playback per response language
+ *  • Integrated useUserProfile hook for progressive user profiling (Name, State, Occupation)
+ *  • Integrated ProfileModal for citizen profile editing and data deletion
+ *  • Calls backend POST /api/v1/voice/parse with userProfile payload
+ *  • Renders Verified Source Cards in chat bubbles with official government links (.gov.in)
+ *  • Renders real Haversine distance bank cards for FIND_NEAREST_BANK intent
+ *  • Smooth voice TTS playback per response language (EN, TE, HI)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -16,12 +15,15 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Mic, MicOff, Type, FileText, Send, Sparkles, User,
   ToggleLeft, ToggleRight, MapPin, CheckCircle, Loader2, Volume2,
-  VolumeX, AlertCircle, RefreshCw, XCircle, Wand2, Radio, Building2, ExternalLink
+  VolumeX, AlertCircle, RefreshCw, XCircle, Wand2, Radio, Building2,
+  ExternalLink, ShieldCheck, Check, Info, Settings
 } from 'lucide-react';
 import { api } from '../services/api';
 import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
+import { useUserProfile } from '../context/UserProfileContext';
+import ProfileModal from '../components/profile/ProfileModal';
 import AgentReportModal from '../components/agent/AgentReportModal';
 import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoiceRecognition';
 import useTextToSpeech from '../hooks/useTextToSpeech';
@@ -67,8 +69,13 @@ const STATE_COLORS = {
 export default function InputHub() {
   const navigate = useNavigate();
   const { lang: globalAppLang, t } = useLanguage();
-  const { location, updateLocation, requestGpsLocation } = useLocation();
+  const { location } = useLocation();
+  const { profile, updateProfile, getNextMissingSlot } = useUserProfile();
   const chatEndRef = useRef(null);
+
+  // Modal states
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [agentReportOpen, setAgentReportOpen] = useState(false);
 
   // ── Language Detection Hook ───────────────────────────────────────────────
   const {
@@ -116,7 +123,6 @@ export default function InputHub() {
   // UI state
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [agentReportOpen, setAgentReportOpen] = useState(false);
 
   // Agent Mode Fast-Fill
   const [agentForm, setAgentForm] = useState({
@@ -156,15 +162,17 @@ export default function InputHub() {
   useEffect(() => { stepRef.current = step; }, [step]);
   useEffect(() => { criteriaRef.current = criteria; }, [criteria]);
 
-  // ── Initialization ────────────────────────────────────────────────────────
+  // ── Progressive Initialization ───────────────────────────────────────────
   useEffect(() => {
-    const welcome = t(
-      'botWelcome',
-      'Namaste! I am SchemeSetu AI Assistant. What kind of government assistance do you need today? For example: business loan, agriculture subsidy, or nearest bank.'
-    );
+    let welcome = '';
+    if (profile.name) {
+      welcome = `Namaste ${profile.name}! I am SchemeSetu AI Assistant. How can I help you today?`;
+    } else {
+      welcome = 'Namaste! Welcome to SchemeSetu. May I know your name to personalize your guidance?';
+    }
     setMessages([{ sender: 'bot', text: welcome, id: 'welcome' }]);
     setStep(STEPS.PROJECT_TYPE);
-  }, [globalAppLang]);
+  }, [globalAppLang, profile.name]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -179,8 +187,8 @@ export default function InputHub() {
   }, []);
 
   // ── Message helpers ───────────────────────────────────────────────────────
-  const addBotMessage = useCallback((text, speak = true, bankCards = null, overrideLang = null) => {
-    const msg = { sender: 'bot', text, id: `bot_${Date.now()}`, bankCards };
+  const addBotMessage = useCallback((text, speak = true, bankCards = null, verifiedFact = null, overrideLang = null) => {
+    const msg = { sender: 'bot', text, id: `bot_${Date.now()}`, bankCards, verifiedFact };
     setMessages((prev) => [...prev, msg]);
     if (speak) speakIfNotMuted(text, overrideLang);
   }, [speakIfNotMuted]);
@@ -195,7 +203,7 @@ export default function InputHub() {
     // 1. Run client-side language detection
     const detResult = analyzeTranscript(text);
 
-    // 2. Parse intent via backend POST /api/v1/voice/parse
+    // 2. Parse intent & verify facts via backend POST /api/v1/voice/parse
     let parseRes = null;
     try {
       parseRes = await api.post('/voice/parse', {
@@ -203,9 +211,15 @@ export default function InputHub() {
         lang: effectiveGoogleCode,
         lat: location?.lat,
         lng: location?.lng,
+        userProfile: profile,
       });
     } catch (err) {
-      console.warn('[InputHub] Voice parse backend call note:', err.message);
+      console.warn('[InputHub] Voice parse API note:', err.message);
+    }
+
+    // Merge updated profile slots if returned by backend
+    if (parseRes?.userProfile) {
+      updateProfile(parseRes.userProfile);
     }
 
     const intent = parseRes?.intent || 'GENERAL_QUERY';
@@ -236,15 +250,21 @@ export default function InputHub() {
           ? `Found ${bankResults.length} nearby bank partners.`
           : 'To find nearby banks, please share your location or state.');
 
-      addBotMessage(responseText, true, bankResults.length > 0 ? bankResults : null, parseRes?.responseLang);
+      addBotMessage(responseText, true, bankResults.length > 0 ? bankResults : null, parseRes?.verifiedFact, parseRes?.responseLang);
       return;
     }
 
     // ── INTENT: DIRECT NAVIGATION (e.g. "go to schemes", "my applications") ───
     if (parseRes?.targetPage && actionTaken === 'execute' && parseRes.targetPage !== '/input') {
       const navReply = parseRes.responseText || `Navigating to ${parseRes.targetPage.replace('/', '')}…`;
-      addBotMessage(navReply, true, null, parseRes?.responseLang);
+      addBotMessage(navReply, true, null, parseRes?.verifiedFact, parseRes?.responseLang);
       setTimeout(() => navigate(parseRes.targetPage), 1400);
+      return;
+    }
+
+    // ── VERIFIED SCHEME QUERY RESPONSE ──────────────────────────────────
+    if (parseRes?.verifiedFact && parseRes.verifiedFact.verificationStatus !== 'uncertain') {
+      addBotMessage(parseRes.responseText, true, null, parseRes.verifiedFact, parseRes.responseLang);
       return;
     }
 
@@ -326,18 +346,19 @@ export default function InputHub() {
 
       setTimeout(() => submitRecommendation(updated), 600);
     }
-  }, [t, addBotMessage, analyzeTranscript, effectiveGoogleCode, location, navigate]);
+  }, [t, addBotMessage, analyzeTranscript, effectiveGoogleCode, location, navigate, profile, updateProfile]);
 
   // ── API Submit ────────────────────────────────────────────────────────────
   const submitRecommendation = async (finalCriteria) => {
     setIsLoading(true);
     try {
       const res = await api.post('/schemes/recommend', {
-        income: finalCriteria.income || 200000,
+        income: finalCriteria.income || profile.annualIncome || 200000,
         cost: finalCriteria.cost || 300000,
         education: finalCriteria.education || '10th pass',
-        projectType: finalCriteria.projectType || 'business',
-        occupation: finalCriteria.occupation || 'Farmer',
+        projectType: finalCriteria.projectType || profile.projectType || 'business',
+        occupation: finalCriteria.occupation || profile.occupation || 'Farmer',
+        state: profile.state || location?.state || 'All India',
       });
 
       const schemes = res.schemes || res.data || [];
@@ -396,7 +417,9 @@ export default function InputHub() {
     setMessages([]);
     setTextInput('');
     setPipelineInfo({ transcript: '', intent: '', confidence: 0, actionTaken: '' });
-    const welcome = t('botWelcome', 'Conversation reset. What kind of government assistance do you need?');
+    const welcome = profile.name
+      ? `Conversation reset, ${profile.name}. What government assistance do you need today?`
+      : 'Conversation reset. What kind of government assistance do you need?';
     setTimeout(() => addBotMessage(welcome, false), 100);
   };
 
@@ -440,13 +463,31 @@ export default function InputHub() {
             </h1>
             <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
               {mode === 'user'
-                ? t('convAssistant', 'SchemeSetu Multilingual Voice Assistant')
+                ? t('convAssistant', 'SchemeSetu V4 Multilingual & Verified AI')
                 : t('fastFillAgent', 'CSC / VLE Fast-Fill Portal')}
             </span>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          {/* User Profile Button */}
+          {mode === 'user' && (
+            <button
+              onClick={() => setProfileModalOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: '20px', padding: '0.35rem 0.75rem', color: '#fff',
+                fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', minHeight: '40px',
+              }}
+              title="View or Edit Your Profile"
+              aria-label="View or edit profile"
+            >
+              <User size={15} style={{ color: '#F59E0B' }} />
+              <span>{profile.name || 'Profile'}</span>
+            </button>
+          )}
+
           {/* Mute toggle */}
           <button
             onClick={() => { if (!isMuted) stopSpeaking(); setIsMuted(!isMuted); }}
@@ -596,6 +637,58 @@ export default function InputHub() {
                     </div>
                   )}
                 </div>
+
+                {/* ── VERIFIED SOURCE CARD (rendered when verifiedFact is returned) ── */}
+                {msg.verifiedFact && msg.verifiedFact.verificationStatus !== 'uncertain' && (
+                  <div
+                    style={{
+                      marginTop: '0.65rem', marginLeft: '2.5rem', maxWidth: '85%',
+                      background: '#ECFDF5', border: '1px solid #6EE7B7',
+                      borderRadius: '12px', padding: '0.85rem 1.1rem',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                        background: '#D1FAE5', color: '#065F46', borderRadius: '12px',
+                        padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: 800,
+                      }}>
+                        <ShieldCheck size={13} /> Verified Government Source
+                      </span>
+                      {msg.verifiedFact.source?.url && (
+                        <a
+                          href={msg.verifiedFact.source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: '0.73rem', color: '#047857', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', gap: '0.25rem', textDecoration: 'none',
+                          }}
+                        >
+                          Official Portal <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: 800, color: '#064E3B', fontSize: '0.9rem', marginBottom: '0.2rem' }}>
+                      {msg.verifiedFact.schemeName}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#047857', marginBottom: '0.5rem' }}>
+                      Authority: {msg.verifiedFact.source?.title || 'Govt of India'}
+                    </div>
+
+                    {msg.verifiedFact.eligibilitySummary?.matchedCriteria?.length > 0 && (
+                      <div style={{ fontSize: '0.78rem', color: '#065F46' }}>
+                        {msg.verifiedFact.eligibilitySummary.matchedCriteria.map((c, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
+                            <Check size={13} style={{ color: '#059669', flexShrink: 0 }} />
+                            <span>{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Bank result card list (rendered on FIND_NEAREST_BANK intent) */}
                 {msg.bankCards && Array.isArray(msg.bankCards) && (
@@ -932,6 +1025,12 @@ export default function InputHub() {
           </form>
         </div>
       )}
+
+      {/* ── Profile Modal ─────────────────────────────────────────────── */}
+      <ProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+      />
 
       {/* ── Demo Mode Panel Overlay ─────────────────────────────────────── */}
       {mode === 'user' && (

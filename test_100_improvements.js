@@ -83,6 +83,24 @@ assert(
   `Calculated EMI: ₹${emi}`
 );
 
+// ── FEASIBILITY CONDITIONS TESTS ─────────────────────────────────────────────
+console.log('\n--- Feasibility Conditions & SC Entrepreneur Assessment ---');
+
+const { evaluateProjectFeasibility } = require('./frontend/src/utils/feasibilityChecker');
+const feasibilityResult = evaluateProjectFeasibility({
+  projectCost: 500000,
+  monthlyNetIncome: 30000,
+  monthlyEmi: 10258,
+  ownerEquity: 50000,
+  socialCategory: 'SC',
+});
+
+assert(
+  'Project Feasibility Engine calculates High Feasibility score',
+  feasibilityResult.totalScore >= 75 && feasibilityResult.overallFeasibility === 'HIGHLY_FEASIBLE',
+  `Feasibility Score: ${feasibilityResult.totalScore}/100`
+);
+
 // ── SUMMARY ───────────────────────────────────────────────────────────────────
 console.log('\n====================================================');
 console.log(`RESULTS: ${passed}/${total} TESTS PASSED`);

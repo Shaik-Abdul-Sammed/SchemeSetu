@@ -11,6 +11,8 @@ const LANGUAGES = [
   { code: 'MR', name: 'Marathi', native: 'मराठी', flag: '🇮🇳', greeting: 'स्कीमसेतूमध्ये आपले स्वागत आहे' },
   { code: 'BN', name: 'Bengali', native: 'বাংলা', flag: '🇮🇳', greeting: 'স্কিমসেতুতে আপনাকে স্বাগতম' },
   { code: 'GU', name: 'Gujarati', native: 'ગુજરાતી', flag: '🇮🇳', greeting: 'સ્કીમસેતુમાં આપનું સ્વાગત છે' },
+  { code: 'GO', name: 'Gondi', native: 'గోంది / गोंडी', flag: '🏹', greeting: 'స్కీమ్‌సేతుకు స్వాగతం (గోంది)' },
+  { code: 'CH', name: 'Chenchu', native: 'చెంచు / चेन्चू', flag: '🌲', greeting: 'స్కీమ్‌సేతుకు స్వాగతం (చెంచు)' },
 ];
 
 export default function LanguageSelectionModal() {

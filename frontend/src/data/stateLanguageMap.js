@@ -92,4 +92,6 @@ export const SUPPORTED_LANGUAGES = {
   ML: { languageCode: 'ML', bcp47: 'ml-IN', googleCode: 'ml', displayName: 'Malayalam',  nativeName: 'മലയാളം',   script: 'Malayalam'  },
   BN: { languageCode: 'BN', bcp47: 'bn-IN', googleCode: 'bn', displayName: 'Bengali',    nativeName: 'বাংলা',     script: 'Bengali'    },
   MR: { languageCode: 'MR', bcp47: 'mr-IN', googleCode: 'mr', displayName: 'Marathi',    nativeName: 'मराठी',     script: 'Devanagari' },
+  GO: { languageCode: 'GO', bcp47: 'te-IN', googleCode: 'te', displayName: 'Gondi',      nativeName: 'గోంది / गोंडी', script: 'Gunjala' },
+  CH: { languageCode: 'CH', bcp47: 'te-IN', googleCode: 'te', displayName: 'Chenchu',    nativeName: 'చెంచు / चेन्चू', script: 'Telugu' },
 };

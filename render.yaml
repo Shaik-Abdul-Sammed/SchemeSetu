@@ -1,37 +1,15 @@
+# Render.com Free Tier Deployment Blueprint for SchemeSetu
 services:
-  # ── Backend Express Web Service ──
   - type: web
-    name: schemesetu-backend
+    name: schemesetu-backend-api
     env: node
-    rootDir: backend
+    region: singapore
+    plan: free
     buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /api/health
+    startCommand: node backend/src/server.js
+    healthCheckPath: /api/v1/health
     envVars:
-      - key: PORT
-        value: 5000
       - key: NODE_ENV
         value: production
-      - key: JWT_SECRET
-        generateValue: true
-      - key: CORS_ORIGINS
-        value: '*'
-
-  # ── Frontend React Static Site ──
-  - type: web
-    name: schemesetu-frontend
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: schemesetu-backend
-          property: url
-          suffix: /api/v1
+      - key: PORT
+        value: 5000

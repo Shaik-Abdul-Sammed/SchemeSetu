@@ -1,0 +1,20 @@
+{
+  "name": "schemesetu-root",
+  "version": "1.0.0",
+  "description": "SchemeSetu Smart India Hackathon 2026 - AI-Powered Citizen Scheme Platform",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js",
+    "test": "node test_v4_assistant.js && node test_100_improvements.js && node test_100_pages_deploy.js"
+  },
+  "keywords": [
+    "schemesetu",
+    "sih2026",
+    "ai",
+    "fintech",
+    "welfare"
+  ],
+  "author": "Shaik Abdul Sammed",
+  "license": "MIT"
+}

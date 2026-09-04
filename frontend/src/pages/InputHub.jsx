@@ -1,19 +1,14 @@
 /**
- * InputHub v3 — Production Voice + Conversational AI
+ * InputHub v3 — Multilingual + Location-Aware Voice Assistant
  * ─────────────────────────────────────────────────────────────────────────────
- * Improvements over v2:
- *  • Uses useVoiceRecognition hook (fixes all stale-closure/race conditions)
- *  • Uses useTextToSpeech hook (chunked, voice-selected, no cutoff)
- *  • Transcript normalization before processing (spoken numbers, fillers)
- *  • Multi-step conversation context with slot accumulation
- *  • Confidence-based intent flow (not just keyword scan)
- *  • Duplicate-submission prevention via submittingRef
- *  • Retry button when voice fails
- *  • Live interim transcript in chat bubble
- *  • Proper voiceState UI: Ready / Listening / Processing / Speaking / Error
- *  • Text debounce to prevent double-send
- *  • Error recovery — never stuck in loading state
- *  • Security: input length capped before API call
+ * Features:
+ *  • Integrated useLanguageDetection (4-tier priority chain: explicit > STT detected > state default > EN)
+ *  • Integrated VoiceLanguageBar for real-time status and language selection
+ *  • Integrated DemoModePanel for SIH presentation overlay & pre-loaded test commands
+ *  • Integrated LocationContext for GPS & state-level location aware routing
+ *  • Calls backend POST /api/v1/voice/parse for intent parsing & multilingual translation
+ *  • Handles FIND_NEAREST_BANK intent with real Haversine distance bank cards in chat
+ *  • Smooth voice TTS playback per response language
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -21,14 +16,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Mic, MicOff, Type, FileText, Send, Sparkles, User,
   ToggleLeft, ToggleRight, MapPin, CheckCircle, Loader2, Volume2,
-  VolumeX, AlertCircle, RefreshCw, XCircle, Wand2, Radio
+  VolumeX, AlertCircle, RefreshCw, XCircle, Wand2, Radio, Building2, ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 import { safeGetLocation } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
+import { useLocation } from '../context/LocationContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
 import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoiceRecognition';
 import useTextToSpeech from '../hooks/useTextToSpeech';
+import useLanguageDetection from '../hooks/useLanguageDetection';
+import VoiceLanguageBar from '../components/voice/VoiceLanguageBar';
+import DemoModePanel from '../components/voice/DemoModePanel';
 import {
   normalizeTranscript,
   extractAmount,
@@ -67,8 +66,22 @@ const STATE_COLORS = {
 
 export default function InputHub() {
   const navigate = useNavigate();
-  const { lang, t } = useLanguage();
+  const { lang: globalAppLang, t } = useLanguage();
+  const { location, updateLocation, requestGpsLocation } = useLocation();
   const chatEndRef = useRef(null);
+
+  // ── Language Detection Hook ───────────────────────────────────────────────
+  const {
+    explicitLang,
+    detectionResult,
+    stateDefaultLang,
+    effectiveLang,
+    effectiveBcp47,
+    effectiveGoogleCode,
+    displayLabel,
+    analyzeTranscript,
+    setUserLanguage,
+  } = useLanguageDetection({ stateName: location?.state });
 
   // Mode
   const [mode, setMode] = useState('user'); // 'user' | 'agent'
@@ -77,6 +90,14 @@ export default function InputHub() {
   // Chat state
   const [messages, setMessages] = useState([]);
   const [textInput, setTextInput] = useState('');
+
+  // Pipeline tracking for Demo Mode Panel
+  const [pipelineInfo, setPipelineInfo] = useState({
+    transcript: '',
+    intent: '',
+    confidence: 0,
+    actionTaken: '',
+  });
 
   // Conversation slot collection
   const [step, setStep] = useState(STEPS.GREETING);
@@ -105,27 +126,26 @@ export default function InputHub() {
     location: 'Hyderabad, Telangana',
   });
 
-  // ── TTS ──────────────────────────────────────────────────────────────────
-  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech({ lang });
+  // ── TTS (with per-utterance effectiveLang override) ──────────────────────
+  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech({ lang: effectiveLang });
 
-  const speakIfNotMuted = useCallback((text) => {
-    if (!isMuted) speak(text);
-  }, [isMuted, speak]);
+  const speakIfNotMuted = useCallback((text, overrideLang) => {
+    if (!isMuted) speak(text, undefined, overrideLang || effectiveLang);
+  }, [isMuted, speak, effectiveLang]);
 
   // ── STT ──────────────────────────────────────────────────────────────────
   const { state: voiceState, isListening, isProcessing: voiceProcessing,
           isRequesting, hasError: voiceHasError, isSupported: voiceSupported,
           interimTranscript, errorInfo, startListening, stopListening,
           clearError, toggle: toggleVoice } = useVoiceRecognition({
-    lang,
+    lang: effectiveBcp47,
     onResult: (transcript, confidence) => {
       const normalized = normalizeTranscript(transcript);
       if (isTranscriptMeaningful(normalized)) {
-        handleUserMessage(normalized);
+        handleUserMessage(transcript);
       }
     },
     onError: (type, message) => {
-      // Error already shown in voice state; also add chat bubble for context
       if (type === VOICE_ERRORS.NO_SPEECH) {
         addBotMessage('I couldn\'t hear you. Please tap the microphone and speak again.');
       }
@@ -140,12 +160,11 @@ export default function InputHub() {
   useEffect(() => {
     const welcome = t(
       'botWelcome',
-      'Namaste! I am SchemeSetu AI Assistant. What kind of government assistance do you need today? For example: business loan, agriculture subsidy, or education support.'
+      'Namaste! I am SchemeSetu AI Assistant. What kind of government assistance do you need today? For example: business loan, agriculture subsidy, or nearest bank.'
     );
     setMessages([{ sender: 'bot', text: welcome, id: 'welcome' }]);
     setStep(STEPS.PROJECT_TYPE);
-    // Don't auto-speak on mount — user hasn't interacted yet
-  }, [lang]);
+  }, [globalAppLang]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -160,22 +179,47 @@ export default function InputHub() {
   }, []);
 
   // ── Message helpers ───────────────────────────────────────────────────────
-  const addBotMessage = useCallback((text, speak = true) => {
-    const msg = { sender: 'bot', text, id: `bot_${Date.now()}` };
+  const addBotMessage = useCallback((text, speak = true, bankCards = null, overrideLang = null) => {
+    const msg = { sender: 'bot', text, id: `bot_${Date.now()}`, bankCards };
     setMessages((prev) => [...prev, msg]);
-    if (speak) speakIfNotMuted(text);
+    if (speak) speakIfNotMuted(text, overrideLang);
   }, [speakIfNotMuted]);
 
   // ── Core Conversation Logic ───────────────────────────────────────────────
   const handleUserMessage = useCallback(async (rawText) => {
-    // Security: cap input length
     const text = (rawText || '').substring(0, 400).trim();
     if (!text) return;
 
-    // Prevent duplicate processing
     if (submittingRef.current && stepRef.current === STEPS.SUBMITTING) return;
 
-    // Add user message
+    // 1. Run client-side language detection
+    const detResult = analyzeTranscript(text);
+
+    // 2. Parse intent via backend POST /api/v1/voice/parse
+    let parseRes = null;
+    try {
+      parseRes = await api.post('/voice/parse', {
+        transcript: text,
+        lang: effectiveGoogleCode,
+        lat: location?.lat,
+        lng: location?.lng,
+      });
+    } catch (err) {
+      console.warn('[InputHub] Voice parse backend call note:', err.message);
+    }
+
+    const intent = parseRes?.intent || 'GENERAL_QUERY';
+    const confidence = parseRes?.confidence || detResult?.confidence || 0.8;
+    const actionTaken = parseRes?.action || 'execute';
+
+    setPipelineInfo({
+      transcript: text,
+      intent,
+      confidence,
+      actionTaken,
+    });
+
+    // Add user message to chat log
     const userMsg = { sender: 'user', text, id: `user_${Date.now()}` };
     setMessages((prev) => [...prev, userMsg]);
     setTextInput('');
@@ -184,9 +228,31 @@ export default function InputHub() {
     const currentStep = stepRef.current;
     const currentCriteria = { ...criteriaRef.current };
 
+    // ── INTENT: FIND_NEAREST_BANK ────────────────────────────────────────
+    if (intent === 'FIND_NEAREST_BANK') {
+      const bankResults = parseRes?.bankResults || [];
+      const responseText = parseRes?.responseText ||
+        (bankResults.length > 0
+          ? `Found ${bankResults.length} nearby bank partners.`
+          : 'To find nearby banks, please share your location or state.');
+
+      addBotMessage(responseText, true, bankResults.length > 0 ? bankResults : null, parseRes?.responseLang);
+      return;
+    }
+
+    // ── INTENT: DIRECT NAVIGATION (e.g. "go to schemes", "my applications") ───
+    if (parseRes?.targetPage && actionTaken === 'execute' && parseRes.targetPage !== '/input') {
+      const navReply = parseRes.responseText || `Navigating to ${parseRes.targetPage.replace('/', '')}…`;
+      addBotMessage(navReply, true, null, parseRes?.responseLang);
+      setTimeout(() => navigate(parseRes.targetPage), 1400);
+      return;
+    }
+
+    // ── STEP-BY-STEP RECOMMENDATION FLOW ────────────────────────────────
+
     // ── STEP: PROJECT TYPE ───────────────────────────────────────────────
     if (currentStep === STEPS.PROJECT_TYPE || !currentCriteria.projectType) {
-      const detected = detectProjectType(normalized);
+      const detected = parseRes?.slots?.projectType || detectProjectType(normalized);
       const updated = { ...currentCriteria, projectType: detected };
       setCriteria(updated);
       setStep(STEPS.COST);
@@ -201,10 +267,9 @@ export default function InputHub() {
 
     // ── STEP: COST ───────────────────────────────────────────────────────
     if (currentStep === STEPS.COST || !currentCriteria.cost) {
-      const amount = extractAmount(normalized);
+      const amount = parseRes?.slots?.amount || extractAmount(normalized);
 
       if (amount === null || amount <= 0) {
-        // Couldn't parse — ask to clarify
         addBotMessage(t('costClarify',
           'I could not understand the amount. Please say the amount clearly, like "2 lakh" or "200000".'
         ));
@@ -229,7 +294,7 @@ export default function InputHub() {
 
     // ── STEP: INCOME ─────────────────────────────────────────────────────
     if (currentStep === STEPS.INCOME || !currentCriteria.income) {
-      const amount = extractAmount(normalized);
+      const amount = parseRes?.slots?.amount || extractAmount(normalized);
 
       if (amount === null || amount <= 0) {
         addBotMessage(t('incomeClarify',
@@ -261,7 +326,7 @@ export default function InputHub() {
 
       setTimeout(() => submitRecommendation(updated), 600);
     }
-  }, [t, addBotMessage]);
+  }, [t, addBotMessage, analyzeTranscript, effectiveGoogleCode, location, navigate]);
 
   // ── API Submit ────────────────────────────────────────────────────────────
   const submitRecommendation = async (finalCriteria) => {
@@ -330,6 +395,7 @@ export default function InputHub() {
     setStep(STEPS.PROJECT_TYPE);
     setMessages([]);
     setTextInput('');
+    setPipelineInfo({ transcript: '', intent: '', confidence: 0, actionTaken: '' });
     const welcome = t('botWelcome', 'Conversation reset. What kind of government assistance do you need?');
     setTimeout(() => addBotMessage(welcome, false), 100);
   };
@@ -338,7 +404,7 @@ export default function InputHub() {
   const micColors = STATE_COLORS[voiceState] || STATE_COLORS[VOICE_STATES.IDLE];
 
   const renderVoiceStateLabel = () => {
-    if (isSpeaking) return 'Assistant speaking…';
+    if (isSpeaking) return `Speaking in ${displayLabel}…`;
     return STATE_LABELS[voiceState] || 'Tap Microphone to Speak';
   };
 
@@ -356,7 +422,7 @@ export default function InputHub() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0.85rem 1.15rem',
         background: 'linear-gradient(135deg, #0B192C, #1E3E62)',
-        color: '#fff', borderRadius: '14px', marginBottom: '1rem',
+        color: '#fff', borderRadius: '14px', marginBottom: '0.75rem',
         boxShadow: '0 4px 14px rgba(0,0,0,0.18)', flexWrap: 'wrap', gap: '0.75rem',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -374,7 +440,7 @@ export default function InputHub() {
             </h1>
             <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
               {mode === 'user'
-                ? t('convAssistant', 'SchemeSetu Voice Assistant')
+                ? t('convAssistant', 'SchemeSetu Multilingual Voice Assistant')
                 : t('fastFillAgent', 'CSC / VLE Fast-Fill Portal')}
             </span>
           </div>
@@ -454,7 +520,19 @@ export default function InputHub() {
           background: '#fff', borderRadius: '16px',
           border: '1px solid #E2E8F0',
           boxShadow: '0 4px 14px rgba(0,0,0,0.06)', overflow: 'hidden',
+          position: 'relative',
         }}>
+          {/* ── Voice Language Status Bar ────────────────────────────── */}
+          <VoiceLanguageBar
+            explicitLang={explicitLang}
+            detectionResult={detectionResult}
+            displayLabel={displayLabel}
+            stateDefaultLang={stateDefaultLang}
+            locationState={location?.state}
+            locationDistrict={location?.district}
+            onLanguageChange={setUserLanguage}
+          />
+
           {/* Chat scroll area */}
           <div
             role="log"
@@ -471,42 +549,92 @@ export default function InputHub() {
                 key={msg.id}
                 style={{
                   display: 'flex',
-                  justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                  gap: '0.65rem', width: '100%', alignItems: 'flex-end',
+                  flexDirection: 'column',
+                  alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  width: '100%',
                 }}
               >
-                {msg.sender === 'bot' && (
-                  <div style={{
-                    width: '34px', height: '34px', borderRadius: '50%',
-                    background: '#0B192C', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: '#F59E0B', flexShrink: 0,
-                  }} aria-hidden="true">
-                    <Sparkles size={18} />
-                  </div>
-                )}
                 <div
-                  role="article"
-                  aria-label={`${msg.sender === 'user' ? 'You' : 'Assistant'}: ${msg.text}`}
                   style={{
-                    maxWidth: '78%', padding: '0.85rem 1.1rem',
-                    borderRadius: msg.sender === 'user'
-                      ? '18px 18px 4px 18px'
-                      : '18px 18px 18px 4px',
-                    backgroundColor: msg.sender === 'user' ? '#1E3E62' : '#F1F5F9',
-                    color: msg.sender === 'user' ? '#fff' : '#0F172A',
-                    fontSize: '0.95rem', lineHeight: 1.55,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)', wordBreak: 'break-word',
+                    display: 'flex',
+                    justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                    gap: '0.65rem', width: '100%', alignItems: 'flex-end',
                   }}
                 >
-                  {msg.text}
+                  {msg.sender === 'bot' && (
+                    <div style={{
+                      width: '34px', height: '34px', borderRadius: '50%',
+                      background: '#0B192C', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', color: '#F59E0B', flexShrink: 0,
+                    }} aria-hidden="true">
+                      <Sparkles size={18} />
+                    </div>
+                  )}
+                  <div
+                    role="article"
+                    aria-label={`${msg.sender === 'user' ? 'You' : 'Assistant'}: ${msg.text}`}
+                    style={{
+                      maxWidth: '78%', padding: '0.85rem 1.1rem',
+                      borderRadius: msg.sender === 'user'
+                        ? '18px 18px 4px 18px'
+                        : '18px 18px 18px 4px',
+                      backgroundColor: msg.sender === 'user' ? '#1E3E62' : '#F1F5F9',
+                      color: msg.sender === 'user' ? '#fff' : '#0F172A',
+                      fontSize: '0.95rem', lineHeight: 1.55,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)', wordBreak: 'break-word',
+                    }}
+                  >
+                    {msg.text}
+                  </div>
+                  {msg.sender === 'user' && (
+                    <div style={{
+                      width: '34px', height: '34px', borderRadius: '50%',
+                      background: '#D97706', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', color: '#fff', flexShrink: 0,
+                    }} aria-hidden="true">
+                      <User size={18} />
+                    </div>
+                  )}
                 </div>
-                {msg.sender === 'user' && (
+
+                {/* Bank result card list (rendered on FIND_NEAREST_BANK intent) */}
+                {msg.bankCards && Array.isArray(msg.bankCards) && (
                   <div style={{
-                    width: '34px', height: '34px', borderRadius: '50%',
-                    background: '#D97706', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: '#fff', flexShrink: 0,
-                  }} aria-hidden="true">
-                    <User size={18} />
+                    marginTop: '0.65rem', marginLeft: '2.5rem', maxWidth: '85%',
+                    display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                  }}>
+                    {msg.bankCards.map((bank, bIdx) => (
+                      <div
+                        key={bank.id || bIdx}
+                        style={{
+                          background: '#F8FAFC', border: '1px solid #CBD5E1',
+                          borderRadius: '12px', padding: '0.75rem 1rem',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <Building2 size={20} style={{ color: '#1E3E62', flexShrink: 0 }} />
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>
+                              {bank.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                              {bank.address || bank.district || 'Nearby Branch'}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <span style={{
+                            background: '#DBEAFE', color: '#1E40AF',
+                            padding: '0.2rem 0.55rem', borderRadius: '12px',
+                            fontWeight: 800, fontSize: '0.75rem', display: 'inline-block',
+                          }}>
+                            {bank.distanceText || `${bank.distance?.toFixed(1)} km`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -531,7 +659,7 @@ export default function InputHub() {
             {isSpeaking && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748B', fontSize: '0.85rem', paddingLeft: '2.5rem' }}>
                 <Volume2 size={16} style={{ color: '#059669' }} aria-hidden="true" />
-                <span style={{ fontStyle: 'italic' }}>Assistant speaking…</span>
+                <span style={{ fontStyle: 'italic' }}>Speaking ({displayLabel})…</span>
                 <button
                   onClick={stopSpeaking}
                   className="btn btn-sm btn-outline"
@@ -547,7 +675,7 @@ export default function InputHub() {
             {voiceProcessing && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748B', fontSize: '0.85rem', paddingLeft: '2.5rem' }}>
                 <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', color: '#7C3AED' }} aria-hidden="true" />
-                <span>Processing your voice…</span>
+                <span>Analyzing speech & intent ({displayLabel})…</span>
               </div>
             )}
 
@@ -571,7 +699,7 @@ export default function InputHub() {
                   style={{ width: 12, height: 12, background: '#DC2626', borderRadius: '50%', animation: 'pulse 1s ease-in-out infinite' }}
                   aria-hidden="true"
                 />
-                <span>Listening… speak clearly, then pause</span>
+                <span>Listening in {displayLabel}… speak clearly</span>
               </div>
               <button
                 onClick={stopListening}
@@ -704,7 +832,7 @@ export default function InputHub() {
                   type="text"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  placeholder={t('typeReplyPlaceholder', 'Type your reply (e.g. "2 lakh", "10th pass")…')}
+                  placeholder={t('typeReplyPlaceholder', 'Type your query (e.g. "find bank near me", "2 lakh")…')}
                   className="form-control"
                   style={{ borderRadius: '24px', flexGrow: 1 }}
                   maxLength={400}
@@ -798,20 +926,34 @@ export default function InputHub() {
             <button type="submit" className="btn btn-green btn-lg"
               style={{ marginTop: '1rem', width: '100%', justifyContent: 'center' }}
               disabled={isLoading || submittingRef.current}>
-              {isLoading
-                ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
-                : <><CheckCircle size={20} /> Generate Official Beneficiary Recommendation Dossier</>
-              }
+              <CheckCircle size={20} />
+              Submit Application via Agent Network
             </button>
           </form>
         </div>
       )}
 
-      <AgentReportModal
-        isOpen={agentReportOpen}
-        onClose={() => { setAgentReportOpen(false); submittingRef.current = false; }}
-        formData={agentForm}
-      />
+      {/* ── Demo Mode Panel Overlay ─────────────────────────────────────── */}
+      {mode === 'user' && (
+        <DemoModePanel
+          transcript={pipelineInfo.transcript}
+          detectionResult={detectionResult}
+          intent={pipelineInfo.intent}
+          intentConfidence={pipelineInfo.confidence}
+          actionTaken={pipelineInfo.actionTaken}
+          locationState={location?.state}
+          effectiveLang={effectiveLang}
+          onSendCommand={handleUserMessage}
+        />
+      )}
+
+      {/* Agent Report Modal */}
+      {agentReportOpen && (
+        <AgentReportModal
+          data={agentForm}
+          onClose={() => setAgentReportOpen(false)}
+        />
+      )}
     </div>
   );
 }

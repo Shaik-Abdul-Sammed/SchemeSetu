@@ -169,7 +169,7 @@ export default function useVoiceRecognition({
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
 
-      recognition.lang = LANG_LOCALE_MAP[lang] || 'en-IN';
+      recognition.lang = LANG_LOCALE_MAP[lang] || lang || 'en-IN';
       recognition.continuous = false;       // Single turn
       recognition.interimResults = true;    // Live preview
       recognition.maxAlternatives = 3;      // Get top 3 alternatives for confidence

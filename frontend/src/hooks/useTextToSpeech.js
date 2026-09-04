@@ -102,7 +102,7 @@ export default function useTextToSpeech({ lang = 'EN', rate = 0.92, pitch = 1.0 
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [isSupported]);
 
-  function _speakChunk(chunks, index, onDone) {
+  function _speakChunk(chunks, index, onDone, targetLang) {
     if (!activeRef.current || index >= chunks.length) {
       activeRef.current = false;
       setIsSpeaking(false);
@@ -111,14 +111,18 @@ export default function useTextToSpeech({ lang = 'EN', rate = 0.92, pitch = 1.0 
     }
 
     const utterance = new SpeechSynthesisUtterance(chunks[index]);
-    utterance.lang = LANG_LOCALE_MAP[lang] || 'en-IN';
+    const langCode = targetLang || lang;
+    const locale = LANG_LOCALE_MAP[langCode] || langCode || 'en-IN';
+    utterance.lang = locale;
     utterance.rate = rate;
     utterance.pitch = pitch;
-    if (voiceRef.current) utterance.voice = voiceRef.current;
+
+    const dynamicVoice = getBestVoice(locale) || voiceRef.current;
+    if (dynamicVoice) utterance.voice = dynamicVoice;
 
     utterance.onend = () => {
       currentIndexRef.current = index + 1;
-      _speakChunk(chunks, index + 1, onDone);
+      _speakChunk(chunks, index + 1, onDone, targetLang);
     };
 
     utterance.onerror = (e) => {
@@ -136,8 +140,9 @@ export default function useTextToSpeech({ lang = 'EN', rate = 0.92, pitch = 1.0 
    * Speak text. Cancels any ongoing speech first.
    * @param {string} text
    * @param {function} [onDone] - Called when speech finishes
+   * @param {string} [overrideLang] - Optional per-utterance language override
    */
-  const speak = useCallback((text, onDone) => {
+  const speak = useCallback((text, onDone, overrideLang) => {
     if (!isSupported || !text) return;
 
     // Cancel any ongoing speech
@@ -154,7 +159,7 @@ export default function useTextToSpeech({ lang = 'EN', rate = 0.92, pitch = 1.0 
     // Small delay to let cancel() settle in Chrome
     setTimeout(() => {
       if (activeRef.current) {
-        _speakChunk(chunks, 0, onDone);
+        _speakChunk(chunks, 0, onDone, overrideLang);
       }
     }, 80);
   }, [isSupported, lang, rate, pitch]);

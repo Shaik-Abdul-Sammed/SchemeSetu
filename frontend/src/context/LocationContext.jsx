@@ -35,6 +35,10 @@ export function LocationProvider({ children }) {
     };
   });
 
+  const [hasConsent, setHasConsent] = useState(() => {
+    return localStorage.getItem('schemesetu_location_consent') === 'true';
+  });
+
   const [nearbyPartners, setNearbyPartners] = useState(MOCK_PARTNERS);
 
   // Haversine formula to compute distance in km
@@ -73,9 +77,12 @@ export function LocationProvider({ children }) {
     }
   };
 
-  // Attempt initial GPS check
-  useEffect(() => {
-    if (navigator.geolocation && !location.isGPS) {
+  const requestGpsLocation = (consentGiven = true) => {
+    if (consentGiven) {
+      setHasConsent(true);
+      localStorage.setItem('schemesetu_location_consent', 'true');
+    }
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude;
@@ -88,16 +95,46 @@ export function LocationProvider({ children }) {
           });
         },
         (err) => {
-          // Gracefully maintain default location without interrupting UX
-          console.log("GPS automatic detection note:", err.message);
+          console.log("GPS detection note:", err.message);
         },
         { timeout: 5000, enableHighAccuracy: false }
       );
     }
-  }, []);
+  };
+
+  const selectStateLocation = (stateName) => {
+    const found = INDIAN_LOCATIONS.find(l => l.state.toLowerCase() === stateName.toLowerCase());
+    if (found) {
+      updateLocation({
+        lat: found.lat,
+        lng: found.lng,
+        state: found.state,
+        district: found.district,
+        address: `${found.district}, ${found.state}, India`,
+        isGPS: false
+      });
+    }
+  };
+
+  // Attempt initial GPS check if user already gave consent
+  useEffect(() => {
+    if (hasConsent && navigator.geolocation && !location.isGPS) {
+      requestGpsLocation(false);
+    }
+  }, [hasConsent]);
 
   return (
-    <LocationContext.Provider value={{ location, updateLocation, nearbyPartners, setNearbyPartners, calculateDistance, INDIAN_LOCATIONS }}>
+    <LocationContext.Provider value={{
+      location,
+      updateLocation,
+      nearbyPartners,
+      setNearbyPartners,
+      calculateDistance,
+      INDIAN_LOCATIONS,
+      hasConsent,
+      requestGpsLocation,
+      selectStateLocation
+    }}>
       {children}
     </LocationContext.Provider>
   );

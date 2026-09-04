@@ -1,11 +1,12 @@
 /**
- * SchemeSetu Voice Intent Parser v2.0
+ * SchemeSetu Voice Intent Parser v3.0
  * ─────────────────────────────────────────────────────────────────────────────
- * Robust NLU engine with:
- *   • Alias/synonym resolution
+ * Robust multilingual NLU engine with:
+ *   • Alias/synonym resolution — English, Telugu, Hindi, Tanglish, Hinglish
  *   • Slot extraction (numbers, occupations, locations)
  *   • Confidence-weighted scoring (not just keyword includes)
  *   • Conversation context for follow-ups
+ *   • FIND_NEAREST_BANK intent with location-aware routing
  *   • Security: validates and sanitizes input before action
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -25,6 +26,36 @@ const SPOKEN_NUMBERS = {
   'lakh': 100000, 'lakhs': 100000, 'lac': 100000, 'lacs': 100000,
   'crore': 10000000, 'crores': 10000000,
   'million': 1000000, 'billion': 1000000000,
+};
+
+// ── Hindi number words (Devanagari transliteration & Unicode) ──────────────────
+const HINDI_NUMBERS = {
+  'ek': 1, 'do': 2, 'teen': 3, 'char': 4, 'paanch': 5, 'panch': 5,
+  'chhe': 6, 'saat': 7, 'aath': 8, 'nau': 9, 'das': 10,
+  'gyarah': 11, 'barah': 12, 'tera': 13, 'chaudah': 14, 'pandrah': 15,
+  'solah': 16, 'satrah': 17, 'atharah': 18, 'unnis': 19, 'bees': 20,
+  'tees': 30, 'chalis': 40, 'pachaas': 50, 'saath': 60, 'sattar': 70,
+  'assi': 80, 'nabbe': 90, 'sau': 100, 'hazaar': 1000,
+  'lakh': 100000, 'lakhs': 100000,
+  'crore': 10000000, 'crores': 10000000,
+  // Devanagari script
+  'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
+  'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+  'लाख': 100000, 'करोड़': 10000000, 'हजार': 1000,
+};
+
+// ── Telugu number words (transliterated & Unicode) ────────────────────────────
+const TELUGU_NUMBERS = {
+  'okati': 1, 'oka': 1, 'rendu': 2, 'moodu': 3, 'naalu': 4, 'aidu': 5,
+  'aaru': 6, 'edu': 7, 'enimidi': 8, 'tommidi': 9, 'padi': 10,
+  'velu': 1000, 'vellu': 1000,
+  'laksha': 100000, 'lakshal': 100000, 'laksham': 100000, 'lakshe': 100000,
+  'lakhalu': 100000, 'lakhla': 100000,
+  'koti': 10000000, 'kotlu': 10000000,
+  // Telugu script
+  'ఒకటి': 1, 'ఒక': 1, 'రెండు': 2, 'మూడు': 3, 'నాలుగు': 4, 'ఐదు': 5,
+  'ఆరు': 6, 'ఏడు': 7, 'ఎనిమిది': 8, 'తొమ్మిది': 9, 'పది': 10,
+  'లక్ష': 100000, 'లక్షలు': 100000, 'లక్షల': 100000, 'కోటి': 10000000, 'వేలు': 1000,
 };
 
 /**
@@ -66,19 +97,51 @@ function normalizeTranscript(raw = '') {
 }
 
 /**
- * Parse spoken currency/number expressions.
- * "five lakh" → "500000", "2 crore" → "20000000"
+ * Parse spoken currency/number expressions — English, Hindi, Telugu transliterations.
+ * "five lakh" → "500000", "paanch lakh" → "500000", "aidu lakshal" → "500000"
  */
 function parseSpokenCurrency(text) {
-  // Handle compound expressions like "five lakh fifty thousand"
   let result = text;
 
-  // Replace written numbers adjacent to multipliers
-  const pattern = /(\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b)\s*(?:point\s*\d+\s*)?(\b(?:lakh|lac|crore|lacs|lakhs|crores|thousand|million|billion)\b)/gi;
-
-  result = result.replace(pattern, (match, numWord, multiplierWord) => {
+  // ── English spoken numbers ────────────────────────────────────────────
+  const enPattern = /(\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b)\s*(?:point\s*\d+\s*)?(\b(?:lakh|lac|crore|lacs|lakhs|crores|thousand|million|billion)\b)/gi;
+  result = result.replace(enPattern, (_, numWord, multiplierWord) => {
     const num = SPOKEN_NUMBERS[numWord.toLowerCase()] || 0;
     const mult = SPOKEN_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Hindi transliteration numbers ─────────────────────────────────────
+  // e.g. "paanch lakh", "do crore", "ek hazaar"
+  const hiPattern = /(\b(?:ek|do|teen|char|paanch|panch|chhe|saat|aath|nau|das|gyarah|barah|tera|chaudah|pandrah|solah|satrah|atharah|unnis|bees|tees|chalis|pachaas|saath|sattar|assi|nabbe|sau)\b)\s*(\b(?:lakh|lakhs|crore|crores|hazaar|sau)\b)/gi;
+  result = result.replace(hiPattern, (_, numWord, multiplierWord) => {
+    const num = HINDI_NUMBERS[numWord.toLowerCase()] || 0;
+    const mult = HINDI_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Telugu transliteration numbers ────────────────────────────────────
+  // e.g. "aidu lakshal", "rendu koti"
+  const tePattern = /(\b(?:okati|oka|rendu|moodu|naalu|aidu|aaru|edu|enimidi|tommidi|padi)\b)\s*(\b(?:laksha|lakshal|laksham|lakshe|lakhalu|lakhla|koti|kotlu|velu|vellu)\b)/gi;
+  result = result.replace(tePattern, (_, numWord, multiplierWord) => {
+    const num = TELUGU_NUMBERS[numWord.toLowerCase()] || 0;
+    const mult = TELUGU_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Hindi Unicode numbers (e.g. "पांच लाख") ─────────────────────────────
+  const hiUniPattern = /(एक|दो|तीन|चार|पांच|पाँच|छह|सात|आठ|नौ|दस)\s*(लाख|करोड़|हजार)/g;
+  result = result.replace(hiUniPattern, (_, numWord, multWord) => {
+    const num = HINDI_NUMBERS[numWord] || 0;
+    const mult = HINDI_NUMBERS[multWord] || 1;
+    return String(num * mult);
+  });
+
+  // ── Telugu Unicode numbers (e.g. "ఐదు లక్షల") ─────────────────────────────
+  const teUniPattern = /(ఒకటి|ఒక|రెండు|మూడు|నాలుగు|ఐదు|ఆరు|ఏడు|ఎనిమిది|తొమ్మిది|పది)\s*(లక్ష|లక్షలు|లక్షల|కోటి|వేలు)/g;
+  result = result.replace(teUniPattern, (_, numWord, multWord) => {
+    const num = TELUGU_NUMBERS[numWord] || 0;
+    const mult = TELUGU_NUMBERS[multWord] || 1;
     return String(num * mult);
   });
 
@@ -124,8 +187,15 @@ function extractNumber(text) {
 const INTENT_DEFINITIONS = [
   {
     id: 'NAVIGATE_HOME',
-    aliases: ['home', 'main page', 'homepage', 'go home', 'back home', 'start'],
-    patterns: [['home']],
+    aliases: [
+      // English
+      'home', 'main page', 'homepage', 'go home', 'back home', 'start',
+      // Hindi
+      'ghar', 'mukh prishtha', 'shuruat',
+      // Telugu transliteration
+      'illu', 'mukhya pagina', 'mottam',
+    ],
+    patterns: [['home', 'ghar', 'illu', 'mukhya']],
     targetPage: '/',
     confirmationRequired: false,
     baseScore: 1.0,
@@ -133,11 +203,23 @@ const INTENT_DEFINITIONS = [
   {
     id: 'NAVIGATE_SCHEMES',
     aliases: [
+      // English
       'schemes', 'all schemes', 'scheme list', 'view schemes', 'browse schemes',
       'explore schemes', 'government schemes', 'welfare schemes', 'yojana list',
       'show schemes', 'see schemes',
+      // Hindi + Hinglish
+      'yojana', 'yojanaye', 'sarkari yojana', 'kalyan yojana', 'sabhi yojana',
+      'yojana dikhao', 'yojana list', 'sarkar ki yojana',
+      'योजनाएं', 'योजना', 'सरकारी योजनाएं', 'योजनाएं दिखाइए',
+      // Telugu + Tanglish
+      'pathakalu', 'pthakalu', 'pathakam', 'sarkar pathakalu', 'anni pathakalu',
+      'pathakalu chupincu', 'pathakalu chudandi',
+      'yojana kavali', 'schemes kavali', 'pathakam kavali',
+      'పథకాలు', 'యोजनाలు', 'పథకాలు చూపించండి', 'పథకాలు చూడండి',
     ],
-    patterns: [['scheme', 'yojana', 'welfare', 'programme', 'program']],
+    patterns: [['scheme', 'yojana', 'welfare', 'programme', 'program',
+                'pathakalu', 'pathakam', 'yojanaye', 'sarkar',
+                'పథకాలు', 'యोजनाలు', 'योजनाएं', 'योजना']],
     targetPage: '/schemes',
     confirmationRequired: false,
     baseScore: 1.0,
@@ -145,11 +227,21 @@ const INTENT_DEFINITIONS = [
   {
     id: 'CHECK_ELIGIBILITY',
     aliases: [
+      // English
       'eligibility', 'check eligibility', 'am i eligible', 'eligible schemes',
       'find my schemes', 'which schemes', 'what schemes', 'qualify',
       'suitable schemes', 'apply eligibility',
+      // Hindi + Hinglish
+      'patrata', 'patrata jaanch', 'kya main eligible', 'meri yojana',
+      'yogya', 'yogyata', 'kon si yojana mujhe milegi',
+      'पात्रता', 'योग्यता',
+      // Telugu + Tanglish
+      'arthata', 'arthata check', 'naaku emi yojana', 'naaku eligible',
+      'naaku arthamavutundi', 'naaku suitable',
+      'అర్హత', 'అర్హత చెక్',
     ],
-    patterns: [['eligib', 'qualify', 'suitable', 'my scheme', 'find scheme']],
+    patterns: [['eligib', 'qualify', 'suitable', 'my scheme', 'find scheme',
+                'patrata', 'yogya', 'arthata', 'eligible', 'पात्रता', 'అర్హత']],
     targetPage: '/eligibility',
     confirmationRequired: false,
     baseScore: 1.0,
@@ -157,34 +249,67 @@ const INTENT_DEFINITIONS = [
   {
     id: 'DISCOVER_SCHEMES',
     aliases: [
+      // English
       'loan', 'business loan', 'mudra', 'pmegp', 'agriculture loan',
       'farming help', 'kisan loan', 'stand up india', 'startup loan',
-      'money help', 'financial help', 'subsidy',
+      'money help', 'financial help', 'subsidy', 'dairy farming',
+      'kisan credit card', 'pm kisan', 'pmfby',
+      // Hindi + Hinglish
+      'karz chahiye', 'loan chahiye', 'mudra loan chahiye', 'rin chahiye',
+      'vyapar loan', 'kheti loan', 'kisan loan chahiye', 'paisa chahiye',
+      'mujhe loan', 'business ke liye loan',
+      'कृषि', 'ऋण', 'लोन चाहिए', 'बिजनेस लोन', 'कृषि योजनाएं',
+      // Telugu + Tanglish
+      'loan kavali', 'lonu kavali', 'runu kavali', 'business loan kavali',
+      'vyavasayam loan', 'padi loan', 'naaku loan', 'farm loan kavali',
+      'mudra loan kavali', 'dairy farming loan',
+      'వ్యవసాయ', 'రుణం', 'లోన్ కావాలి', 'బిజినెస్ లోన్', 'వ్యవసాయ పథకాలు',
     ],
-    patterns: [['loan', 'borrow', 'money', 'fund', 'subsidy', 'grant', 'farm', 'kisan', 'agri', 'business', 'entrepreneur', 'mudra', 'msme']],
-    targetPage: '/input-hub',
+    patterns: [['loan', 'borrow', 'money', 'fund', 'subsidy', 'grant',
+                'farm', 'kisan', 'agri', 'business', 'entrepreneur',
+                'mudra', 'msme', 'rin', 'karz', 'runu', 'kavali',
+                'dairy', 'vyapar', 'kheti', 'vyavasayam',
+                'రుణం', 'లోన్', 'వ్యవసాయ', 'ऋण', 'लोन', 'कृषि']],
+    targetPage: '/input',
     confirmationRequired: false,
     baseScore: 0.85,
   },
   {
     id: 'OPEN_INPUT_HUB',
     aliases: [
+      // English
       'input hub', 'chat', 'voice chat', 'tell you', 'start chat',
       'open chat', 'voice assistant', 'ask question', 'ask ai',
+      // Hindi
+      'baat karo', 'sawaal poochho', 'ai se baat', 'chat karo',
+      // Telugu
+      'matladandi', 'chat cheyyandi', 'ai tho matladandi',
     ],
-    patterns: [['input', 'hub', 'chat', 'voice', 'assistant', 'ai']],
-    targetPage: '/input-hub',
+    patterns: [['input', 'hub', 'chat', 'voice', 'assistant', 'ai',
+                'matladandi', 'baat karo']],
+    targetPage: '/input',
     confirmationRequired: false,
     baseScore: 1.0,
   },
   {
     id: 'CHECK_STATUS',
     aliases: [
+      // English
       'status', 'application status', 'my applications', 'track application',
       'track my', 'applied schemes', 'applied status', 'check application',
       'what did i apply', 'pending application',
+      // Hindi + Hinglish
+      'aavedan sthiti', 'mera aavedan', 'status batao', 'application ka status',
+      'mera aavedan kahan hai', 'track karo', 'pending application',
+      'आवेदन की स्थिति', 'आवेदन', 'स्टेटस', 'स्थिति',
+      // Telugu + Tanglish
+      'darkhaastu sthiti', 'naaku application status', 'status cheppandi',
+      'application emi ayindi', 'naaku apply chesina',
+      'అప్లికేషన్ స్టేటస్', 'దరఖాస్తు స్థితి', 'అప్లికేషన్', 'స్టేటస్',
     ],
-    patterns: [['status', 'application', 'track', 'applied', 'pending', 'check my']],
+    patterns: [['status', 'application', 'track', 'applied', 'pending',
+                'aavedan', 'sthiti', 'darkhaastu', 'track karo',
+                'అప్లికేషన్', 'దరఖాస్తు', 'आवेदन', 'स्थिति']],
     targetPage: '/applications',
     confirmationRequired: false,
     baseScore: 1.0,
@@ -193,9 +318,38 @@ const INTENT_DEFINITIONS = [
     id: 'NAVIGATE_DASHBOARD',
     aliases: [
       'dashboard', 'my dashboard', 'profile', 'my profile', 'account',
+      // Hindi
+      'mera dashboard', 'meri profile',
+      // Telugu
+      'naaku dashboard', 'naaku profile',
     ],
-    patterns: [['dashboard', 'profile', 'account', 'my page']],
+    patterns: [['dashboard', 'profile', 'account', 'mera', 'naaku']],
     targetPage: '/dashboard',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'FIND_NEAREST_BANK',
+    aliases: [
+      // English
+      'nearest bank', 'bank near me', 'find bank', 'nearby bank',
+      'closest bank', 'which bank', 'bank location', 'bank address',
+      'mudra bank', 'loan bank', 'where is bank',
+      // Hindi + Hinglish
+      'nazdeeki bank', 'paas mein bank', 'bank kahan hai', 'bank dhundho',
+      'mujhe bank chahiye', 'bank milega kahan', 'kaunsa bank', 'bank near',
+      'बैंक', 'बैंक कहां है', 'मेरे पास बैंक', 'नज़दीकी बैंक',
+      // Telugu + Tanglish
+      'dagarina bank', 'naaku bank ekkada', 'bank ekkada undi',
+      'bank chudandi', 'bank kavali ekkada', 'naaku bank kavali',
+      'nearest bank chupincu',
+      'బ్యాంక్', 'బ్యాంకు', 'నా దగ్గర బ్యాంక్', 'బ్యాంక్ ఎక్కడ ఉంది',
+    ],
+    patterns: [['bank', 'branch', 'nearest', 'near me', 'nearby', 'closest',
+                'dagarina', 'nazdeeki', 'paas', 'ekkada', 'kahan hai',
+                'బ్యాంక్', 'బ్యాంకు', 'बैंक']],
+    targetPage: null, // Handled in-place with bank results, no navigation
+    requiresSlots: ['location'],
     confirmationRequired: false,
     baseScore: 1.0,
   },
@@ -204,25 +358,38 @@ const INTENT_DEFINITIONS = [
     aliases: [
       'agent', 'vle', 'register agent', 'csc', 'village entrepreneur',
       'jan seva kendra', 'common service',
+      // Hindi
+      'agent registration', 'csc registration', 'jan seva',
+      // Telugu
+      'agent noondukovalanukuntunna', 'csc registration kavali',
     ],
-    patterns: [['agent', 'vle', 'csc', 'village level', 'register']],
-    targetPage: '/input-hub',
+    patterns: [['agent', 'vle', 'csc', 'village level', 'register',
+                'jan seva', 'common service']],
+    targetPage: '/input',
     slotsToPrefill: { mode: 'agent' },
     confirmationRequired: false,
     baseScore: 0.9,
   },
   {
     id: 'NAVIGATE_LOGIN',
-    aliases: ['login', 'sign in', 'log in', 'signin'],
-    patterns: [['login', 'sign in']],
+    aliases: [
+      'login', 'sign in', 'log in', 'signin',
+      // Hindi
+      'login karo', 'andar jao',
+    ],
+    patterns: [['login', 'sign in', 'login karo']],
     targetPage: '/login',
     confirmationRequired: false,
     baseScore: 1.0,
   },
   {
     id: 'NAVIGATE_COMMUNITY',
-    aliases: ['community', 'forum', 'discussion', 'community forum'],
-    patterns: [['community', 'forum', 'discuss']],
+    aliases: [
+      'community', 'forum', 'discussion', 'community forum',
+      // Hindi
+      'samudaya', 'baatcheet',
+    ],
+    patterns: [['community', 'forum', 'discuss', 'samudaya']],
     targetPage: '/community',
     confirmationRequired: false,
     baseScore: 1.0,
@@ -230,7 +397,7 @@ const INTENT_DEFINITIONS = [
   {
     id: 'SEARCH_SCHEME',
     aliases: [],
-    patterns: [['search', 'find', 'look for', 'find scheme for']],
+    patterns: [['search', 'find', 'look for', 'find scheme for', 'dhundho']],
     targetPage: '/schemes',
     requiresSlots: ['query'],
     confirmationRequired: false,
@@ -240,7 +407,7 @@ const INTENT_DEFINITIONS = [
     id: 'GENERAL_QUERY',
     aliases: [],
     patterns: [],
-    targetPage: '/input-hub',
+    targetPage: '/input',
     confirmationRequired: false,
     baseScore: 0.4,
   },

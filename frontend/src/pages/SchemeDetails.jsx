@@ -22,6 +22,7 @@ import AudioReaderButton from '../components/common/AudioReaderButton';
 import ShareSchemeButton from '../components/common/ShareSchemeButton';
 import BenefitEstimator from '../components/scheme/BenefitEstimator';
 import SchemeFAQ from '../components/scheme/SchemeFAQ';
+import ApplicationGuidanceModal from '../components/scheme/ApplicationGuidanceModal';
 
 export default function SchemeDetails() {
   const { id } = useParams();
@@ -31,6 +32,7 @@ export default function SchemeDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -115,17 +117,25 @@ export default function SchemeDetails() {
 
         {/* Action CTAs */}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button onClick={() => navigate('/eligibility')} className="btn btn-primary btn-lg">
+          <button onClick={() => setGuidanceOpen(true)} className="btn btn-primary btn-lg" style={{ backgroundColor: '#059669', borderColor: '#059669' }}>
+            <FileText size={18} /> {t('applyGuidanceBtn', 'Apply Now / Application Guidance')}
+          </button>
+
+          <button onClick={() => navigate('/compare', { state: { schemeIds: [scheme.id, 'pmegp'] } })} className="btn btn-secondary btn-lg" style={{ borderColor: '#D97706', color: '#D97706' }}>
+            <Scale size={18} /> {t('compare', 'Compare')}
+          </button>
+
+          <button onClick={() => navigate('/eligibility')} className="btn btn-secondary btn-lg">
             <Sparkles size={18} /> {t('checkMyEligibility', 'Check My Eligibility')}
           </button>
 
           <a 
-            href={scheme.officialUrl} 
+            href={scheme.officialUrl || 'https://www.myscheme.gov.in/'} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="btn btn-secondary btn-lg"
           >
-            {t('officialPortal', 'Apply on Official Portal')} <ExternalLink size={18} />
+            {t('officialPortal', 'Official Portal')} <ExternalLink size={18} />
           </a>
 
           <AudioReaderButton textToRead={`${scheme.name}. ${scheme.summary}. ${scheme.benefits}`} label={t('readAloud', 'Read Aloud')} />
@@ -134,7 +144,7 @@ export default function SchemeDetails() {
       </div>
 
       {/* Main Grid Details */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '2rem' }}>
         {/* Left Column: Benefits & Eligibility */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Key Benefits */}
@@ -288,10 +298,17 @@ export default function SchemeDetails() {
         <Link to="/schemes" className="btn btn-secondary btn-lg" style={{ minWidth: '200px', justifyContent: 'center' }}>
           <ArrowLeft size={18} /> {t('backToSchemes', 'Back to Schemes')}
         </Link>
-        <button onClick={() => navigate('/eligibility')} className="btn btn-primary btn-lg" style={{ minWidth: '220px', justifyContent: 'center' }}>
-          <Sparkles size={18} /> {t('checkMyEligibility', 'Check My Eligibility')}
+        <button onClick={() => setGuidanceOpen(true)} className="btn btn-primary btn-lg" style={{ minWidth: '220px', justifyContent: 'center', backgroundColor: '#059669', borderColor: '#059669' }}>
+          <FileText size={18} /> {t('applyGuidanceBtn', 'Apply Now / Guidance')}
         </button>
       </div>
+
+      {/* Application Guidance Modal */}
+      <ApplicationGuidanceModal 
+        isOpen={guidanceOpen} 
+        onClose={() => setGuidanceOpen(false)} 
+        scheme={scheme} 
+      />
     </div>
   );
 }

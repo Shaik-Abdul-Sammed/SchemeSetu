@@ -1,0 +1,5 @@
+JANSAMARTH NATIONAL PORTAL FOR CREDIT LINKED SCHEMES
+
+1. Unified Access: Single digital platform connecting 13+ central credit-linked government schemes.
+2. Digital In-Principle Approval: Instant bank eligibility check and in-principle sanction letter generation.
+3. Integrated Verification: Online PAN, Aadhaar, and Udyam e-KYC integration.

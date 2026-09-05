@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B192C"/>
+      <stop offset="100%" stop-color="#1E3E62"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#navyGrad)" stroke="#D97706" stroke-width="12"/>
+  
+  <!-- Tricolor Accent Stars -->
+  <circle cx="150" cy="140" r="18" fill="#FF671F"/>
+  <circle cx="362" cy="140" r="18" fill="#047857"/>
+  <polygon points="256,90 262,108 280,108 266,118 271,136 256,125 241,136 246,118 232,108 250,108" fill="#F59E0B"/>
+  
+  <!-- Central 'S' Letter -->
+  <path d="M 330 200 C 330 160, 190 150, 190 210 C 190 260, 325 240, 325 300 C 325 360, 180 360, 180 310" 
+        fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+        
+  <!-- Bridge Arch (Setu) -->
+  <path d="M 100 370 Q 256 310 412 370" fill="none" stroke="url(#goldGrad)" stroke-width="20" stroke-linecap="round"/>
+  <!-- Bridge Vertical Piers -->
+  <line x1="160" y1="358" x2="160" y2="400" stroke="#D97706" stroke-width="10" stroke-linecap="round"/>
+  <line x1="256" y1="338" x2="256" y2="400" stroke="#D97706" stroke-width="10" stroke-linecap="round"/>
+  <line x1="352" y1="358" x2="352" y2="400" stroke="#D97706" stroke-width="10" stroke-linecap="round"/>
+</svg>

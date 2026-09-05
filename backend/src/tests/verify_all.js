@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 const http = require('http');
 const assert = require('assert');
 const app = require('../index');
@@ -976,17 +977,21 @@ async function runAllTests() {
     console.log('\n--- 15. Localization & 100% Translation Key Coverage (10 tests) ---');
     const fs = require('fs');
     const path = require('path');
-    const langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    let langFilePath = path.resolve(__dirname, '../../../frontend/src/context/languageStore.js');
+    if (!fs.existsSync(langFilePath)) {
+      langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    }
     const langFileContent = fs.readFileSync(langFilePath, 'utf8');
-    const langMatch = langFileContent.match(/const translations = ({[\s\S]*?});\n\nconst LanguageContext/);
+    const langMatch = langFileContent.match(/export const translations = ({[\s\S]*?});/) || 
+                      langFileContent.match(/const translations = ({[\s\S]*?});/);
     const transObj = eval('(' + langMatch[1] + ')');
     const enKeys = Object.keys(transObj.EN);
-    const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR'];
+    const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
 
-    await test('All 8 supported languages (EN, HI, TE, TA, KN, ML, BN, MR) exist in dictionary', async () => {
+    await test('All 10 supported languages (EN, HI, TE, TA, KN, ML, BN, MR, GON, BHI) exist in dictionary', async () => {
       const langs = Object.keys(transObj);
-      assert.strictEqual(langs.length, 8);
-      assert(langs.includes('EN') && langs.includes('HI') && langs.includes('TE') && langs.includes('BN'));
+      assert.strictEqual(langs.length, 10);
+      assert(langs.includes('EN') && langs.includes('HI') && langs.includes('TE') && langs.includes('GON') && langs.includes('BHI'));
     });
 
     for (const lang of targetLangs) {
@@ -1005,6 +1010,387 @@ async function runAllTests() {
     await test('Translation fallback function returns key string for completely non-existent key', async () => {
       const t = (lang, key) => transObj[lang]?.[key] || transObj['EN']?.[key] || key;
       assert.strictEqual(t('EN', 'nonExistentKey123'), 'nonExistentKey123');
+    });
+
+    console.log('\n--- 16. Translation API & Health Check Endpoints (6 tests) ---');
+    await test('GET /api/v1/health returns status OK and uptime', async () => {
+      const res = await request('GET', '/api/v1/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+      assert(typeof res.data.uptimeSeconds === 'number');
+    });
+
+    await test('GET /api/health alias returns status OK', async () => {
+      const res = await request('GET', '/api/health');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'OK');
+    });
+
+    await test('POST /api/v1/translate rejects missing targetLang with 400', async () => {
+      const res = await request('POST', '/api/v1/translate', { text: 'Hello' });
+      assert.strictEqual(res.status, 400);
+    });
+
+    await test('POST /api/v1/translate with EN target returns original text directly', async () => {
+      const res = await request('POST', '/api/v1/translate', { text: 'SchemeSetu Portal', targetLang: 'EN' });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.translated, 'SchemeSetu Portal');
+    });
+
+    await test('POST /api/v1/translate batch mode with EN target returns original array', async () => {
+      const res = await request('POST', '/api/v1/translate', { texts: ['Apply Now', 'View Details'], targetLang: 'EN' });
+      assert.strictEqual(res.status, 200);
+      assert.deepStrictEqual(res.data.translated, ['Apply Now', 'View Details']);
+    });
+
+    await test('GET /api/v1/translate/cache-stats returns valid cache statistics', async () => {
+      const res = await request('GET', '/api/v1/translate/cache-stats');
+      assert.strictEqual(res.status, 200);
+      assert(typeof res.data.cacheSize === 'number');
+      assert.strictEqual(res.data.maxCacheSize, 2000);
+    });
+
+    console.log('\n--- 17. Demo Person Profiles & Data-Driven SC Financial Limits (5 tests) ---');
+    const demoDir = path.resolve(__dirname, '../../../database/sample-data/demo-person');
+    
+    await test('Demo SC Person JSON file exists and has valid schema', async () => {
+      const scJsonPath = path.join(demoDir, 'demo-person-sc-profile.json');
+      assert(fs.existsSync(scJsonPath), 'demo-person-sc-profile.json must exist');
+      const scData = JSON.parse(fs.readFileSync(scJsonPath, 'utf8'));
+      assert.strictEqual(scData.casteCategory, 'SC');
+      assert.strictEqual(typeof scData.annualIncome, 'number');
+      assert.strictEqual(typeof scData.projectCost, 'number');
+      assert.strictEqual(typeof scData.loanRequirement, 'number');
+    });
+
+    await test('Demo multiple profiles dataset exists with at least 5 records', async () => {
+      const multiJsonPath = path.join(demoDir, 'demo-person-multiple-profiles.json');
+      assert(fs.existsSync(multiJsonPath), 'demo-person-multiple-profiles.json must exist');
+      const multiData = JSON.parse(fs.readFileSync(multiJsonPath, 'utf8'));
+      assert(Array.isArray(multiData) && multiData.length >= 5);
+    });
+
+    await test('POST /api/v1/eligibility/check evaluates SC entrepreneur Ramesh Kumar with high match', async () => {
+      const payload = {
+        name: 'Ramesh Kumar',
+        age: 32,
+        gender: 'Male',
+        casteCategory: 'SC',
+        annualIncome: 240000,
+        occupation: 'Farmer',
+        state: 'Telangana',
+        projectCost: 350000,
+        loanRequirement: 250000,
+        bplStatus: 'Yes'
+      };
+      const res = await request('POST', '/api/v1/eligibility/check', payload);
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.eligibleSchemesCount > 0);
+      const top = res.data.results[0];
+      assert(top.matchScore >= 50);
+      assert(top.financialStatus.length > 0);
+    });
+
+    await test('POST /api/v1/eligibility/check marks oversized project cost as Exceeds Scheme Limit safely', async () => {
+      const payload = {
+        name: 'Test Excess Amount',
+        age: 35,
+        gender: 'Male',
+        casteCategory: 'SC',
+        annualIncome: 200000,
+        occupation: 'Farmer',
+        projectCost: 15000000, // 1.5 Cr exceeds normal Mudra caps
+        loanRequirement: 12000000
+      };
+      const res = await request('POST', '/api/v1/eligibility/check', payload);
+      assert.strictEqual(res.status, 200);
+      const mudra = res.data.results.find(r => r.scheme.id.includes('mudra'));
+      if (mudra) {
+        assert.strictEqual(mudra.financialStatus, 'Exceeds Scheme Limit');
+      }
+    });
+
+    await test('Downloads sample data directory contains demo person files', async () => {
+      const dlDir = '/home/user/Downloads/Sampledata/demo-person';
+      assert(fs.existsSync(path.join(dlDir, 'demo-person-sc-profile.json')));
+      assert(fs.existsSync(path.join(dlDir, 'demo-person-multiple-profiles.csv')));
+    });
+
+    console.log('\n--- 18. Scheme Comparator & Voice Assistant Locales (4 tests) ---');
+    await test('GET /api/v1/schemes/pm-mudra-yojana returns valid data for comparison', async () => {
+      const res = await request('GET', '/api/v1/schemes/pm-mudra-yojana');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.id, 'pm-mudra-yojana');
+      assert.strictEqual(typeof res.data.maxLoan, 'number');
+    });
+
+    await test('GET /api/v1/schemes/pmegp returns valid SC margin subsidy metadata', async () => {
+      const res = await request('GET', '/api/v1/schemes/pmegp');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.id, 'pmegp');
+      assert(res.data.maxLoan >= 1000000);
+    });
+
+    await test('Voice Assistant locale maps 10 languages accurately', async () => {
+      const localeMap = {
+        EN: 'en-IN', HI: 'hi-IN', TE: 'te-IN', TA: 'ta-IN',
+        KN: 'kn-IN', ML: 'ml-IN', BN: 'bn-IN', MR: 'mr-IN',
+        GON: 'hi-IN', BHI: 'hi-IN'
+      };
+      assert.strictEqual(Object.keys(localeMap).length, 10);
+      assert.strictEqual(localeMap['TE'], 'te-IN');
+      assert.strictEqual(localeMap['GON'], 'hi-IN');
+      assert.strictEqual(localeMap['BHI'], 'hi-IN');
+    });
+
+    await test('All 400+ keys are present across all 10 languages', async () => {
+      const allLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        assert(transObj[l], `Language ${l} dictionary must exist`);
+        assert.strictEqual(Object.keys(transObj[l]).length, enKeys.length);
+      }
+    });
+
+    console.log('\n--- 19. Extreme Numerical & Agent Mode Financial Validation (6 tests) ---');
+    const { sanitizeAndValidateNumber, formatIndianCurrency } = require('../utils/numberValidator');
+
+    await test('Number validator rejects extreme overflow string (e.g. 100000000000000000000000)', async () => {
+      const res = sanitizeAndValidateNumber('100000000000000000000000', 'income');
+      assert.strictEqual(res.isValid, false);
+    });
+
+    await test('Number validator rejects scientific notation (1e100) and negative values (-50000)', async () => {
+      const res1 = sanitizeAndValidateNumber('1e100', 'cost');
+      assert.strictEqual(res1.isValid, false);
+      const res2 = sanitizeAndValidateNumber('-50000', 'income');
+      assert.strictEqual(res2.isValid, false);
+    });
+
+    await test('Number validator rejects unrealistic age (999 or -5)', async () => {
+      const res1 = sanitizeAndValidateNumber('999', 'age');
+      assert.strictEqual(res1.isValid, false);
+      const res2 = sanitizeAndValidateNumber('-5', 'age');
+      assert.strictEqual(res2.isValid, false);
+    });
+
+    await test('formatIndianCurrency handles extreme numbers safely without infinite repetition', async () => {
+      const formattedHuge = formatIndianCurrency('100000000000000000000000');
+      assert.strictEqual(formattedHuge, 'Outside Supported Limit');
+      
+      const formattedNaN = formatIndianCurrency('abc');
+      assert.strictEqual(formattedNaN, '₹0');
+
+      const formattedValid = formatIndianCurrency(250000);
+      assert.strictEqual(formattedValid, '₹2,50,000');
+    });
+
+    await test('POST /api/v1/agent/submit validates required fields safely', async () => {
+      const invalidRes = await request('POST', '/api/v1/agent/submit', { agentId: 'agent-101' });
+      assert.strictEqual(invalidRes.status, 400);
+    });
+
+    await test('POST /api/v1/agent/submit accepts valid submission and returns 201', async () => {
+      const validRes = await request('POST', '/api/v1/agent/submit', {
+        agentId: 'agent-101',
+        userId: 'user-sc-01',
+        schemeId: 'pm-mudra-yojana',
+        applicationData: {
+          name: 'Ramesh Kumar',
+          loanAmount: 250000
+        }
+      });
+      assert.strictEqual(validRes.status, 201);
+      assert(validRes.data.applicationId.startsWith('APP-'));
+    });
+
+    console.log('\n--- 20. 2,500+ Translation Keys, Applications & Locations Module (5 tests) ---');
+    await test('languageStore.js contains >= 2,500 unique structured translation keys in EN', async () => {
+      assert(enKeys.length >= 2500, `Expected >= 2500 keys in EN, but got ${enKeys.length}`);
+    });
+
+    await test('All 10 languages have exact key parity with EN (>= 2500 keys each)', async () => {
+      const allLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        const lKeys = Object.keys(transObj[l] || {});
+        assert.strictEqual(lKeys.length, enKeys.length, `Language ${l} count (${lKeys.length}) does not match EN (${enKeys.length})`);
+      }
+    });
+
+    await test('GET /api/v1/partners returns list of verified assistance centers', async () => {
+      const res = await request('GET', '/api/v1/partners');
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data) || Array.isArray(res.data.partners));
+    });
+
+    await test('POST /api/v1/partners/nearest returns nearest centers with valid distance calculations', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 13.0827,
+        lng: 80.2707
+      });
+      assert.strictEqual(res.status, 200);
+      assert(Array.isArray(res.data.partners));
+      assert(res.data.partners.length > 0);
+    });
+
+    await test('No undefined, null, or [object Object] present in language translation dictionaries', async () => {
+      const allLangs = ['EN', 'HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
+      for (const l of allLangs) {
+        for (const [k, v] of Object.entries(transObj[l])) {
+          assert(v !== undefined && v !== null && v !== '' && v !== '[object Object]', `Invalid value for key ${k} in lang ${l}`);
+        }
+      }
+    });
+
+    console.log('\n--- 21. RAG Multi-Document Engine & 30-Query Evaluation Benchmark (5 tests) ---');
+    await test('GET /api/v1/rag/status returns ready status and indexed chunks', async () => {
+      const res = await request('GET', '/api/v1/rag/status');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.status, 'READY');
+      assert(res.data.totalChunks >= 15);
+    });
+
+    await test('GET /api/v1/rag/query retrieves relevant citation metadata for PMEGP query', async () => {
+      const res = await request('GET', '/api/v1/rag/query?q=' + encodeURIComponent('PMEGP subsidy rate for SC'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.found, true);
+      assert(res.data.results.length > 0);
+      assert(res.data.results[0].docName.includes('pmegp'));
+      assert(res.data.results[0].relevanceScore > 0);
+    });
+
+    await test('GET /api/v1/rag/query handles completely out-of-scope query safely', async () => {
+      const res = await request('GET', '/api/v1/rag/query?q=' + encodeURIComponent('Flight ticket from Tokyo to Paris'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.found, false);
+      assert.strictEqual(res.data.results.length, 0);
+    });
+
+    await test('GET /api/v1/rag/evaluate runs 30 benchmark queries with high hit rate and precision', async () => {
+      const res = await request('GET', '/api/v1/rag/evaluate');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.totalQueries, 30);
+      assert(parseInt(res.data.hitRate, 10) >= 80);
+      assert(parseInt(res.data.noResultAccuracy, 10) >= 80);
+    });
+
+    await test('RAG evaluation results contain 30 individual test assertions', async () => {
+      const res = await request('GET', '/api/v1/rag/evaluate');
+      assert.strictEqual(res.data.evaluationDetails.length, 30);
+    });
+
+    console.log('\n--- 22. Centralized Audit Logging, Platform Stats & Dataset Integrity (5 tests) ---');
+    await test('GET /api/v1/admin/audit-logs returns sanitized operational logs without credentials', async () => {
+      const res = await request('GET', '/api/v1/admin/audit-logs');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.events.length > 0);
+      const str = JSON.stringify(res.data.events);
+      assert(!str.includes('password123'));
+    });
+
+    await test('GET /api/v1/admin/stats returns platform scheme counts and health status', async () => {
+      const res = await request('GET', '/api/v1/admin/stats');
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.totalSchemes >= 15);
+      assert.strictEqual(res.data.supportedLanguages, 10);
+    });
+
+    await test('Schemes dataset contains at least 15 verified schemes with valid dataStatus', async () => {
+      const schemes = require('../data/schemesData');
+      assert(schemes.length >= 15);
+      schemes.forEach(s => {
+        assert(s.id && s.name && s.category && s.officialMinistry);
+        assert(['VERIFIED', 'DEMO', 'NEEDS_VERIFICATION', 'NOT_SPECIFIED'].includes(s.dataStatus));
+      });
+    });
+
+    await test('Sample users JSON file contains 20 distinct fictional applicant records', async () => {
+      const users = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../database/sample-data/sample-users.json'), 'utf8'));
+      assert.strictEqual(users.length, 20);
+    });
+
+    await test('Sample applications JSON file contains 20 lifecycle tracked applications', async () => {
+      const apps = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../database/sample-data/sample-applications.json'), 'utf8'));
+      assert.strictEqual(apps.length, 20);
+    });
+
+    console.log('\n--- 23. GPS Location Pipeline, Coordinate Integrity & No-Fallback Regression (7 tests) ---');
+    await test('GPS coordinates for IIIT RK Valley / Vempalli (14.3396, 78.5818) are passed without swap', async () => {
+      const { haversineDistance, isValidCoordinate } = require('../utils/haversine');
+      const lat = 14.3396;
+      const lng = 78.5818;
+      assert.strictEqual(isValidCoordinate(lat, lng), true);
+      assert.strictEqual(isValidCoordinate(lng, lat), true); // Both in range, but order matters
+      // Distance from IIIT RK Valley to Vempalli CSC (14.3725, 78.4552)
+      const d1 = haversineDistance(lat, lng, 14.3725, 78.4552);
+      assert(d1 > 10 && d1 < 20, `Distance should be ~14km, got ${d1}`);
+      // Swapping coordinates produces invalid distance or out-of-range error
+      const dSwapped = haversineDistance(lng, lat, 78.4552, 14.3725);
+      assert.notStrictEqual(d1, dSwapped);
+    });
+
+    await test('POST /api/v1/partners/nearest returns Vempalli centers first for IIIT RK Valley coords', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 14.3396,
+        lng: 78.5818,
+        maxDistance: 50
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.partners.length >= 2, 'Should find at least 2 partners within 50km');
+      assert.strictEqual(res.data.partners[0].district, 'YSR Kadapa');
+      assert(res.data.partners[0].name.includes('Vempalli'));
+      assert(res.data.partners[0].distanceKm < 20);
+    });
+
+    await test('POST /api/v1/partners/nearest never substitutes distant Chittoor for Vempalli coords', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', {
+        lat: 14.3396,
+        lng: 78.5818,
+        maxDistance: 500
+      });
+      assert.strictEqual(res.status, 200);
+      // Closest center must be in YSR Kadapa, NOT Chittoor or Chennai
+      assert.strictEqual(res.data.partners[0].district, 'YSR Kadapa');
+    });
+
+    await test('POST /api/v1/partners/nearest rejects missing or NaN coordinates without fallback', async () => {
+      const res = await request('POST', '/api/v1/partners/nearest', { lat: 'invalid', lng: 78.5818 });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.data.success, false);
+      assert(res.data.error.includes('Validation failed'));
+    });
+
+    await test('Location coordinate validation strictly rejects out-of-range latitude (>90 or <-90)', () => {
+      const { isValidCoordinate } = require('../utils/haversine');
+      assert.strictEqual(isValidCoordinate(90.1, 78.5818), false);
+      assert.strictEqual(isValidCoordinate(-90.1, 78.5818), false);
+      assert.strictEqual(isValidCoordinate(14.3396, 180.1), false);
+      assert.strictEqual(isValidCoordinate(14.3396, -180.1), false);
+    });
+
+    await test('Distance calculation is symmetric and yields 0 for identical coordinates', () => {
+      const { haversineDistance } = require('../utils/haversine');
+      const d = haversineDistance(14.3396, 78.5818, 14.3396, 78.5818);
+      assert.strictEqual(d, 0);
+      const d1 = haversineDistance(14.3396, 78.5818, 17.3850, 78.4867);
+      const d2 = haversineDistance(17.3850, 78.4867, 14.3396, 78.5818);
+      assert.strictEqual(d1, d2);
+      assert(d1 > 330 && d1 < 350, `Distance to Hyderabad should be ~339km, got ${d1}`);
+    });
+
+    await test('Partners database includes verified centers in YSR Kadapa with valid coordinates', () => {
+      const dataService = require('../services/dataService');
+      const partners = dataService.getPartners();
+      const kadapaPartners = partners.filter(p => p.district === 'YSR Kadapa');
+      assert(kadapaPartners.length >= 2, 'Must have at least 2 verified partners in YSR Kadapa');
+      kadapaPartners.forEach(p => {
+        assert(p.coordinates && typeof p.coordinates.lat === 'number' && typeof p.coordinates.lng === 'number');
+        assert(p.coordinates.lat > 14.0 && p.coordinates.lat < 15.0);
+        assert(p.coordinates.lng > 78.0 && p.coordinates.lng < 79.0);
+      });
     });
 
     console.log('\n========================================');

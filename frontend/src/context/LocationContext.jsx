@@ -1,3 +1,5 @@
+export { LocationContext, useLocation } from './useLocation';
+export { LocationProvider, INDIAN_LOCATIONS, default } from './LocationProvider';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MOCK_PARTNERS } from '../data/mock/partners';
 

@@ -275,6 +275,8 @@ function normalizePartner(raw, index) {
   const npaStatus = String(raw.npaStatus || 'low').toLowerCase().trim();
   const address = raw.address || 'Local Branch';
   const phone = raw.phone || 'N/A';
+  const state = raw.state || '';
+  const district = raw.district || '';
 
   return {
     id: String(id),
@@ -285,7 +287,9 @@ function normalizePartner(raw, index) {
     fundAvailable,
     npaStatus,
     address: String(address),
-    phone: String(phone)
+    phone: String(phone),
+    state: String(state),
+    district: String(district)
   };
 }
 
@@ -306,14 +310,38 @@ function loadSchemes() {
 }
 
 function loadPartners() {
-  let partners = FALLBACK_PARTNERS.map(normalizePartner);
-  const existingIds = new Set(partners.map(p => p.id));
+  const datasetMap = new Map();
+
+  // Try loading from database/seeders/data/partners.json
+  try {
+    const seedPath = path.resolve(__dirname, '../../../database/seeders/data/partners.json');
+    if (fs.existsSync(seedPath)) {
+      const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+      if (Array.isArray(seedData)) {
+        seedData.map(normalizePartner).forEach(p => {
+          if (p) datasetMap.set(p.id.toLowerCase(), p);
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('[dataService] Failed to load partners.json:', e.message);
+  }
+
+  // Also include fallback partners
+  FALLBACK_PARTNERS.map(normalizePartner).forEach(p => {
+    if (p && !datasetMap.has(p.id.toLowerCase())) {
+      datasetMap.set(p.id.toLowerCase(), p);
+    }
+  });
+
+  // Include in-memory registered partners
   for (const reg of registeredPartners) {
-    if (!existingIds.has(reg.id)) {
-      partners.push(reg);
+    if (reg && reg.id) {
+      datasetMap.set(reg.id.toLowerCase(), reg);
     }
   }
-  return partners;
+
+  return Array.from(datasetMap.values());
 }
 
 function getSchemes() {

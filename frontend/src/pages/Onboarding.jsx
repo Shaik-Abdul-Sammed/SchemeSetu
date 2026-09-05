@@ -49,7 +49,7 @@ export default function Onboarding() {
 
   return (
     <div style={{ minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }} className="container py-8">
-      {/* Top Header Logos & Language Bar */}
+      {/* Top Header Logos & Government Badges */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -62,22 +62,14 @@ export default function Onboarding() {
           </div>
         </div>
 
-        {/* Global Language Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFFFFF', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
-          <Globe size={16} style={{ color: '#0284C7' }} />
-          <select
-            value={lang}
-            onChange={(e) => changeLanguage(e.target.value)}
-            style={{ border: 'none', background: 'transparent', fontSize: '0.9rem', fontWeight: 600, color: '#0F172A', cursor: 'pointer', outline: 'none' }}
-            aria-label="Select Preferred Language"
-          >
-            {availableLanguages.map((code) => (
-              <option key={code} value={code}>
-                {code === 'EN' ? 'English (EN)' : code === 'HI' ? 'हिंदी (HI)' : code === 'TE' ? 'తెలుగు (TE)' : code === 'TA' ? 'தமிழ் (TA)' : code === 'KN' ? 'ಕನ್ನಡ (KN)' : code === 'ML' ? 'മലയാളം (ML)' : code === 'BN' ? 'বাংলা (BN)' : 'मराठी (MR)'}
-              </option>
-            ))}
-          </select>
-        </div>
+        <button
+          onClick={handleQuickDemo}
+          className="btn btn-secondary btn-sm"
+          style={{ borderColor: '#F59E0B', color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+        >
+          <Zap size={15} style={{ color: '#F59E0B' }} />
+          <span>Quick Demo Showcase (SIH 2026)</span>
+        </button>
       </div>
 
       {/* Main Onboarding Card */}

@@ -1,32 +1,58 @@
 /**
  * Safe Capacitor Native Plugin Wrapper with Web Fallbacks
+ * 
+ * IMPORTANT: This module NEVER returns fabricated coordinates.
+ * If geolocation is unavailable or denied, it returns null — not fake defaults.
  */
 
 export const isNativePlatform = () => {
   return typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform();
 };
 
+/**
+ * Attempts to get the device's real GPS location.
+ * Returns { lat, lng, accuracy, timestamp } on success, or null on failure.
+ * NEVER returns hardcoded fallback coordinates.
+ */
 export const safeGetLocation = async () => {
+  // Try Capacitor native geolocation first (mobile apps)
   if (isNativePlatform() && window.Capacitor?.Plugins?.Geolocation) {
     try {
-      const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition();
+      const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
       return {
         lat: position.coords.latitude,
-        lng: position.coords.longitude
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy ? Math.round(position.coords.accuracy) : null,
+        timestamp: position.timestamp || Date.now()
       };
     } catch (e) {
       console.warn("Capacitor geolocation failed, falling back to Web API:", e);
     }
   }
 
+  // Web browser Geolocation API
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      return resolve({ lat: 20.5937, lng: 78.9629 }); // India center fallback
+      // No geolocation available — return null, NOT fake coordinates
+      return resolve(null);
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve({ lat: 20.5937, lng: 78.9629 }),
-      { timeout: 8000 }
+      (pos) => resolve({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy ? Math.round(pos.coords.accuracy) : null,
+        timestamp: pos.timestamp || Date.now()
+      }),
+      (err) => {
+        console.warn('Geolocation error:', err.message);
+        // Permission denied or unavailable — return null, NOT fake coordinates
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
 };

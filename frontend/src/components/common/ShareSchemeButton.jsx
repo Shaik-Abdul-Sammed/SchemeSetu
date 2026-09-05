@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function ShareSchemeButton({ scheme }) {
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
@@ -23,9 +25,10 @@ export default function ShareSchemeButton({ scheme }) {
       try {
         await navigator.clipboard.writeText(window.location.href);
         setCopied(true);
+        showToast(t('linkCopied', 'Scheme link copied to clipboard!'), 'success');
         setTimeout(() => setCopied(false), 2500);
       } catch (e) {
-        alert(`Copy link: ${window.location.href}`);
+        showToast(t('linkCopied', `Link: ${window.location.href}`), 'info');
       }
     }
   };

@@ -24,6 +24,7 @@ const microloanRouter = require('./routes/v1/microloanRoutes');
 const vleRouter = require('./routes/v1/vleRoutes');
 const adminRouter = require('./routes/v1/adminRoutes');
 const translateRouter = require('./routes/v1/translate');
+const ragRouter = require('./routes/v1/ragRoutes');
 const voiceRouter = require('./routes/v1/voice');
 
 const notFound = require('./middleware/notFound');
@@ -31,6 +32,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // CORS configuration for frontend integration
 const allowedOrigins = [
@@ -41,11 +43,19 @@ const allowedOrigins = [
   'http://127.0.0.1:5173'
 ];
 
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
+}
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN.replace(/\/$/, ''));
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.onrender.com')) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
     return callback(null, true);
   },
   credentials: true,
@@ -61,7 +71,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 function healthCheckHandler(req, res) {
   return res.status(200).json({
     status: 'OK',
-    message: 'SchemeSetu Backend is running',
+    service: 'SchemeSetu Backend API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
   });
 }
@@ -117,6 +130,7 @@ app.use('/api/v1/microloan', microloanRouter);
 app.use('/api/v1/vle', vleRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/translate', translateRouter);
+app.use('/api/v1/rag', ragRouter);
 app.use('/api/v1/voice', voiceRouter);
 
 // 404 Catch-All Middleware
@@ -126,15 +140,34 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start Server
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+if (require.main === module) {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`====================================================`);
     console.log(`🚀 SchemeSetu Backend Server running successfully!`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`📡 URL: http://${HOST}:${PORT}`);
     console.log(`🩺 Health: http://localhost:${PORT}/api/health`);
     console.log(`🩺 V1 Health: http://localhost:${PORT}/api/v1/health`);
     console.log(`====================================================`);
   });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ [PORT IN USE] Port ${PORT} is already being used by another process.`);
+      console.error(`💡 To free port ${PORT}, run: fuser -k ${PORT}/tcp or kill the existing node process.\n`);
+      process.exit(1);
+    } else {
+      console.error('❌ Server startup error:', err);
+      process.exit(1);
+    }
+  });
+
+  const handleShutdown = () => {
+    server.close(() => {
+      process.exit(0);
+    });
+  };
+  process.on('SIGINT', handleShutdown);
+  process.on('SIGTERM', handleShutdown);
 }
 
 module.exports = app;

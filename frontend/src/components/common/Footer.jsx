@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, PhoneCall, HelpCircle, FileText } from 'lucide-react';
+import { Shield, PhoneCall, HelpCircle, FileText, Download } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { usePWA } from '../../context/PWAContext';
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { isInstalled, triggerInstall } = usePWA();
 
   return (
     <footer className="footer">
@@ -27,6 +29,27 @@ export default function Footer() {
               <li><Link to="/schemes">{t('exploreSchemes', 'Find Schemes')}</Link></li>
               <li><Link to="/eligibility">{t('checkEligibility', 'Check My Eligibility')}</Link></li>
               <li><Link to="/login">{t('login', 'Citizen Login')}</Link></li>
+              {!isInstalled && (
+                <li>
+                  <button
+                    onClick={triggerInstall}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#F59E0B',
+                      cursor: 'pointer',
+                      fontSize: 'inherit',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <Download size={14} /> {t('installAppBtn', 'Install App')}
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

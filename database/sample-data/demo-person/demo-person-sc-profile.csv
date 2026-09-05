@@ -1,0 +1,2 @@
+id,name,age,gender,category,casteCategory,state,district,villageTown,education,employmentStatus,occupation,businessType,businessExperience,annualIncome,existingBusinessIncome,projectCost,loanRequirement,numEmployees,disabilityStatus,entrepreneurType,bankRequirement,bplStatus,landOwner,maritalStatus
+DEMO-SC-001,Ramesh Kumar (Demo SC Entrepreneur),32,Male,SC,SC,Telangana,Hyderabad,Secunderabad,10th pass,Self-Employed,Small Business Owner,Manufacturing,4,240000,180000,350000,250000,2,No,Existing Micro Enterprise,Working Capital & Machinery Term Loan,Yes,No,Married

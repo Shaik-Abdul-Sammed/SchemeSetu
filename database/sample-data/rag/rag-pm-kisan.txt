@@ -1,0 +1,5 @@
+PRADHAN MANTRI KISAN SAMMAN NIDHI (PM-KISAN) OPERATIONAL NORMS
+
+1. Annual Entitlement: Rs. 6,000 per year transferred in 3 equal 4-monthly installments of Rs. 2,000.
+2. Payment Channel: Direct Benefit Transfer (DBT) to Aadhaar-seeded primary savings account.
+3. Mandatory Verification: e-KYC authentication and land ownership record seeding.

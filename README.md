@@ -12,10 +12,12 @@
 ### Core Value Proposition
 - **Voice-First AI Conversational Assistant**: Speech recognition (`Web Speech API`) allowing low-literacy citizens to speak in their native dialect instead of filling complex forms.
 - **Explainable AI Eligibility Engine**: Transparent, human-understandable rule breakdown (e.g. `✅ Household income ₹2.4L < ₹5L ceiling`).
+- **Data-Driven SC Financial Limit Validation**: Checks requested loan/project costs against actual official scheme ceilings (Mudra Kishore/Tarun, PMEGP 35% SC subsidy, Stand-Up India ₹10L-₹1Cr, PM SVANidhi, Dalit Bandhu).
+- **Media & Document Analysis Hub**: Ingests certificates, documents (PDF/Image), and voice recordings with local rule-based attribute extraction.
+- **Demo Person Data Hub**: 1-click evaluation of standardized fictional Scheduled Caste (SC), OBC, Women, Farmer, and Street Vendor personas (`demo-person-sc-profile.json`).
 - **Interactive Financial EMI Calculator**: Real-time loan repayment slider visualization with moratorium period support.
 - **Snapchat Location Radar & GIS Partner Locator**: Pinpointing nearby bank branches & Common Service Centers (CSCs) with real-time fund availability indicators and Google Maps navigation.
-- **Agent Assisted Fast-Fill Mode**: Enables CSC operators to register citizens in bulk and issue pre-filled summary PDF slips.
-- **100% Localization**: Fully translated across **8 Indian languages** (English, Hindi, Telugu, Tamil, Kannada, Malayalam, Bengali, Marathi).
+- **100% Localization Across 10 Languages**: Full-page dynamic translation across English, Hindi, Telugu, Tamil, Kannada, Malayalam, Bengali, Marathi, **Gondi (గోండి / गोंडी)**, and **Bhili/Bhilodi (भीली / भीलोड़ी)**.
 
 ---
 

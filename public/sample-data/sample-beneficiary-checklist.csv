@@ -1,0 +1,6 @@
+Document_Code,Document_Name,Mandatory,Verification_Authority
+DOC-01,Aadhaar Card,Yes,UIDAI
+DOC-02,Caste Certificate,Yes,Revenue Tahsildar
+DOC-03,Income Certificate,Yes,Revenue Tahsildar
+DOC-04,Detailed Project Report,Yes,Technical Consultant / Chartered Accountant
+DOC-05,Bank Passbook,Yes,Lead District Bank

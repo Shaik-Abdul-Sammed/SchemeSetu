@@ -1,42 +1,71 @@
 {
+  "id": "/",
+  "name": "SchemeSetu - Citizen Scheme & Welfare Discovery",
   "short_name": "SchemeSetu",
-  "name": "SchemeSetu - Citizen Scheme & Welfare Portal",
-  "description": "Discover government schemes, verify eligibility, check loan EMI, locate nearest CSC centers, and track applications.",
+  "description": "AI-Powered Multilingual Government Scheme Discovery & Citizen Welfare Portal for Bharat",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0B192C",
+  "theme_color": "#0B192C",
+  "categories": ["government", "finance", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
     }
   ],
-  "start_url": "/",
-  "background_color": "#0A2540",
-  "theme_color": "#0A2540",
-  "display": "standalone",
-  "orientation": "portrait",
   "shortcuts": [
     {
       "name": "Explore Schemes",
       "short_name": "Schemes",
       "description": "Search and filter government schemes",
-      "url": "/schemes"
+      "url": "/schemes",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Check Eligibility",
       "short_name": "Eligibility",
-      "description": "Run 6-step citizen eligibility wizard",
-      "url": "/eligibility"
+      "description": "Run citizen eligibility assessment",
+      "url": "/eligibility",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Partner Radar",
-      "short_name": "Radar",
-      "description": "Locate nearest CSC and Jan Seva Kendra branches",
-      "url": "/#radar"
+      "name": "Citizen Dashboard",
+      "short_name": "Dashboard",
+      "description": "View saved applications and e-KYC status",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

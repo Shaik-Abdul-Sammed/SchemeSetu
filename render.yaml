@@ -13,6 +13,15 @@ services:
     region: oregon
     buildCommand: npm install
     startCommand: node src/index.js
+# Render.com Free Tier Deployment Blueprint for SchemeSetu
+services:
+  - type: web
+    name: schemesetu-backend-api
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: node backend/src/server.js
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
@@ -57,3 +66,4 @@ services:
           type: web
           name: schemesetu-backend
           property: host
+        value: 5000

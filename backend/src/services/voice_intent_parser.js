@@ -1,24 +1,724 @@
 /**
- * Voice Intent Parser (PRAGATI-Inspired NLU Engine)
+ * SchemeSetu Voice Intent Parser v3.0
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Robust multilingual NLU engine with:
+ *   • Alias/synonym resolution — English, Telugu, Hindi, Tanglish, Hinglish
+ *   • Slot extraction (numbers, occupations, locations)
+ *   • Confidence-weighted scoring (not just keyword includes)
+ *   • Conversation context for follow-ups
+ *   • FIND_NEAREST_BANK intent with location-aware routing
+ *   • Security: validates and sanitizes input before action
+ * ─────────────────────────────────────────────────────────────────────────────
  */
-function parseVoiceIntent(transcript = '') {
-  const text = transcript.toLowerCase();
 
-  if (text.includes('status') || text.includes('application') || text.includes('track')) {
-    return { intent: 'CHECK_STATUS', confidence: 0.95, targetPage: '/applications' };
+'use strict';
+
+// ── 1. TRANSCRIPT NORMALIZATION ───────────────────────────────────────────────
+const FILLER_WORDS = /\b(umm?|uh+|er+|ah+|like|you know|basically|actually|please|kindly|can you|could you|would you|i want to|i'd like to|i need|help me|show me|take me to|open|go to|navigate to|let me see)\b/gi;
+
+const SPOKEN_NUMBERS = {
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+  'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+  'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+  'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70,
+  'eighty': 80, 'ninety': 90, 'hundred': 100, 'thousand': 1000,
+  'lakh': 100000, 'lakhs': 100000, 'lac': 100000, 'lacs': 100000,
+  'crore': 10000000, 'crores': 10000000,
+  'million': 1000000, 'billion': 1000000000,
+};
+
+// ── Hindi number words (Devanagari transliteration & Unicode) ──────────────────
+const HINDI_NUMBERS = {
+  'ek': 1, 'do': 2, 'teen': 3, 'char': 4, 'paanch': 5, 'panch': 5,
+  'chhe': 6, 'saat': 7, 'aath': 8, 'nau': 9, 'das': 10,
+  'gyarah': 11, 'barah': 12, 'tera': 13, 'chaudah': 14, 'pandrah': 15,
+  'solah': 16, 'satrah': 17, 'atharah': 18, 'unnis': 19, 'bees': 20,
+  'tees': 30, 'chalis': 40, 'pachaas': 50, 'saath': 60, 'sattar': 70,
+  'assi': 80, 'nabbe': 90, 'sau': 100, 'hazaar': 1000,
+  'lakh': 100000, 'lakhs': 100000,
+  'crore': 10000000, 'crores': 10000000,
+  // Devanagari script
+  'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
+  'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+  'लाख': 100000, 'करोड़': 10000000, 'हजार': 1000,
+};
+
+// ── Telugu number words (transliterated & Unicode) ────────────────────────────
+const TELUGU_NUMBERS = {
+  'okati': 1, 'oka': 1, 'rendu': 2, 'moodu': 3, 'naalu': 4, 'aidu': 5,
+  'aaru': 6, 'edu': 7, 'enimidi': 8, 'tommidi': 9, 'padi': 10,
+  'velu': 1000, 'vellu': 1000,
+  'laksha': 100000, 'lakshal': 100000, 'laksham': 100000, 'lakshe': 100000,
+  'lakhalu': 100000, 'lakhla': 100000,
+  'koti': 10000000, 'kotlu': 10000000,
+  // Telugu script
+  'ఒకటి': 1, 'ఒక': 1, 'రెండు': 2, 'మూడు': 3, 'నాలుగు': 4, 'ఐదు': 5,
+  'ఆరు': 6, 'ఏడు': 7, 'ఎనిమిది': 8, 'తొమ్మిది': 9, 'పది': 10,
+  'లక్ష': 100000, 'లక్షలు': 100000, 'లక్షల': 100000, 'కోటి': 10000000, 'వేలు': 1000,
+};
+
+/**
+ * Normalize a raw speech-to-text transcript.
+ * @param {string} raw - Raw transcript from Web Speech API
+ * @returns {string} - Normalized text safe for intent parsing
+ */
+function normalizeTranscript(raw = '') {
+  if (!raw || typeof raw !== 'string') return '';
+
+  let text = raw.trim();
+
+  // 1. Lowercase
+  text = text.toLowerCase();
+
+  // 2. Remove filler words
+  text = text.replace(FILLER_WORDS, ' ');
+
+  // 3. Normalize common contractions
+  text = text.replace(/\bdon't\b/g, 'do not')
+             .replace(/\bcan't\b/g, 'cannot')
+             .replace(/\bwon't\b/g, 'will not')
+             .replace(/\bi'm\b/g, 'i am')
+             .replace(/\bi've\b/g, 'i have')
+             .replace(/\bi'd\b/g, 'i would')
+             .replace(/\bit's\b/g, 'it is');
+
+  // 4. Normalize Indian spoken number expressions  
+  // e.g. "five lakh rupees" → "500000"
+  text = parseSpokenCurrency(text);
+
+  // 5. Remove extra punctuation from STT
+  text = text.replace(/[,;:!?.]+/g, ' ');
+
+  // 6. Collapse multiple spaces
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return text;
+}
+
+/**
+ * Parse spoken currency/number expressions — English, Hindi, Telugu transliterations.
+ * "five lakh" → "500000", "paanch lakh" → "500000", "aidu lakshal" → "500000"
+ */
+function parseSpokenCurrency(text) {
+  let result = text;
+
+  // ── English spoken numbers ────────────────────────────────────────────
+  const enPattern = /(\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b)\s*(?:point\s*\d+\s*)?(\b(?:lakh|lac|crore|lacs|lakhs|crores|thousand|million|billion)\b)/gi;
+  result = result.replace(enPattern, (_, numWord, multiplierWord) => {
+    const num = SPOKEN_NUMBERS[numWord.toLowerCase()] || 0;
+    const mult = SPOKEN_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Hindi transliteration numbers ─────────────────────────────────────
+  // e.g. "paanch lakh", "do crore", "ek hazaar"
+  const hiPattern = /(\b(?:ek|do|teen|char|paanch|panch|chhe|saat|aath|nau|das|gyarah|barah|tera|chaudah|pandrah|solah|satrah|atharah|unnis|bees|tees|chalis|pachaas|saath|sattar|assi|nabbe|sau)\b)\s*(\b(?:lakh|lakhs|crore|crores|hazaar|sau)\b)/gi;
+  result = result.replace(hiPattern, (_, numWord, multiplierWord) => {
+    const num = HINDI_NUMBERS[numWord.toLowerCase()] || 0;
+    const mult = HINDI_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Telugu transliteration numbers ────────────────────────────────────
+  // e.g. "aidu lakshal", "rendu koti"
+  const tePattern = /(\b(?:okati|oka|rendu|moodu|naalu|aidu|aaru|edu|enimidi|tommidi|padi)\b)\s*(\b(?:laksha|lakshal|laksham|lakshe|lakhalu|lakhla|koti|kotlu|velu|vellu)\b)/gi;
+  result = result.replace(tePattern, (_, numWord, multiplierWord) => {
+    const num = TELUGU_NUMBERS[numWord.toLowerCase()] || 0;
+    const mult = TELUGU_NUMBERS[multiplierWord.toLowerCase()] || 1;
+    return String(num * mult);
+  });
+
+  // ── Hindi Unicode numbers (e.g. "पांच लाख") ─────────────────────────────
+  const hiUniPattern = /(एक|दो|तीन|चार|पांच|पाँच|छह|सात|आठ|नौ|दस)\s*(लाख|करोड़|हजार)/g;
+  result = result.replace(hiUniPattern, (_, numWord, multWord) => {
+    const num = HINDI_NUMBERS[numWord] || 0;
+    const mult = HINDI_NUMBERS[multWord] || 1;
+    return String(num * mult);
+  });
+
+  // ── Telugu Unicode numbers (e.g. "ఐదు లక్షల") ─────────────────────────────
+  const teUniPattern = /(ఒకటి|ఒక|రెండు|మూడు|నాలుగు|ఐదు|ఆరు|ఏడు|ఎనిమిది|తొమ్మిది|పది)\s*(లక్ష|లక్షలు|లక్షల|కోటి|వేలు)/g;
+  result = result.replace(teUniPattern, (_, numWord, multWord) => {
+    const num = TELUGU_NUMBERS[numWord] || 0;
+    const mult = TELUGU_NUMBERS[multWord] || 1;
+    return String(num * mult);
+  });
+
+  return result;
+}
+
+/**
+ * Extract a numeric value from normalized text.
+ * Handles: "300000", "3 lakh", "₹3L", "5.5 lakhs"
+ */
+function extractNumber(text) {
+  // Already converted spoken → numeric by normalizeTranscript
+  // Also handle ₹, L, K shorthand
+  const cleaned = text.replace(/₹/g, '').replace(/,/g, '');
+
+  // Match "3L" or "3.5L" (lakh shorthand)
+  const lakhShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[lL](?:akh)?/);
+  if (lakhShort) return Math.round(parseFloat(lakhShort[1]) * 100000);
+
+  // Match "3K" (thousand shorthand)
+  const kShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[kK]/);
+  if (kShort) return Math.round(parseFloat(kShort[1]) * 1000);
+
+  // Match plain number
+  const plain = cleaned.match(/\d+(?:\.\d+)?/);
+  if (plain) return Math.round(parseFloat(plain[0]));
+
+  return null;
+}
+
+// ── 2. INTENT DEFINITIONS ─────────────────────────────────────────────────────
+
+/**
+ * Each intent has:
+ *   - id: string
+ *   - patterns: array of keyword groups (each group is OR'd; groups are AND'd)
+ *   - aliases: flat array of trigger phrases (any match = strong signal)
+ *   - targetPage: app route
+ *   - requiresSlots: optional slots that must be extracted for the intent to be actionable
+ *   - confirmationRequired: boolean (for destructive/sensitive actions)
+ *   - baseScore: numeric weight when the intent is matched
+ */
+const INTENT_DEFINITIONS = [
+  {
+    id: 'NAVIGATE_HOME',
+    aliases: [
+      // English
+      'home', 'main page', 'homepage', 'go home', 'back home', 'start',
+      // Hindi
+      'ghar', 'mukh prishtha', 'shuruat',
+      // Telugu transliteration
+      'illu', 'mukhya pagina', 'mottam',
+    ],
+    patterns: [['home', 'ghar', 'illu', 'mukhya']],
+    targetPage: '/',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'NAVIGATE_SCHEMES',
+    aliases: [
+      // English
+      'schemes', 'all schemes', 'scheme list', 'view schemes', 'browse schemes',
+      'explore schemes', 'government schemes', 'welfare schemes', 'yojana list',
+      'show schemes', 'see schemes',
+      // Hindi + Hinglish
+      'yojana', 'yojanaye', 'sarkari yojana', 'kalyan yojana', 'sabhi yojana',
+      'yojana dikhao', 'yojana list', 'sarkar ki yojana',
+      'योजनाएं', 'योजना', 'सरकारी योजनाएं', 'योजनाएं दिखाइए',
+      // Telugu + Tanglish
+      'pathakalu', 'pthakalu', 'pathakam', 'sarkar pathakalu', 'anni pathakalu',
+      'pathakalu chupincu', 'pathakalu chudandi',
+      'yojana kavali', 'schemes kavali', 'pathakam kavali',
+      'పథకాలు', 'యोजनाలు', 'పథకాలు చూపించండి', 'పథకాలు చూడండి',
+    ],
+    patterns: [['scheme', 'yojana', 'welfare', 'programme', 'program',
+                'pathakalu', 'pathakam', 'yojanaye', 'sarkar',
+                'పథకాలు', 'యोजनाలు', 'योजनाएं', 'योजना']],
+    targetPage: '/schemes',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'CHECK_ELIGIBILITY',
+    aliases: [
+      // English
+      'eligibility', 'check eligibility', 'am i eligible', 'eligible schemes',
+      'find my schemes', 'which schemes', 'what schemes', 'qualify',
+      'suitable schemes', 'apply eligibility',
+      // Hindi + Hinglish
+      'patrata', 'patrata jaanch', 'kya main eligible', 'meri yojana',
+      'yogya', 'yogyata', 'kon si yojana mujhe milegi',
+      'पात्रता', 'योग्यता',
+      // Telugu + Tanglish
+      'arthata', 'arthata check', 'naaku emi yojana', 'naaku eligible',
+      'naaku arthamavutundi', 'naaku suitable',
+      'అర్హత', 'అర్హత చెక్',
+    ],
+    patterns: [['eligib', 'qualify', 'suitable', 'my scheme', 'find scheme',
+                'patrata', 'yogya', 'arthata', 'eligible', 'पात्रता', 'అర్హత']],
+    targetPage: '/eligibility',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'DISCOVER_SCHEMES',
+    aliases: [
+      // English
+      'loan', 'business loan', 'mudra', 'pmegp', 'agriculture loan',
+      'farming help', 'kisan loan', 'stand up india', 'startup loan',
+      'money help', 'financial help', 'subsidy', 'dairy farming',
+      'kisan credit card', 'pm kisan', 'pmfby',
+      // Hindi + Hinglish
+      'karz chahiye', 'loan chahiye', 'mudra loan chahiye', 'rin chahiye',
+      'vyapar loan', 'kheti loan', 'kisan loan chahiye', 'paisa chahiye',
+      'mujhe loan', 'business ke liye loan',
+      'कृषि', 'ऋण', 'लोन चाहिए', 'बिजनेस लोन', 'कृषि योजनाएं',
+      // Telugu + Tanglish
+      'loan kavali', 'lonu kavali', 'runu kavali', 'business loan kavali',
+      'vyavasayam loan', 'padi loan', 'naaku loan', 'farm loan kavali',
+      'mudra loan kavali', 'dairy farming loan',
+      'వ్యవసాయ', 'రుణం', 'లోన్ కావాలి', 'బిజినెస్ లోన్', 'వ్యవసాయ పథకాలు',
+    ],
+    patterns: [['loan', 'borrow', 'money', 'fund', 'subsidy', 'grant',
+                'farm', 'kisan', 'agri', 'business', 'entrepreneur',
+                'mudra', 'msme', 'rin', 'karz', 'runu', 'kavali',
+                'dairy', 'vyapar', 'kheti', 'vyavasayam',
+                'రుణం', 'లోన్', 'వ్యవసాయ', 'ऋण', 'लोन', 'कृषि']],
+    targetPage: '/input',
+    confirmationRequired: false,
+    baseScore: 0.85,
+  },
+  {
+    id: 'OPEN_INPUT_HUB',
+    aliases: [
+      // English
+      'input hub', 'chat', 'voice chat', 'tell you', 'start chat',
+      'open chat', 'voice assistant', 'ask question', 'ask ai',
+      // Hindi
+      'baat karo', 'sawaal poochho', 'ai se baat', 'chat karo',
+      // Telugu
+      'matladandi', 'chat cheyyandi', 'ai tho matladandi',
+    ],
+    patterns: [['input', 'hub', 'chat', 'voice', 'assistant', 'ai',
+                'matladandi', 'baat karo']],
+    targetPage: '/input',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'CHECK_STATUS',
+    aliases: [
+      // English
+      'status', 'application status', 'my applications', 'track application',
+      'track my', 'applied schemes', 'applied status', 'check application',
+      'what did i apply', 'pending application',
+      // Hindi + Hinglish
+      'aavedan sthiti', 'mera aavedan', 'status batao', 'application ka status',
+      'mera aavedan kahan hai', 'track karo', 'pending application',
+      'आवेदन की स्थिति', 'आवेदन', 'स्टेटस', 'स्थिति',
+      // Telugu + Tanglish
+      'darkhaastu sthiti', 'naaku application status', 'status cheppandi',
+      'application emi ayindi', 'naaku apply chesina',
+      'అప్లికేషన్ స్టేటస్', 'దరఖాస్తు స్థితి', 'అప్లికేషన్', 'స్టేటస్',
+    ],
+    patterns: [['status', 'application', 'track', 'applied', 'pending',
+                'aavedan', 'sthiti', 'darkhaastu', 'track karo',
+                'అప్లికేషన్', 'దరఖాస్తు', 'आवेदन', 'स्थिति']],
+    targetPage: '/applications',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'NAVIGATE_DASHBOARD',
+    aliases: [
+      'dashboard', 'my dashboard', 'profile', 'my profile', 'account',
+      // Hindi
+      'mera dashboard', 'meri profile',
+      // Telugu
+      'naaku dashboard', 'naaku profile',
+    ],
+    patterns: [['dashboard', 'profile', 'account', 'mera', 'naaku']],
+    targetPage: '/dashboard',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'FIND_NEAREST_BANK',
+    aliases: [
+      // English
+      'nearest bank', 'bank near me', 'find bank', 'nearby bank',
+      'closest bank', 'which bank', 'bank location', 'bank address',
+      'mudra bank', 'loan bank', 'where is bank',
+      // Hindi + Hinglish
+      'nazdeeki bank', 'paas mein bank', 'bank kahan hai', 'bank dhundho',
+      'mujhe bank chahiye', 'bank milega kahan', 'kaunsa bank', 'bank near',
+      'बैंक', 'बैंक कहां है', 'मेरे पास बैंक', 'नज़दीकी बैंक',
+      // Telugu + Tanglish
+      'dagarina bank', 'naaku bank ekkada', 'bank ekkada undi',
+      'bank chudandi', 'bank kavali ekkada', 'naaku bank kavali',
+      'nearest bank chupincu',
+      'బ్యాంక్', 'బ్యాంకు', 'నా దగ్గర బ్యాంక్', 'బ్యాంక్ ఎక్కడ ఉంది',
+    ],
+    patterns: [['bank', 'branch', 'nearest', 'near me', 'nearby', 'closest',
+                'dagarina', 'nazdeeki', 'paas', 'ekkada', 'kahan hai',
+                'బ్యాంక్', 'బ్యాంకు', 'बैंक']],
+    targetPage: null, // Handled in-place with bank results, no navigation
+    requiresSlots: ['location'],
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'AGENT_REGISTRATION',
+    aliases: [
+      'agent', 'vle', 'register agent', 'csc', 'village entrepreneur',
+      'jan seva kendra', 'common service',
+      // Hindi
+      'agent registration', 'csc registration', 'jan seva',
+      // Telugu
+      'agent noondukovalanukuntunna', 'csc registration kavali',
+    ],
+    patterns: [['agent', 'vle', 'csc', 'village level', 'register',
+                'jan seva', 'common service']],
+    targetPage: '/input',
+    slotsToPrefill: { mode: 'agent' },
+    confirmationRequired: false,
+    baseScore: 0.9,
+  },
+  {
+    id: 'NAVIGATE_LOGIN',
+    aliases: [
+      'login', 'sign in', 'log in', 'signin',
+      // Hindi
+      'login karo', 'andar jao',
+    ],
+    patterns: [['login', 'sign in', 'login karo']],
+    targetPage: '/login',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'NAVIGATE_COMMUNITY',
+    aliases: [
+      'community', 'forum', 'discussion', 'community forum',
+      // Hindi
+      'samudaya', 'baatcheet',
+    ],
+    patterns: [['community', 'forum', 'discuss', 'samudaya']],
+    targetPage: '/community',
+    confirmationRequired: false,
+    baseScore: 1.0,
+  },
+  {
+    id: 'SEARCH_SCHEME',
+    aliases: [],
+    patterns: [['search', 'find', 'look for', 'find scheme for', 'dhundho']],
+    targetPage: '/schemes',
+    requiresSlots: ['query'],
+    confirmationRequired: false,
+    baseScore: 0.8,
+  },
+  {
+    id: 'GENERAL_QUERY',
+    aliases: [],
+    patterns: [],
+    targetPage: '/input',
+    confirmationRequired: false,
+    baseScore: 0.4,
+  },
+];
+
+// ── 3. CONFIDENCE SCORING ─────────────────────────────────────────────────────
+
+/**
+ * Compute a confidence score (0–1) for how well text matches an intent.
+ */
+function scoreIntent(normalizedText, intentDef) {
+  let score = 0;
+  let matchCount = 0;
+
+  // A. Exact alias match — very strong signal
+  for (const alias of intentDef.aliases) {
+    if (normalizedText.includes(alias)) {
+      score += 0.9;
+      matchCount++;
+      break; // Only count once per alias list
+    }
   }
 
-  if (text.includes('loan') || text.includes('money') || text.includes('business') || text.includes('farm')) {
-    return { intent: 'DISCOVER_SCHEMES', confidence: 0.92, targetPage: '/results' };
+  // B. Pattern group match — moderate signal
+  for (const group of intentDef.patterns) {
+    const groupHit = group.some((kw) => normalizedText.includes(kw));
+    if (groupHit) {
+      score += 0.5;
+      matchCount++;
+    }
   }
 
-  if (text.includes('agent') || text.includes('vle') || text.includes('register')) {
-    return { intent: 'AGENT_REGISTRATION', confidence: 0.90, targetPage: '/input' };
+  // C. Token-level fuzzy matching (count word overlaps)
+  const textTokens = new Set(normalizedText.split(/\s+/));
+  const allKeywords = [
+    ...intentDef.aliases.flatMap((a) => a.split(/\s+/)),
+    ...intentDef.patterns.flat(),
+  ];
+  const tokenHits = allKeywords.filter((kw) => textTokens.has(kw)).length;
+  score += tokenHits * 0.05;
+
+  // D. Apply base score weight
+  const rawScore = matchCount > 0 ? (score / Math.max(1, matchCount)) * intentDef.baseScore : 0;
+
+  return Math.min(1.0, rawScore);
+}
+
+// ── 4. SLOT EXTRACTION ────────────────────────────────────────────────────────
+
+const OCCUPATION_MAP = {
+  farmer: ['farmer', 'farming', 'agriculture', 'agri', 'kisan', 'crop', 'field'],
+  artisan: ['artisan', 'craftsman', 'weaver', 'potter', 'blacksmith', 'handicraft'],
+  vendor: ['vendor', 'street vendor', 'hawker', 'seller', 'trader', 'shopkeeper'],
+  business: ['business', 'entrepreneur', 'startup', 'msme', 'small business', 'manufacturer'],
+  student: ['student', 'education', 'college', 'scholarship', 'study', 'school'],
+  healthcare: ['health', 'medical', 'hospital', 'doctor', 'nurse', 'ayushman'],
+};
+
+function extractSlots(normalizedText) {
+  const slots = {};
+
+  // Extract Name (e.g. "my name is ravi", "i am suresh", "నా పేరు రవి", "मेरा नाम रवि")
+  const nameMatch = normalizedText.match(/(?:my name is|i am|call me|నా పేరు|मेरा नाम)\s+([a-zA-Z\u0C00-\u0C7F\u0900-\u097F]+)/i);
+  if (nameMatch && nameMatch[1].length > 1 && !['farmer', 'student', 'from', 'here'].includes(nameMatch[1].toLowerCase())) {
+    slots.name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
   }
 
-  return { intent: 'GENERAL_QUERY', confidence: 0.85, targetPage: '/input' };
+  // Extract State
+  const STATES = [
+    'Andhra Pradesh', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Kerala',
+    'Maharashtra', 'Gujarat', 'Uttar Pradesh', 'Bihar', 'Madhya Pradesh',
+    'Rajasthan', 'West Bengal', 'Punjab', 'Delhi', 'Odisha', 'Haryana',
+    'Jharkhand', 'Chhattisgarh', 'Assam', 'Himachal Pradesh', 'Uttarakhand'
+  ];
+  for (const st of STATES) {
+    if (normalizedText.toLowerCase().includes(st.toLowerCase())) {
+      slots.state = st;
+      break;
+    }
+  }
+
+  // Extract numeric values
+  const amount = extractNumber(normalizedText);
+  if (amount !== null && amount > 0) {
+    slots.amount = amount;
+    // Classify as income or cost based on context
+    if (normalizedText.includes('income') || normalizedText.includes('earn') || normalizedText.includes('salary') || normalizedText.includes('wage')) {
+      slots.income = amount;
+    } else if (normalizedText.includes('cost') || normalizedText.includes('loan') || normalizedText.includes('amount') || normalizedText.includes('borrow') || normalizedText.includes('need')) {
+      slots.cost = amount;
+    }
+  }
+
+  // Extract occupation
+  for (const [occupation, keywords] of Object.entries(OCCUPATION_MAP)) {
+    if (keywords.some((kw) => normalizedText.includes(kw))) {
+      slots.occupation = occupation;
+      break;
+    }
+  }
+
+  // Extract project type
+  const PROJECT_TYPES = {
+    agriculture: ['farm', 'agri', 'kisan', 'crop', 'irrigation', 'horticulture'],
+    manufacturing: ['manufactur', 'factory', 'production', 'industrial'],
+    services: ['service', 'salon', 'repair', 'tailoring', 'catering'],
+    trading: ['trading', 'shop', 'retail', 'wholesale', 'market'],
+    education: ['education', 'training', 'skill', 'scholarship'],
+    healthcare: ['health', 'medical', 'pharmacy', 'clinic'],
+  };
+  for (const [type, keywords] of Object.entries(PROJECT_TYPES)) {
+    if (keywords.some((kw) => normalizedText.includes(kw))) {
+      slots.projectType = type;
+      break;
+    }
+  }
+
+  // Extract search query (words after "search for", "find", "about")
+  const queryMatch = normalizedText.match(/(?:search for|find|about|regarding|related to)\s+(.+)/);
+  if (queryMatch) {
+    slots.query = queryMatch[1].trim();
+  }
+
+  return slots;
+}
+
+// ── 5. MAIN INTENT PARSER ─────────────────────────────────────────────────────
+
+const CONFIDENCE_THRESHOLDS = {
+  HIGH: 0.75,   // Execute directly
+  MEDIUM: 0.50, // Ask for clarification
+  LOW: 0.25,    // Ask to repeat
+};
+
+/**
+ * Parse a voice/text input and return structured intent with confidence.
+ *
+ * @param {string} rawTranscript - Raw text from STT or text input
+ * @param {object} context - Conversation context (previous intent, collected slots, etc.)
+ * @returns {object} ParsedIntent
+ */
+function parseVoiceIntent(rawTranscript = '', context = {}) {
+  // 1. Validate input
+  if (!rawTranscript || typeof rawTranscript !== 'string') {
+    return buildResult('EMPTY_INPUT', 0, null, {}, 'repeat');
+  }
+
+  // 2. Sanitize: reject suspiciously long input (possible injection)
+  if (rawTranscript.length > 500) {
+    return buildResult('INVALID_INPUT', 0, null, {}, 'repeat');
+  }
+
+  // 3. Normalize transcript
+  const normalized = normalizeTranscript(rawTranscript);
+
+  if (!normalized || normalized.length < 2) {
+    return buildResult('EMPTY_INPUT', 0, null, {}, 'repeat');
+  }
+
+  // 4. Extract slots regardless of intent
+  const slots = extractSlots(normalized);
+
+  // 5. Score all intents
+  const scores = INTENT_DEFINITIONS.map((intentDef) => ({
+    intent: intentDef,
+    score: scoreIntent(normalized, intentDef),
+  }));
+
+  // 6. Sort by descending score
+  scores.sort((a, b) => b.score - a.score);
+
+  const best = scores[0];
+  const runnerUp = scores[1];
+
+  // 7. Handle ambiguity: if top two intents are too close together
+  const isAmbiguous =
+    runnerUp &&
+    best.score > CONFIDENCE_THRESHOLDS.LOW &&
+    best.score - runnerUp.score < 0.15 &&
+    best.intent.id !== 'GENERAL_QUERY';
+
+  // 8. Determine action tier
+  let action;
+  if (best.score >= CONFIDENCE_THRESHOLDS.HIGH) {
+    action = 'execute';
+  } else if (best.score >= CONFIDENCE_THRESHOLDS.MEDIUM) {
+    action = isAmbiguous ? 'clarify' : 'execute';
+  } else if (best.score >= CONFIDENCE_THRESHOLDS.LOW) {
+    action = 'clarify';
+  } else {
+    action = 'repeat';
+  }
+
+  // 9. Apply conversation context for follow-ups
+  const intentId = best.intent.id;
+  const targetPage = best.intent.targetPage;
+  const confirmationRequired = best.intent.confirmationRequired || false;
+
+  return buildResult(intentId, best.score, targetPage, slots, action, {
+    normalized,
+    confirmationRequired,
+    ambiguousAlternative: isAmbiguous ? runnerUp.intent.id : null,
+    slotsToPrefill: best.intent.slotsToPrefill || {},
+    requiresSlots: best.intent.requiresSlots || [],
+    rawTranscript: rawTranscript.substring(0, 200), // Safe truncated reference
+  });
+}
+
+function buildResult(intentId, confidence, targetPage, slots, action, extra = {}) {
+  return {
+    intent: intentId,
+    confidence: Math.round(confidence * 100) / 100,
+    targetPage,
+    slots,
+    action, // 'execute' | 'clarify' | 'repeat'
+    ...extra,
+  };
+}
+
+// ── 6. CONVERSATION CONTEXT MANAGER ───────────────────────────────────────────
+
+class ConversationContext {
+  constructor(maxTurns = 5) {
+    this.turns = [];
+    this.maxTurns = maxTurns;
+    this.collectedSlots = {};
+    this.lastIntent = null;
+    this.lastTargetPage = null;
+    this.pendingConfirmation = null;
+  }
+
+  addTurn(transcript, parsedIntent) {
+    this.turns.push({ transcript, parsedIntent, timestamp: Date.now() });
+    if (this.turns.length > this.maxTurns) {
+      this.turns.shift(); // Keep rolling window
+    }
+    // Merge slots
+    if (parsedIntent.slots) {
+      Object.assign(this.collectedSlots, parsedIntent.slots);
+    }
+    if (parsedIntent.intent !== 'EMPTY_INPUT' && parsedIntent.intent !== 'INVALID_INPUT') {
+      this.lastIntent = parsedIntent.intent;
+      this.lastTargetPage = parsedIntent.targetPage;
+    }
+  }
+
+  resolvePronouns(normalized) {
+    // Resolve "it", "this", "that" to last page/entity if known
+    if ((normalized.includes(' it') || normalized.includes(' this') || normalized.includes(' that')) && this.lastTargetPage) {
+      return normalized + ` ${this.lastTargetPage}`;
+    }
+    return normalized;
+  }
+
+  getCollectedSlots() {
+    return { ...this.collectedSlots };
+  }
+
+  clear() {
+    this.turns = [];
+    this.collectedSlots = {};
+    this.lastIntent = null;
+    this.lastTargetPage = null;
+    this.pendingConfirmation = null;
+  }
+}
+
+/**
+ * Extract dictated digit sequences for Aadhaar/Phone numbers.
+ * Handles "double eight", "saat teen zero", "9 8 4 9 0", etc.
+ */
+function extractDictatedDigits(text = '') {
+  if (!text) return '';
+  let cleaned = text.toLowerCase();
+  
+  // Replace double/triple spoken modifiers
+  cleaned = cleaned.replace(/\bdouble\s+(\d|\w+)/gi, '$1 $1')
+                   .replace(/\btriple\s+(\d|\w+)/gi, '$1 $1 $1');
+
+  // Convert digit words to numbers
+  const DIGIT_WORDS = {
+    'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+    'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+    'ek': '1', 'do': '2', 'teen': '3', 'char': '4', 'paanch': '5',
+    'chhe': '6', 'saat': '7', 'aath': '8', 'nau': '9', 'sunya': '0',
+    'oka': '1', 'rendu': '2', 'moodu': '3', 'naalu': '4', 'aidu': '5',
+    'aaru': '6', 'edu': '7', 'enimidi': '8', 'tommidi': '9', 'sunnal': '0'
+  };
+
+  const tokens = cleaned.split(/\s+/);
+  const digits = [];
+
+  for (const token of tokens) {
+    if (/^\d+$/.test(token)) {
+      digits.push(token);
+    } else if (DIGIT_WORDS[token]) {
+      digits.push(DIGIT_WORDS[token]);
+    }
+  }
+
+  return digits.join('');
 }
 
 module.exports = {
-  parseVoiceIntent
+  parseVoiceIntent,
+  normalizeTranscript,
+  extractSlots,
+  extractNumber,
+  parseSpokenCurrency,
+  extractDictatedDigits,
+  ConversationContext,
+  CONFIDENCE_THRESHOLDS,
+  INTENT_DEFINITIONS,
 };

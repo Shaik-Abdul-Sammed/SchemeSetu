@@ -8,6 +8,7 @@ import { LocationProvider } from './context/LocationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PWAProvider } from './context/PWAContext';
 import { ToastProvider } from './context/ToastContext';
+import { UserProfileProvider } from './context/UserProfileContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import './index.css';
 
@@ -24,6 +25,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                     <App />
                   </ToastProvider>
                 </PWAProvider>
+                <UserProfileProvider>
+                  <App />
+                </UserProfileProvider>
               </AuthProvider>
             </LocationProvider>
           </LanguageProvider>

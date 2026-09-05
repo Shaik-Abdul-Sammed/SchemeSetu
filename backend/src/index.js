@@ -25,6 +25,7 @@ const vleRouter = require('./routes/v1/vleRoutes');
 const adminRouter = require('./routes/v1/adminRoutes');
 const translateRouter = require('./routes/v1/translate');
 const ragRouter = require('./routes/v1/ragRoutes');
+const voiceRouter = require('./routes/v1/voice');
 
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
@@ -130,6 +131,7 @@ app.use('/api/v1/vle', vleRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/translate', translateRouter);
 app.use('/api/v1/rag', ragRouter);
+app.use('/api/v1/voice', voiceRouter);
 
 // 404 Catch-All Middleware
 app.use(notFound);

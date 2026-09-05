@@ -1,212 +1,192 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, AlertCircle } from 'lucide-react';
+/**
+ * VoiceSearchButton v2 — Production-grade voice input button
+ *
+ * Uses useVoiceRecognition hook. Improvements over v1:
+ *  - Proper VOICE_STATES state machine (not boolean isListening)
+ *  - Shows interim live transcript
+ *  - Confidence-based fallback messaging
+ *  - Silence timeout (4s) + hard cap (15s) — no infinite listening
+ *  - Permission-denied specific guidance
+ *  - Retry button on error
+ *  - No alert() calls
+ *  - Accessible: aria-live region for status
+ */
+import React from 'react';
+import { Mic, MicOff, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../../hooks/useVoiceRecognition';
+import { normalizeTranscript, isTranscriptMeaningful } from '../../utils/voiceUtils';
 
 export default function VoiceSearchButton({ onResult, onError }) {
   const { lang, t } = useLanguage();
-  const [isListening, setIsListening] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const recognitionRef = useRef(null);
 
-  // Map app language code to speech recognition locale
-  const getLanguageLocale = () => {
-    switch (lang) {
-      case 'HI': return 'hi-IN';
-      case 'TE': return 'te-IN';
-      case 'TA': return 'ta-IN';
-      case 'KN': return 'kn-IN';
-      case 'ML': return 'ml-IN';
-      case 'BN': return 'bn-IN';
-      case 'MR': return 'mr-IN';
-      case 'EN':
-      default: return 'en-IN';
+  const { state, isListening, isProcessing, isRequesting, hasError, isSupported,
+          interimTranscript, errorInfo, startListening, stopListening, clearError, toggle } =
+    useVoiceRecognition({
+      lang,
+      onResult: (transcript, confidence) => {
+        const normalized = normalizeTranscript(transcript);
+        if (isTranscriptMeaningful(normalized) && onResult) {
+          onResult(normalized);
+        }
+      },
+      onError: (type, message) => {
+        if (onError) onError(message);
+      },
+    });
+
+  const isActive = isListening || isRequesting;
+
+  const getStatusLabel = () => {
+    switch (state) {
+      case VOICE_STATES.REQUESTING: return t('voiceRequesting', 'Requesting mic...');
+      case VOICE_STATES.LISTENING:  return t('voiceListening', 'Listening...');
+      case VOICE_STATES.PROCESSING: return t('voiceProcessing', 'Processing...');
+      case VOICE_STATES.ERROR:      return '';
+      default:                      return t('voiceSearch', 'Voice search');
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {}
-      }
-    };
-  }, []);
-
-  const toggleVoiceSearch = () => {
-    setErrorMessage(null);
-
-    // If currently listening, stop
-    if (isListening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
-      setIsListening(false);
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      const msg = t('voiceUnsupported', 'Voice search is not supported in this browser.');
-      setErrorMessage(msg);
-      if (onError) onError(msg);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
-      recognition.lang = getLanguageLocale();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        setErrorMessage(null);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript && onResult) {
-          onResult(transcript);
-        }
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event) => {
-        setIsListening(false);
-        let userMsg = '';
-        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-          userMsg = t('voicePermissionDenied', 'Microphone permission is required for voice search. Please enable microphone access in your browser settings.');
-        } else if (event.error === 'no-speech') {
-          userMsg = 'No speech was detected. Please try speaking again.';
-        } else {
-          userMsg = `Voice recognition error: ${event.error}`;
-        }
-        setErrorMessage(userMsg);
-        if (onError) onError(userMsg);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      setIsListening(false);
-      const msg = 'Failed to initiate voice recognition.';
-      setErrorMessage(msg);
-      if (onError) onError(msg);
-    }
+  const getButtonColor = () => {
+    if (hasError) return { bg: '#FFF1F2', border: '#FCA5A5', color: '#DC2626' };
+    if (isListening) return { bg: '#FEF2F2', border: '#EF4444', color: '#DC2626' };
+    if (isRequesting || isProcessing) return { bg: '#EFF6FF', border: '#93C5FD', color: '#3B82F6' };
+    return { bg: '#F8FAFC', border: '#CBD5E1', color: '#475569' };
   };
+
+  const colors = getButtonColor();
+
+  if (!isSupported) {
+    return (
+      <div
+        title={t('voiceUnsupported', 'Voice search requires Chrome or Edge browser')}
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: '42px', height: '42px', borderRadius: '10px',
+          border: '1px dashed #CBD5E1', backgroundColor: '#F8FAFC',
+          color: '#94A3B8', opacity: 0.6, cursor: 'not-allowed' }}
+        aria-label={t('voiceUnsupported', 'Voice search not supported in this browser')}
+        aria-disabled="true"
+      >
+        <MicOff size={18} />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+    <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Main mic button */}
       <button
         type="button"
-        onClick={toggleVoiceSearch}
-        aria-label={isListening ? t('voiceListening', 'Listening... Speak now') : t('voiceSearch', 'Search by voice')}
-        title={isListening ? t('voiceStop', 'Stop Listening') : t('voiceSearch', 'Search by voice')}
+        onClick={() => {
+          if (hasError) { clearError(); return; }
+          toggle();
+        }}
+        aria-label={isActive
+          ? t('voiceStop', 'Stop listening')
+          : hasError
+            ? t('voiceRetry', 'Retry voice search')
+            : t('voiceSearch', 'Search by voice')}
+        aria-pressed={isActive}
+        aria-busy={isProcessing || isRequesting}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '42px',
-          height: '42px',
-          borderRadius: '10px',
-          border: isListening ? '2px solid #EF4444' : '1px solid #CBD5E1',
-          backgroundColor: isListening ? '#FEF2F2' : '#F8FAFC',
-          color: isListening ? '#DC2626' : '#475569',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '42px', height: '42px', borderRadius: '10px',
+          border: `1.5px solid ${colors.border}`,
+          backgroundColor: colors.bg, color: colors.color,
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: isListening ? '0 0 12px rgba(239, 68, 68, 0.4)' : 'none'
+          transition: 'all 200ms ease',
+          boxShadow: isListening ? `0 0 0 3px rgba(220,38,38,0.2)` : 'none',
+          position: 'relative', overflow: 'visible',
         }}
       >
-        {isListening ? (
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span
-              style={{
-                position: 'absolute',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(239, 68, 68, 0.3)',
-                animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite'
-              }}
-            />
-            <MicOff size={19} />
-          </div>
-        ) : (
-          <Mic size={19} />
+        {/* Pulse ring when listening */}
+        {isListening && (
+          <span style={{
+            position: 'absolute', inset: '-4px', borderRadius: '14px',
+            border: '2px solid rgba(220,38,38,0.35)',
+            animation: 'pulse 1.5s ease-out infinite',
+            pointerEvents: 'none',
+          }} aria-hidden="true" />
         )}
+
+        {isProcessing || isRequesting
+          ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+          : hasError
+            ? <RefreshCw size={18} />
+            : isListening
+              ? <MicOff size={19} />
+              : <Mic size={19} />
+        }
       </button>
 
-      {/* Inline Tooltip / Status Bubble */}
-      {isListening && (
-        <span
-          style={{
-            position: 'absolute',
-            bottom: '100%',
-            right: 0,
-            marginBottom: '8px',
-            backgroundColor: '#DC2626',
-            color: '#FFFFFF',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            padding: '0.3rem 0.65rem',
-            borderRadius: '6px',
-            whiteSpace: 'nowrap',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem'
-          }}
-        >
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FFFFFF', animation: 'pulse 1s infinite' }} />
-          {t('voiceListening', 'Listening...')}
+      {/* Aria live region — announces state to screen readers */}
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}
+      >
+        {getStatusLabel()}
+      </span>
+
+      {/* Listening tooltip */}
+      {isActive && (
+        <span style={{
+          position: 'absolute', bottom: '100%', right: 0,
+          marginBottom: '6px', backgroundColor: '#DC2626', color: '#fff',
+          fontSize: '0.72rem', fontWeight: 700,
+          padding: '0.25rem 0.6rem', borderRadius: '6px',
+          whiteSpace: 'nowrap', zIndex: 60,
+          display: 'flex', alignItems: 'center', gap: '0.35rem',
+          pointerEvents: 'none',
+        }} aria-hidden="true">
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1s infinite' }} />
+          {getStatusLabel()}
         </span>
       )}
 
-      {errorMessage && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: '8px',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FCA5A5',
-            color: '#991B1B',
-            fontSize: '0.78rem',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '8px',
-            width: '240px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '0.4rem'
-          }}
-        >
-          <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ flexGrow: 1 }}>
-            {errorMessage}
+      {/* Interim transcript preview */}
+      {isListening && interimTranscript && (
+        <div style={{
+          position: 'absolute', top: '100%', right: 0,
+          marginTop: '6px', background: '#FEF9C3', border: '1px dashed #FCD34D',
+          borderRadius: '8px', padding: '0.4rem 0.65rem',
+          fontSize: '0.75rem', color: '#78350F', maxWidth: '220px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 60,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }} aria-live="off" aria-hidden="true">
+          💬 {interimTranscript}
+        </div>
+      )}
+
+      {/* Error message */}
+      {hasError && errorInfo && (
+        <div style={{
+          position: 'absolute', top: '100%', right: 0,
+          marginTop: '6px', background: '#FEF2F2',
+          border: '1px solid #FCA5A5', borderRadius: '8px',
+          padding: '0.5rem 0.75rem', width: '240px',
+          fontSize: '0.78rem', color: '#991B1B',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 60,
+          display: 'flex', alignItems: 'flex-start', gap: '0.4rem',
+        }} role="alert">
+          <AlertCircle size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            {errorInfo.type === VOICE_ERRORS.PERMISSION_DENIED ? (
+              <>
+                <strong>Mic access blocked.</strong>
+                {' '}Click the lock icon in your address bar → allow microphone.
+              </>
+            ) : (
+              errorInfo.message
+            )}
             <button
               type="button"
-              onClick={() => setErrorMessage(null)}
-              style={{
-                display: 'block',
-                marginTop: '4px',
-                background: 'none',
-                border: 'none',
-                color: '#7F1D1D',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                padding: 0,
-                textDecoration: 'underline'
-              }}
+              onClick={clearError}
+              style={{ display: 'block', marginTop: '4px', background: 'none',
+                border: 'none', color: '#7F1D1D', fontSize: '0.72rem',
+                fontWeight: 700, cursor: 'pointer', padding: 0,
+                textDecoration: 'underline' }}
             >
               Dismiss
             </button>

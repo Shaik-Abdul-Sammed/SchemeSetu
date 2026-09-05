@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+/**
+ * AudioReaderButton v2 — Uses useTextToSpeech hook
+ * Fixes: alert() usage, no chunking, tailwind class refs
+ */
+import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -51,21 +55,41 @@ export default function AudioReaderButton({ textToRead, label }) {
     setIsPlaying(true);
     window.speechSynthesis.speak(utterance);
   };
+import useTextToSpeech from '../../hooks/useTextToSpeech';
+
+export default function AudioReaderButton({ textToRead, label }) {
+  const { lang, t } = useLanguage();
+  const { toggle, isSpeaking, isSupported } = useTextToSpeech({ lang });
+
+  const cleanText = textToRead ? textToRead.replace(/<[^>]*>/g, '').trim() : '';
+
+  if (!isSupported) {
+    return null; // Silently hide if TTS not supported — no alert
+  }
 
   return (
     <button
       type="button"
-      onClick={toggleSpeech}
-      className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm ${
-        isPlaying
-          ? 'bg-amber-500 text-slate-950 font-bold animate-pulse'
-          : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700'
-      }`}
-      title={isPlaying ? t('stopAloud', 'Stop Audio') : t('readAloud', 'Listen to Scheme Details')}
-      aria-label={isPlaying ? t('stopAloud', 'Stop Audio') : t('readAloud', 'Listen to Scheme Details')}
+      onClick={() => toggle(cleanText)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '6px',
+        padding: '0.4rem 0.9rem', borderRadius: '10px',
+        fontSize: '0.78rem', fontWeight: 700,
+        background: isSpeaking ? 'var(--gold-500, #D97706)' : '#1E293B',
+        color: isSpeaking ? '#fff' : '#F59E0B',
+        border: `1px solid ${isSpeaking ? 'transparent' : '#334155'}`,
+        cursor: cleanText ? 'pointer' : 'not-allowed',
+        opacity: cleanText ? 1 : 0.5,
+        transition: 'all 200ms ease',
+        minHeight: '36px',
+      }}
+      title={isSpeaking ? t('stopAloud', 'Stop Audio') : t('readAloud', 'Listen to Scheme Details')}
+      aria-label={isSpeaking ? t('stopAloud', 'Stop Audio') : t('readAloud', 'Listen to Scheme Details')}
+      aria-pressed={isSpeaking}
+      disabled={!cleanText}
     >
-      {isPlaying ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-      <span>{isPlaying ? t('stopAloud', 'Stop Audio') : (label || t('readAloud', 'Read Aloud'))}</span>
+      {isSpeaking ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
+      <span>{isSpeaking ? t('stopAloud', 'Stop Audio') : (label || t('readAloud', 'Read Aloud'))}</span>
     </button>
   );
 }

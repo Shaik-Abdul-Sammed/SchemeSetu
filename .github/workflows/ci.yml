@@ -1,0 +1,34 @@
+name: SchemeSetu Continuous Integration Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Backend & Frontend Dependencies
+        run: |
+          cd backend && npm install
+          cd ../frontend && npm install
+
+      - name: Run Backend & Assistant Verification Tests
+        run: |
+          node test_v4_assistant.js
+          node test_100_improvements.js
+          node test_100_pages_deploy.js
+
+      - name: Build Frontend SPA Production Bundle
+        run: |
+          cd frontend && npm run build

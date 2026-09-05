@@ -28,12 +28,16 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 
+import LanguageSelectionModal from './components/common/LanguageSelectionModal';
+
 export default function App() {
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
 
   return (
     <ErrorBoundary>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <LanguageSelectionModal />
         <InstallAppBanner />
         <OfflineIndicator />
         <Navbar onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />

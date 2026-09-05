@@ -14,6 +14,7 @@
 import { getApiBaseUrl } from './api';
 
 const API_BASE = getApiBaseUrl();
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /** In-memory client-side cache to avoid redundant network requests */
 const clientCache = new Map();

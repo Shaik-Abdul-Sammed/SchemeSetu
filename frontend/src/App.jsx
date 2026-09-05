@@ -27,7 +27,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
-import { Bot, Mic } from 'lucide-react';
 
 export default function App() {
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
@@ -69,35 +68,6 @@ export default function App() {
         <PWAInstallModal />
         <EntranceVoiceGreeting />
         <GPSDebugPanel />
-
-        {/* Floating Voice Assistant Trigger (Desktop) */}
-        <button
-          type="button"
-          onClick={() => setVoiceAssistantOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 9990,
-            backgroundColor: '#0B192C',
-            color: '#FFFFFF',
-            border: '2px solid #F59E0B',
-            borderRadius: '50px',
-            padding: '0.75rem 1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-            cursor: 'pointer',
-            fontWeight: 700,
-            fontSize: '0.88rem'
-          }}
-          title="Open SchemeSetu AI Voice Assistant"
-          aria-label="Open SchemeSetu AI Voice Assistant"
-        >
-          <Mic size={18} style={{ color: '#F59E0B' }} className="animate-pulse" />
-          <span>Voice AI</span>
-        </button>
 
         {/* Global Voice Assistant Modal */}
         <VoiceAssistantModal 

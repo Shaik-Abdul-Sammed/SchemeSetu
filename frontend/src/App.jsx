@@ -29,6 +29,7 @@ import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 
 import LanguageSelectionModal from './components/common/LanguageSelectionModal';
+import PageTranslator from './components/common/PageTranslator';
 import { setupCapacitorApp } from './utils/capacitorHandler';
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <PageTranslator />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
         <LanguageSelectionModal isOpen={languageModalOpen} onClose={() => setLanguageModalOpen(false)} />
         <InstallAppBanner />

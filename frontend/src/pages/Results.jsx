@@ -135,9 +135,9 @@ export default function Results() {
         status: 'Under Review',
         date: new Date().toISOString().split('T')[0],
         loanAmount: emiPrincipal,
-        beneficiary: 'Citizen Beneficiary',
-        district: passedCriteria.district || 'Hyderabad',
-        state: passedCriteria.state || 'Telangana'
+        beneficiary: passedCriteria.name || 'Citizen Beneficiary',
+        district: passedCriteria.district || passedCriteria.location?.split(',')[0]?.trim() || '',
+        state: passedCriteria.state || ''
       });
       showToast(`Application Slip downloaded! Reference ID: ${appId}`, 'success');
     } catch (err) {

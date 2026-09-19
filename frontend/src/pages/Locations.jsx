@@ -182,8 +182,12 @@ export default function Locations() {
             <select
               value={selectedState}
               onChange={(e) => {
-                setSelectedState(e.target.value);
+                const newState = e.target.value;
+                setSelectedState(newState);
                 setSelectedDistrict('All');
+                if (newState !== 'All') {
+                  setManualLocation(newState, null);
+                }
               }}
               style={{
                 width: '100%',
@@ -206,7 +210,13 @@ export default function Locations() {
           <div>
             <select
               value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              onChange={(e) => {
+                const newDist = e.target.value;
+                setSelectedDistrict(newDist);
+                if (selectedState !== 'All' && newDist !== 'All') {
+                  setManualLocation(selectedState, newDist);
+                }
+              }}
               style={{
                 width: '100%',
                 padding: '0.65rem 1rem',

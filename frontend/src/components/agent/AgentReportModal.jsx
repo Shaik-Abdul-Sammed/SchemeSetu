@@ -71,8 +71,8 @@ export default function AgentReportModal({
         date: new Date().toISOString().split('T')[0],
         loanAmount: validatedProfile.loanRequirement || validatedProfile.projectCost,
         beneficiary: validatedProfile.name,
-        district: validatedProfile.location?.split(',')[0] || location.district || 'Hyderabad',
-        state: validatedProfile.state || location.state || 'Telangana'
+        district: validatedProfile.location?.split(',')[0]?.trim() || location.district || '',
+        state: validatedProfile.state || location.state || ''
       });
       showToast(`Beneficiary Intake Report PDF downloaded! Ref: ${appId}`, 'success');
     } catch (e) {

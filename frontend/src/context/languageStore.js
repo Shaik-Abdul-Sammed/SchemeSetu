@@ -1,4 +1,4 @@
-import { translateText, translateBatch } from '../services/translateService';
+import { SCHEME_PHRASE_TRANSLATIONS } from './schemeTranslations.js';
 
 export const translations = {
   "EN": {
@@ -25796,14 +25796,80 @@ export const AVAILABLE_LANGUAGES = [
   { code: 'BHI', name: 'Bhili', nativeName: 'भीली' }
 ];
 
+// Pre-index English values to keys for fast reverse lookup of English text phrases
+const EN_VALUE_TO_KEY = new Map();
+if (translations && translations.EN) {
+  for (const [k, v] of Object.entries(translations.EN)) {
+    if (typeof v === 'string' && v.trim()) {
+      const norm = v.trim().toLowerCase();
+      if (!EN_VALUE_TO_KEY.has(norm)) {
+        EN_VALUE_TO_KEY.set(norm, k);
+      }
+    }
+  }
+}
+
+// Pre-index phrase translations lowercased
+const PHRASE_LOWER_MAP = {};
+if (typeof SCHEME_PHRASE_TRANSLATIONS !== 'undefined') {
+  for (const [l, dict] of Object.entries(SCHEME_PHRASE_TRANSLATIONS)) {
+    PHRASE_LOWER_MAP[l] = new Map();
+    for (const [phrase, translated] of Object.entries(dict)) {
+      if (typeof phrase === 'string') {
+        PHRASE_LOWER_MAP[l].set(phrase.trim().toLowerCase(), translated);
+      }
+    }
+  }
+}
+
 export function getTranslation(lang, key, fallback = '') {
-  const langDict = translations[lang] || translations['EN'];
+  if (key === undefined || key === null || key === '') return fallback || '';
+  const langKey = String(lang || 'EN').toUpperCase();
+  const langDict = translations[langKey] || translations['EN'];
+  const searchStr = String(key).trim();
+  const lowerSearch = searchStr.toLowerCase();
+
+  // 1. Direct key match (e.g. 'brandTitle', 'exploreSchemes')
   if (langDict && langDict[key] !== undefined && langDict[key] !== null && langDict[key] !== '') {
     return langDict[key];
   }
+
+  // 2. Direct match in Scheme Phrase Translations
+  if (SCHEME_PHRASE_TRANSLATIONS && SCHEME_PHRASE_TRANSLATIONS[langKey]) {
+    if (SCHEME_PHRASE_TRANSLATIONS[langKey][searchStr]) {
+      return SCHEME_PHRASE_TRANSLATIONS[langKey][searchStr];
+    }
+  }
+
+  // 3. Lowercase match in Scheme Phrase Translations
+  if (PHRASE_LOWER_MAP[langKey] && PHRASE_LOWER_MAP[langKey].has(lowerSearch)) {
+    return PHRASE_LOWER_MAP[langKey].get(lowerSearch);
+  }
+
+  // 4. Match against English translation values (reverse lookup)
+  const resolvedKey = EN_VALUE_TO_KEY.get(lowerSearch);
+  if (resolvedKey && langDict && langDict[resolvedKey]) {
+    return langDict[resolvedKey];
+  }
+
+  // 5. Fallback phrase lookup
+  if (fallback && fallback !== key) {
+    const fallbackStr = String(fallback).trim();
+    if (langDict && langDict[fallbackStr]) return langDict[fallbackStr];
+    if (SCHEME_PHRASE_TRANSLATIONS && SCHEME_PHRASE_TRANSLATIONS[langKey]?.[fallbackStr]) {
+      return SCHEME_PHRASE_TRANSLATIONS[langKey][fallbackStr];
+    }
+    const fallbackResolvedKey = EN_VALUE_TO_KEY.get(fallbackStr.toLowerCase());
+    if (fallbackResolvedKey && langDict && langDict[fallbackResolvedKey]) {
+      return langDict[fallbackResolvedKey];
+    }
+  }
+
+  // 6. English dictionary fallback
   const enDict = translations['EN'];
   if (enDict && enDict[key] !== undefined && enDict[key] !== null && enDict[key] !== '') {
     return enDict[key];
   }
+
   return fallback || key;
 }

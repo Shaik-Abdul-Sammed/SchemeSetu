@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { eligibilityService } from '../../services/eligibilityService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useLocation as useGeoLocation } from '../../context/LocationContext';
 import { sanitizeNumericInput, validateAndParseNumber, formatIndianCurrency } from '../../utils/numberValidator';
 import ErrorMessage from '../common/ErrorMessage';
 import ApplicationGuidanceModal from '../scheme/ApplicationGuidanceModal';
@@ -25,6 +26,7 @@ import ApplicationGuidanceModal from '../scheme/ApplicationGuidanceModal';
 export default function MultiStepEligibilityWizard() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { location: geoLoc } = useGeoLocation();
   const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const totalSteps = 6;
@@ -42,7 +44,7 @@ export default function MultiStepEligibilityWizard() {
     annualIncome: prefilled.annualIncome || 240000,
     bplStatus: prefilled.bplStatus || 'Yes',
     occupation: prefilled.occupation || 'Farmer',
-    state: prefilled.state || 'Telangana',
+    state: prefilled.state || geoLoc?.state || '',
     areaType: prefilled.areaType || 'Rural',
     education: prefilled.education || '10th pass',
     landOwner: prefilled.landOwner || 'Yes',

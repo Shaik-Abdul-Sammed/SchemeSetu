@@ -146,8 +146,8 @@ export default function InputHub() {
     loanRequirement: 250000,
     education: '10th pass',
     occupation: 'Small Business',
-    location: 'Hyderabad, Telangana',
-    state: 'Telangana',
+    location: location?.district && location?.state ? `${location.district}, ${location.state}` : (location?.state || location?.district || ''),
+    state: location?.state || '',
   });
 
   // ── TTS (with per-utterance effectiveLang override) ──────────────────────

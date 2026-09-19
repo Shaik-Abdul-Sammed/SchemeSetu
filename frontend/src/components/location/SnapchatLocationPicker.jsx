@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from '../../context/LocationContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { 
@@ -24,7 +24,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
     locationStatus, 
     errorMessage, 
     detectCurrentGPSLocation, 
-    refreshLocation,
+    refreshLocation, 
     setDemoLocation, 
     setManualLocation, 
     nearbyPartners, 
@@ -32,9 +32,15 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
   } = useLocation();
 
   const { t } = useLanguage();
-  const [selectedState, setSelectedState] = useState(location.state || '');
-  const [selectedDistrict, setSelectedDistrict] = useState(location.district || '');
+  const [selectedState, setSelectedState] = useState(location?.state || '');
+  const [selectedDistrict, setSelectedDistrict] = useState(location?.district || '');
   const [activePartner, setActivePartner] = useState(null);
+
+  // Synchronize local dropdowns whenever global location changes
+  useEffect(() => {
+    if (location?.state) setSelectedState(location.state);
+    if (location?.district) setSelectedDistrict(location.district);
+  }, [location?.state, location?.district]);
 
   // Derive unique sorted state list
   const uniqueStates = useMemo(() => {
@@ -54,12 +60,16 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
   const handleStateChange = (e) => {
     const newState = e.target.value;
     setSelectedState(newState);
-    setSelectedDistrict(''); // reset district when state changes
+    if (!newState) {
+      setSelectedDistrict('');
+      return;
+    }
 
-    // Auto-set to first district of the state so something is always selected
-    const firstDistrict = INDIAN_LOCATIONS.find(l => l.state === newState);
+    const stateDists = INDIAN_LOCATIONS.filter(l => l.state === newState).map(l => l.district);
+    const firstDistrict = stateDists[0] || '';
+    setSelectedDistrict(firstDistrict);
     if (firstDistrict) {
-      setManualLocation(newState, firstDistrict.district);
+      setManualLocation(newState, firstDistrict);
     }
   };
 

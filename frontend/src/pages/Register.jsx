@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useLocation } from '../context/LocationContext';
 import { UserPlus, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const { t } = useLanguage();
+  const { location, INDIAN_LOCATIONS } = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [state, setState] = useState('Telangana');
+  const [state, setState] = useState(location?.state || 'Andhra Pradesh');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -97,11 +99,9 @@ export default function Register() {
                 value={state}
                 onChange={e => setState(e.target.value)}
               >
-                <option value="Telangana">Telangana</option>
-                <option value="Andhra Pradesh">Andhra Pradesh</option>
-                <option value="Uttar Pradesh">Uttar Pradesh</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
+                {[...new Set(INDIAN_LOCATIONS.map(l => l.state))].sort().map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
               </select>
             </div>
 

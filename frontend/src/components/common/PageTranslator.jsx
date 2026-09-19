@@ -1,0 +1,172 @@
+import React, { useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
+import { getTranslation } from '../../context/languageStore';
+
+const originalTextNodes = new WeakMap();
+const originalPlaceholders = new WeakMap();
+const originalTitles = new WeakMap();
+
+// Skip tags that should not have their text translated
+const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT', 'SVG', 'PATH']);
+
+export default function PageTranslator() {
+  const { lang } = useLanguage();
+  const isTranslatingRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const root = document.getElementById('root') || document.body;
+    let scheduledFrame = null;
+
+    function shouldSkip(node) {
+      if (!node || !node.parentElement) return true;
+      const el = node.parentElement;
+      if (SKIP_TAGS.has(el.tagName)) return true;
+      if (el.closest('[data-no-translate]')) return true;
+      if (el.isContentEditable) return true;
+      return false;
+    }
+
+    function translateTextNode(textNode) {
+      if (shouldSkip(textNode)) return;
+
+      const currentVal = textNode.nodeValue;
+      if (!currentVal) return;
+
+      if (!originalTextNodes.has(textNode)) {
+        originalTextNodes.set(textNode, currentVal);
+      }
+
+      const original = originalTextNodes.get(textNode);
+      const trimmed = original.trim();
+
+      // Skip numbers, symbols, pure punctuation, or empty strings
+      if (!trimmed || /^[0-9\s.,!?:;/()#₹$%&@*+\-_=\[\]{}<>|\\^~`'"]+$/.test(trimmed)) {
+        return;
+      }
+
+      if (lang === 'EN') {
+        if (textNode.nodeValue !== original) {
+          textNode.nodeValue = original;
+        }
+        return;
+      }
+
+      const translated = getTranslation(lang, trimmed);
+      if (translated && translated !== trimmed) {
+        const leadingSpace = original.match(/^\s*/)?.[0] || '';
+        const trailingSpace = original.match(/\s*$/)?.[0] || '';
+        const newVal = leadingSpace + translated + trailingSpace;
+        if (textNode.nodeValue !== newVal) {
+          textNode.nodeValue = newVal;
+        }
+      }
+    }
+
+    function translateAttributes(el) {
+      if (!el || el.closest?.('[data-no-translate]')) return;
+
+      // 1. Placeholder
+      if (el.placeholder) {
+        if (!originalPlaceholders.has(el)) {
+          originalPlaceholders.set(el, el.placeholder);
+        }
+        const orig = originalPlaceholders.get(el);
+        if (lang === 'EN') {
+          el.placeholder = orig;
+        } else {
+          const trans = getTranslation(lang, orig);
+          if (trans && trans !== orig) el.placeholder = trans;
+        }
+      }
+
+      // 2. Title
+      if (el.title) {
+        if (!originalTitles.has(el)) {
+          originalTitles.set(el, el.title);
+        }
+        const orig = originalTitles.get(el);
+        if (lang === 'EN') {
+          el.title = orig;
+        } else {
+          const trans = getTranslation(lang, orig);
+          if (trans && trans !== orig) el.title = trans;
+        }
+      }
+    }
+
+    function translateSubtree(target) {
+      if (!target) return;
+      isTranslatingRef.current = true;
+
+      try {
+        if (target.nodeType === Node.TEXT_NODE) {
+          translateTextNode(target);
+          return;
+        }
+
+        if (target.nodeType === Node.ELEMENT_NODE) {
+          translateAttributes(target);
+          const walker = document.createTreeWalker(
+            target,
+            NodeFilter.SHOW_TEXT,
+            {
+              acceptNode: (n) => shouldSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            }
+          );
+
+          let node;
+          while ((node = walker.nextNode())) {
+            translateTextNode(node);
+          }
+
+          // Also check all child inputs/buttons for placeholders/titles
+          const inputs = target.querySelectorAll('input[placeholder], textarea[placeholder], button[title], a[title]');
+          inputs.forEach(translateAttributes);
+        }
+      } finally {
+        isTranslatingRef.current = false;
+      }
+    }
+
+    function scheduleTranslation() {
+      if (scheduledFrame) cancelAnimationFrame(scheduledFrame);
+      scheduledFrame = requestAnimationFrame(() => {
+        translateSubtree(root);
+      });
+    }
+
+    // Initial translation pass
+    scheduleTranslation();
+
+    // Observer for dynamic additions
+    const observer = new MutationObserver((mutations) => {
+      if (isTranslatingRef.current) return;
+
+      let hasNewNodes = false;
+      for (const m of mutations) {
+        if (m.type === 'childList' && m.addedNodes.length > 0) {
+          hasNewNodes = true;
+          break;
+        }
+      }
+
+      if (hasNewNodes) {
+        scheduleTranslation();
+      }
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => {
+      if (scheduledFrame) cancelAnimationFrame(scheduledFrame);
+      observer.disconnect();
+    };
+  }, [lang]);
+
+  return null;
+}

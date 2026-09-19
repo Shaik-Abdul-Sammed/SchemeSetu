@@ -99,20 +99,20 @@ export default function SchemeDetails() {
       <div className="card" style={{ backgroundColor: '#0B192C', color: '#FFFFFF', padding: '2.25rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
           <span className="badge badge-central">{scheme.level === 'Central' ? t('centralLevel', 'Central') : t('stateLevel', 'State')}</span>
-          <span className="badge badge-cat">{scheme.category}</span>
+          <span className="badge badge-cat">{t(scheme.category, scheme.category)}</span>
         </div>
 
         <h1 style={{ fontSize: '2.25rem', color: '#FFFFFF', marginBottom: '0.75rem', lineHeight: 1.2 }}>
-          {scheme.name}
+          {t(scheme.name, scheme.name)}
         </h1>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94A3B8', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
           <Building2 size={18} style={{ color: '#F59E0B' }} />
-          <span>{scheme.department}</span>
+          <span>{t(scheme.department, scheme.department)}</span>
         </div>
 
         <p style={{ color: '#CBD5E1', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '900px', marginBottom: '2rem' }}>
-          {scheme.summary}
+          {t(scheme.summary, scheme.summary)}
         </p>
 
         {/* Action CTAs */}
@@ -153,13 +153,13 @@ export default function SchemeDetails() {
               <Award style={{ color: '#059669' }} size={22} /> {t('schemeBenefits', 'Scheme Benefits')}
             </h2>
             <div style={{ backgroundColor: '#ECFDF5', padding: '1rem', borderRadius: '8px', border: '1px solid #A7F3D0', color: '#047857', fontWeight: 600, marginBottom: '1rem' }}>
-              {scheme.benefits}
+              {t(scheme.benefits, scheme.benefits)}
             </div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {(scheme.detailedBenefits || []).map((benefit, idx) => (
                 <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.95rem', color: '#334155' }}>
                   <CheckCircle2 size={18} style={{ color: '#059669', shrink: 0, marginTop: '2px' }} />
-                  <span>{benefit}</span>
+                  <span>{t(benefit, benefit)}</span>
                 </li>
               ))}
             </ul>
@@ -174,7 +174,7 @@ export default function SchemeDetails() {
               {(scheme.eligibilityCriteria || []).map((criterion, idx) => (
                 <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.95rem', color: '#334155', padding: '0.6rem', backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                   <CheckCircle2 size={18} style={{ color: '#D97706', shrink: 0, marginTop: '2px' }} />
-                  <span>{criterion}</span>
+                  <span>{t(criterion, criterion)}</span>
                 </li>
               ))}
             </ul>

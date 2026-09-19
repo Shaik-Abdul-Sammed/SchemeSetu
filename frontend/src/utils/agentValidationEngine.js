@@ -72,8 +72,8 @@ export function validateAgentProfile(formData) {
   normalized.gender = formData.gender || 'Male';
   normalized.occupation = formData.occupation || 'Business';
   normalized.businessType = formData.businessType || formData.projectType || 'Manufacturing';
-  normalized.location = formData.location || 'Hyderabad, Telangana';
-  normalized.state = formData.state || 'Telangana';
+  normalized.location = formData.location || (formData.state ? `${formData.district || ''}, ${formData.state}` : '');
+  normalized.state = formData.state || '';
 
   return {
     isValid: errors.length === 0,

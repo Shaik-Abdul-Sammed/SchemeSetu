@@ -384,19 +384,23 @@ export function LocationProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         if (data.latitude && data.longitude) {
+          const ipState = data.region || data.region_code || '';
+          const ipDistrict = data.city || '';
+          const ipAddress = [ipDistrict, ipState].filter(Boolean).join(', ');
+
           const ipLoc = {
             lat: data.latitude,
             lng: data.longitude,
-            accuracy: 2500,
+            accuracy: 5000,
             timestamp: Date.now(),
-            state: data.region || data.region_code || 'Telangana',
-            district: data.city || 'Hyderabad',
-            address: `${data.city || 'City'}, ${data.region || 'State'} (IP Detected)`,
+            state: ipState,
+            district: ipDistrict,
+            address: ipAddress ? `${ipAddress} (IP Approximate)` : 'Approximate IP Location',
             isGPS: false,
             isIP: true,
             isManual: false,
             isDemo: false,
-            accuracyWarning: 'Location resolved via IP address',
+            accuracyWarning: 'Location estimated via IP address (approximate)',
             geocodeSource: 'ipapi'
           };
           setLocation(ipLoc);
@@ -513,31 +517,51 @@ export function LocationProvider({ children }) {
         
         if (err.code === 1) { // PERMISSION_DENIED
           status = 'denied';
-          msg = 'Location permission was denied. Enable location access in your browser settings.';
+          msg = 'Location permission was denied. Please select your State & District manually.';
+          setLocationStatus(status);
+          setErrorMessage(msg);
+          localStorage.setItem('schemesetu_location_status', status);
+          setGpsDebug({
+            rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
+            reverseGeocodeResult: `Error: ${msg}`,
+            reverseGeocodeSource: 'permission_denied',
+            centroidDistanceKm: null,
+            centroidTrusted: null
+          });
+          return;
         } else if (err.code === 2) { // POSITION_UNAVAILABLE
           status = 'unavailable';
-          msg = 'Your device could not determine the current location.';
+          msg = 'Device could not determine precise GPS coordinates. You can select your State & District manually.';
         } else if (err.code === 3) { // TIMEOUT
           status = 'timeout';
-          msg = 'GPS detection timed out. Please try again.';
+          msg = 'GPS detection timed out. Please try again or select your location manually.';
         }
 
-        // Automatic IP Fallback when GPS fails or is denied
-        detectIPLocation().then((ipSuccess) => {
-          if (!ipSuccess) {
-            setLocationStatus(status);
-            setErrorMessage(msg);
-            localStorage.setItem('schemesetu_location_status', status);
+        setLocationStatus(status);
+        setErrorMessage(msg);
+        localStorage.setItem('schemesetu_location_status', status);
 
-            setGpsDebug({
-              rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
-              reverseGeocodeResult: `Error: ${msg}`,
-              reverseGeocodeSource: 'error',
-              centroidDistanceKm: null,
-              centroidTrusted: null
-            });
-          }
+        setGpsDebug({
+          rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
+          reverseGeocodeResult: `Error: ${msg}`,
+          reverseGeocodeSource: 'error',
+          centroidDistanceKm: null,
+          centroidTrusted: null
         });
+
+        // Only attempt IP fallback if user does not already have a valid manual or saved location
+        const savedLoc = localStorage.getItem('schemesetu_location');
+        let hasSaved = false;
+        if (savedLoc) {
+          try {
+            const p = JSON.parse(savedLoc);
+            if (p.state && p.district) hasSaved = true;
+          } catch (e) {}
+        }
+
+        if (!hasSaved) {
+          detectIPLocation();
+        }
       },
       geoOptions
     );

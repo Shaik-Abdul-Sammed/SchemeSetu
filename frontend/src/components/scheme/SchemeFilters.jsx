@@ -52,7 +52,7 @@ export default function SchemeFilters({ filters, onChange, onClear, totalResults
           >
             {categories.map(c => (
               <option key={c} value={c}>
-                {c === 'All' ? t('allCategories', 'All Categories') : c}
+                {c === 'All' ? t('allCategories', 'All Categories') : t(c, c)}
               </option>
             ))}
           </select>

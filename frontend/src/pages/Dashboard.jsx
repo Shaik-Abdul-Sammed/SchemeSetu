@@ -84,7 +84,7 @@ export default function Dashboard() {
 Applicant Name: ${user?.name || 'Citizen Beneficiary'}
 Email: ${user?.email || 'N/A'}
 Role: Verified Citizen Beneficiary
-Location: ${location.district || location.state || 'Telangana'}
+Location: ${location.district && location.state ? `${location.district}, ${location.state}` : (location.district || location.state || 'Not Specified')}
 e-KYC Status: Verified & Aadhaar Seeded
 Active Applications: ${applications.length}
 Bookmarked Schemes: ${savedSchemes.length}
@@ -211,7 +211,7 @@ Official Government Digital Service Dossier - 2026
                   title="Change Location Radar"
                 >
                   <MapPin size={14} style={{ color: '#F59E0B' }} /> 
-                  <span>{location.district || location.state || 'Telangana'}</span>
+                  <span>{location.district && location.state ? `${location.district}, ${location.state}` : (location.district || location.state || t('selectLocation', 'Select Location'))}</span>
                   {location.isGPS && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />}
                 </button>
               </div>

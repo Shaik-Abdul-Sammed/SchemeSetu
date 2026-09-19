@@ -254,7 +254,7 @@ export default function DataUploadManager() {
       casteCategory: profile.casteCategory || profile.category || 'SC',
       annualIncome: Number(profile.annualIncome || 240000),
       occupation: profile.occupation || 'Farmer',
-      state: profile.state || 'Telangana',
+      state: profile.state || '',
       areaType: profile.villageTown ? 'Rural' : 'Urban',
       education: profile.education || '10th pass',
       bplStatus: profile.bplStatus || 'Yes',

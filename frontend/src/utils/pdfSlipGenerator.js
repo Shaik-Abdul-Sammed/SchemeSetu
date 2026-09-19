@@ -8,7 +8,7 @@ export async function downloadApplicationSlipPdf(app, user = {}) {
   const filename = `SchemeSetu_Application_Slip_${app.id || 'APP-2026-8891'}.pdf`;
   const applicantName = user.name || 'Demo Applicant (Ramesh Kumar)';
   const applicantPhone = user.phone || '+91 98765 43210';
-  const applicantLocation = user.state ? `${user.district || 'Hyderabad'}, ${user.state}` : 'Hyderabad, Telangana';
+  const applicantLocation = user.state ? `${user.district ? `${user.district}, ` : ''}${user.state}` : (user.district || user.address || 'India');
 
   try {
     // 1. Try server-side PDFKit document generator

@@ -35,7 +35,7 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
             {scheme.level === 'Central' ? t('centralLevel', 'Central') : t('stateLevel', 'State')}
           </span>
           <span className="badge badge-cat">
-            {scheme.category}
+            {t(scheme.category, scheme.category)}
           </span>
         </div>
 
@@ -62,24 +62,24 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
 
       <h3 style={{ fontSize: '1.2rem', marginBottom: '0.35rem', color: '#0B192C', lineHeight: 1.35 }}>
         <Link to={`/schemes/${scheme.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          {scheme.name}
+          {t(scheme.name, scheme.name)}
         </Link>
       </h3>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#64748B', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
         <Building2 size={14} style={{ color: '#475569', shrink: 0 }} />
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{scheme.department}</span>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(scheme.department, scheme.department)}</span>
       </div>
 
       <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.1rem', flexGrow: 1 }}>
-        {scheme.summary || scheme.description}
+        {t(scheme.summary || scheme.description, scheme.summary || scheme.description)}
       </p>
 
       {/* Financial Highlight Pills */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem', backgroundColor: '#F8FAFC', padding: '0.5rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.75rem' }}>
         <div>
           <div style={{ color: '#64748B' }}>{t('interestRate', 'Rate')}</div>
-          <div style={{ fontWeight: 700, color: '#0F172A' }}>{scheme.interestRate ? `${scheme.interestRate}%` : 'Grant/DBT'}</div>
+          <div style={{ fontWeight: 700, color: '#0F172A' }}>{scheme.interestRate ? `${scheme.interestRate}%` : t('Grant/DBT', 'Grant/DBT')}</div>
         </div>
         <div>
           <div style={{ color: '#64748B' }}>{t('maxLoanLimit', 'Max Loan')}</div>
@@ -87,7 +87,7 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
         </div>
         <div>
           <div style={{ color: '#64748B' }}>{t('tenure', 'Tenure')}</div>
-          <div style={{ fontWeight: 700, color: '#0F172A' }}>{scheme.tenureMonths ? `${scheme.tenureMonths} Mo.` : scheme.tenure || 'Flexible'}</div>
+          <div style={{ fontWeight: 700, color: '#0F172A' }}>{scheme.tenureMonths ? `${scheme.tenureMonths} ${t('Mo.', 'Mo.')}` : t(scheme.tenure || 'Flexible', scheme.tenure || 'Flexible')}</div>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export default function SchemeCard({ scheme, isSaved: initialSaved = false }) {
           <Award size={15} /> {t('benefits', 'Primary Benefit')}
         </div>
         <div style={{ fontSize: '0.88rem', color: '#065F46', fontWeight: 500 }}>
-          {scheme.benefits}
+          {t(scheme.benefits, scheme.benefits)}
         </div>
       </div>
 

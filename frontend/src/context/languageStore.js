@@ -1,4 +1,5 @@
 import { SCHEME_PHRASE_TRANSLATIONS } from './schemeTranslations.js';
+import { UI_ENRICHMENT_TRANSLATIONS } from './uiEnrichmentTranslations.js';
 
 export const translations = {
   "EN": {
@@ -25783,6 +25784,15 @@ export const translations = {
   }
 };
 
+// Merge comprehensive UI enrichment translations across all languages
+if (typeof UI_ENRICHMENT_TRANSLATIONS !== 'undefined') {
+  for (const [l, dict] of Object.entries(UI_ENRICHMENT_TRANSLATIONS)) {
+    if (translations[l]) {
+      Object.assign(translations[l], dict);
+    }
+  }
+}
+
 export const AVAILABLE_LANGUAGES = [
   { code: 'EN', name: 'English', nativeName: 'English' },
   { code: 'HI', name: 'Hindi', nativeName: 'हिंदी' },
@@ -25850,6 +25860,29 @@ export function getTranslation(lang, key, fallback = '') {
   const resolvedKey = EN_VALUE_TO_KEY.get(lowerSearch);
   if (resolvedKey && langDict && langDict[resolvedKey]) {
     return langDict[resolvedKey];
+  }
+
+  // 4.5 Stripped punctuation / counter variants (e.g. 'Home:', 'Loading...', 'Explore (19)', 'Already registered?')
+  if (langKey !== 'EN') {
+    const parenMatch = searchStr.match(/^(.*?)(\s*\(\d+\))$/);
+    if (parenMatch) {
+      const core = parenMatch[1].trim();
+      const suffix = parenMatch[2];
+      const coreTrans = getTranslation(langKey, core);
+      if (coreTrans && coreTrans !== core) {
+        return coreTrans + suffix;
+      }
+    }
+
+    const punctMatch = searchStr.match(/^(.+?)([:.?!]+|\.{3})$/);
+    if (punctMatch) {
+      const core = punctMatch[1].trim();
+      const punct = punctMatch[2];
+      const coreTrans = getTranslation(langKey, core);
+      if (coreTrans && coreTrans !== core) {
+        return coreTrans + punct;
+      }
+    }
   }
 
   // 5. Fallback phrase lookup

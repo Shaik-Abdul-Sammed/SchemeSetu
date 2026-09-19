@@ -17,6 +17,10 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  React.useEffect(() => {
+    if (location?.state) setState(location.state);
+  }, [location?.state]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');

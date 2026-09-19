@@ -68,7 +68,7 @@ export default function Onboarding() {
           style={{ borderColor: '#F59E0B', color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
         >
           <Zap size={15} style={{ color: '#F59E0B' }} />
-          <span>Quick Demo Showcase (SIH 2026)</span>
+          <span>{t('quickDemo', 'Quick Demo Showcase (SIH 2026)')}</span>
         </button>
       </div>
 

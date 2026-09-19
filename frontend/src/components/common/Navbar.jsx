@@ -67,7 +67,7 @@ export default function Navbar() {
   // Close mobile menu on resize to desktop
   useEffect(() => {
     function onResize() {
-      if (window.innerWidth > 1200) setMobileOpen(false);
+      if (window.innerWidth > 1260) setMobileOpen(false);
     }
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -241,6 +241,23 @@ export default function Navbar() {
                 </div>
               </>
             )}
+
+            {/* Mobile drawer location selector button */}
+            <div className="nav-link-mobile-location">
+              <button
+                type="button"
+                className="btn-mobile-location"
+                onClick={() => { setLocationModalOpen(true); closeMobile(); }}
+                aria-label="Set Location"
+              >
+                <MapPin size={16} style={{ color: '#F59E0B' }} aria-hidden="true" />
+                <span>
+                  {location.district
+                    ? `${location.district}, ${location.state}`
+                    : location.state || t('setLocation', 'Set Location')}
+                </span>
+              </button>
+            </div>
           </nav>
 
           {/* ── 3. RIGHT CONTROLS (location, voice, language, hamburger) ── */}

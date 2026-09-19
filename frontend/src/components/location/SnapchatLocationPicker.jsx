@@ -60,17 +60,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
   const handleStateChange = (e) => {
     const newState = e.target.value;
     setSelectedState(newState);
-    if (!newState) {
-      setSelectedDistrict('');
-      return;
-    }
-
-    const stateDists = INDIAN_LOCATIONS.filter(l => l.state === newState).map(l => l.district);
-    const firstDistrict = stateDists[0] || '';
-    setSelectedDistrict(firstDistrict);
-    if (firstDistrict) {
-      setManualLocation(newState, firstDistrict);
-    }
+    setSelectedDistrict('');
   };
 
   const handleDistrictChange = (e) => {
@@ -255,7 +245,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
                   }}
                   aria-label="Select District"
                 >
-                  <option value="" disabled>
+                  <option value="">
                     {selectedState ? '-- Select District --' : '-- Select State first --'}
                   </option>
                   {districtsForState.map(d => (

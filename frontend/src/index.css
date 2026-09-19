@@ -271,7 +271,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
   max-width: 1400px;
   margin: 0 auto;
   gap: 0.75rem;
-  overflow: hidden; /* prevent any child from blowing out the row */
+  overflow: visible; /* allow dropdowns to render freely without clipping */
 }
 
 /* ── Brand / Logo ── */
@@ -285,7 +285,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
 }
 .navbar-brand:hover { opacity: 0.88; }
 
-/* /* ── Nav links (desktop) ── */
+/* ── Nav links (desktop) ── */
 .nav-links {
   display: flex;
   align-items: center;
@@ -295,7 +295,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
   list-style: none;
   flex: 1;
   min-width: 0; /* allow flex child to shrink */
-  overflow: hidden;
+  overflow: visible;
 }
 
 .nav-link {
@@ -564,8 +564,8 @@ button, input, select, a.btn, textarea { min-height: 44px; }
   .nav-link { padding: 0.38rem 0.6rem; font-size: 0.82rem; }
 }
 
-/* ≤1200px: hamburger, full-width mobile drawer */
-@media (max-width: 1200px) {
+/* ≤1260px: hamburger, full-width mobile drawer */
+@media (max-width: 1260px) {
   .mobile-menu-btn { display: flex; }
 
   .nav-links {
@@ -613,6 +613,31 @@ button, input, select, a.btn, textarea { min-height: 44px; }
     padding: 0.68rem 1rem;
     border-radius: 9px;
   }
+  .nav-link-mobile-location {
+    display: block;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .btn-mobile-location {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .btn-mobile-location:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
   .nav-overlay {
     display: block;
     position: fixed;
@@ -620,6 +645,10 @@ button, input, select, a.btn, textarea { min-height: 44px; }
     background: rgba(0, 0, 0, 0.45);
     z-index: 189;
   }
+}
+
+.nav-link-mobile-location {
+  display: none;
 }
 
 /* ≤768px: compact control pills, shorter height */

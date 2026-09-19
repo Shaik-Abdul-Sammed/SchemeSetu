@@ -33,7 +33,8 @@ export default function Locations() {
     refreshLocation, 
     setManualLocation,
     nearbyPartners,
-    calculateDistance
+    calculateDistance,
+    INDIAN_LOCATIONS
   } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,9 +44,11 @@ export default function Locations() {
   const [selectedType, setSelectedType] = useState('All');
   const [onlyEligible, setOnlyEligible] = useState(true);
   const [selectedCenter, setSelectedCenter] = useState(null);
+  const isUserFiltering = React.useRef(false);
 
-  // Synchronize state and district when location changes from GPS or Radar
+  // Synchronize state and district when location changes externally (GPS or initial load)
   useEffect(() => {
+    if (isUserFiltering.current) return;
     if (location?.state) {
       setSelectedState(location.state);
     }
@@ -56,24 +59,34 @@ export default function Locations() {
 
   // Attempt GPS detect via centralized location service
   const handleDetectGps = () => {
+    isUserFiltering.current = false;
     detectCurrentGPSLocation(true);
   };
 
-  // Dynamically compute state options from available partners
+  // Dynamically compute state options from available partners AND all Indian locations
   const stateOptions = React.useMemo(() => {
-    const states = new Set(nearbyPartners.map(p => p.state).filter(Boolean));
+    const states = new Set([
+      ...nearbyPartners.map(p => p.state),
+      ...(INDIAN_LOCATIONS || []).map(l => l.state)
+    ].filter(Boolean));
     return ['All', ...Array.from(states).sort()];
-  }, [nearbyPartners]);
+  }, [nearbyPartners, INDIAN_LOCATIONS]);
 
   // Dynamically compute district options for selected state
   const districtOptions = React.useMemo(() => {
-    let pool = nearbyPartners;
-    if (selectedState !== 'All') {
-      pool = pool.filter(p => p.state === selectedState || (p.address && p.address.includes(selectedState)));
+    if (selectedState === 'All') {
+      const allDists = new Set([
+        ...nearbyPartners.map(p => p.district),
+        ...(INDIAN_LOCATIONS || []).map(l => l.district)
+      ].filter(Boolean));
+      return ['All', ...Array.from(allDists).sort()];
     }
-    const dists = new Set(pool.map(p => p.district).filter(Boolean));
-    return ['All', ...Array.from(dists).sort()];
-  }, [nearbyPartners, selectedState]);
+    const filteredDists = new Set([
+      ...nearbyPartners.filter(p => p.state === selectedState || (p.address && p.address.includes(selectedState))).map(p => p.district),
+      ...(INDIAN_LOCATIONS || []).filter(l => l.state === selectedState).map(l => l.district)
+    ].filter(Boolean));
+    return ['All', ...Array.from(filteredDists).sort()];
+  }, [nearbyPartners, INDIAN_LOCATIONS, selectedState]);
 
   // Filter from dynamically sorted nearbyPartners from LocationContext
   const filteredPartners = nearbyPartners.filter(partner => {
@@ -183,10 +196,14 @@ export default function Locations() {
               value={selectedState}
               onChange={(e) => {
                 const newState = e.target.value;
+                isUserFiltering.current = true;
                 setSelectedState(newState);
                 setSelectedDistrict('All');
                 if (newState !== 'All') {
-                  setManualLocation(newState, null);
+                  const stateLoc = (INDIAN_LOCATIONS || []).find(l => l.state.toLowerCase() === newState.toLowerCase());
+                  if (stateLoc) {
+                    setManualLocation(newState, stateLoc.district);
+                  }
                 }
               }}
               style={{
@@ -212,6 +229,7 @@ export default function Locations() {
               value={selectedDistrict}
               onChange={(e) => {
                 const newDist = e.target.value;
+                isUserFiltering.current = true;
                 setSelectedDistrict(newDist);
                 if (selectedState !== 'All' && newDist !== 'All') {
                   setManualLocation(selectedState, newDist);
@@ -296,12 +314,20 @@ export default function Locations() {
           <p style={{ color: '#64748B', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto 1.5rem' }}>
             We couldn't find any centers matching your filters. Try selecting "All States" or clearing your search term.
           </p>
-          <button 
-            onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedType('All'); }}
-            className="btn btn-outline btn-sm"
-          >
-            Reset Filters
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); }}
+              className="btn btn-primary btn-sm"
+            >
+              Show Nearest Regional Centers
+            </button>
+            <button 
+              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); }}
+              className="btn btn-outline btn-sm"
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>

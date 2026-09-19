@@ -5,6 +5,7 @@ import { getTranslation } from '../../context/languageStore';
 const originalTextNodes = new WeakMap();
 const originalPlaceholders = new WeakMap();
 const originalTitles = new WeakMap();
+const originalAriaLabels = new WeakMap();
 
 // Skip tags that should not have their text translated
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT', 'SVG', 'PATH']);
@@ -94,6 +95,21 @@ export default function PageTranslator() {
           if (trans && trans !== orig) el.title = trans;
         }
       }
+
+      // 3. aria-label
+      const ariaLabel = el.getAttribute?.('aria-label');
+      if (ariaLabel) {
+        if (!originalAriaLabels.has(el)) {
+          originalAriaLabels.set(el, ariaLabel);
+        }
+        const orig = originalAriaLabels.get(el);
+        if (lang === 'EN') {
+          el.setAttribute('aria-label', orig);
+        } else {
+          const trans = getTranslation(lang, orig);
+          if (trans && trans !== orig) el.setAttribute('aria-label', trans);
+        }
+      }
     }
 
     function translateSubtree(target) {
@@ -121,9 +137,9 @@ export default function PageTranslator() {
             translateTextNode(node);
           }
 
-          // Also check all child inputs/buttons for placeholders/titles
-          const inputs = target.querySelectorAll('input[placeholder], textarea[placeholder], button[title], a[title]');
-          inputs.forEach(translateAttributes);
+          // Check child elements for attributes (placeholder, title, aria-label)
+          const attrEls = target.querySelectorAll('input[placeholder], textarea[placeholder], [title], [aria-label]');
+          attrEls.forEach(translateAttributes);
         }
       } finally {
         isTranslatingRef.current = false;

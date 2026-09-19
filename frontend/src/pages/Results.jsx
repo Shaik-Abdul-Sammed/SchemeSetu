@@ -224,15 +224,15 @@ export default function Results() {
           </div>
           <div>
             <div style={{ fontSize: '0.78rem', fontWeight: 800, color: (passedCriteria.income || 240000) <= 500000 ? '#047857' : '#991B1B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              MoSJE SC Income Goal Verification
+              {t('mosjeVerification', 'MoSJE SC Income Goal Verification')}
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0.15rem 0 0' }}>
               {(passedCriteria.income || 240000) <= 500000 
-                ? '✅ Income Goal Satisfied — Within MoSJE SC Ceiling (₹5,00,000)'
-                : '⚠️ Exceeds SC Income Ceiling Goal (₹5,00,000)'}
+                ? t('incomeGoalSatisfied', '✅ Income Goal Satisfied — Within MoSJE SC Ceiling (₹5,00,000)')
+                : t('incomeGoalExceeded', '⚠️ Exceeds SC Income Ceiling Goal (₹5,00,000)')}
             </h3>
             <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0.15rem 0 0' }}>
-              Declared Household Income: <strong>₹{(passedCriteria.income || 240000).toLocaleString('en-IN')}</strong> | MoSJE Subsidy Entitlement Threshold: <strong>₹5,00,000</strong>
+              {t('declaredHouseholdIncome', 'Declared Household Income')}: <strong>₹{(passedCriteria.income || 240000).toLocaleString('en-IN')}</strong> | {t('mosjeThreshold', 'MoSJE Subsidy Entitlement Threshold')}: <strong>₹5,00,000</strong>
             </p>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function Results() {
           fontWeight: 800,
           fontSize: '0.8rem'
         }}>
-          {(passedCriteria.income || 240000) <= 500000 ? '100% Subsidy Unlocked' : 'Standard Terms'}
+          {(passedCriteria.income || 240000) <= 500000 ? t('subsidyUnlocked', '100% Subsidy Unlocked') : t('standardTerms', 'Standard Terms')}
         </span>
       </div>
 
@@ -356,21 +356,25 @@ export default function Results() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0' }}>
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
             <div style={{ fontSize: '0.95rem', color: '#065F46', fontWeight: 600 }}>
-              Your household annual income (₹{passedCriteria.income.toLocaleString('en-IN')}) is below the scheme limit of ₹{(activeScheme.eligibility?.maxIncome || 500000).toLocaleString('en-IN')}.
+              {t('explainIncomeBelow', 'Your household annual income (₹{income}) is below the scheme limit of ₹{limit}.')
+                .replace('{income}', (passedCriteria.income || 240000).toLocaleString('en-IN'))
+                .replace('{limit}', (activeScheme.eligibility?.maxIncome || 500000).toLocaleString('en-IN'))}
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0' }}>
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
             <div style={{ fontSize: '0.95rem', color: '#065F46', fontWeight: 600 }}>
-              Your required project cost (₹{passedCriteria.cost.toLocaleString('en-IN')}) fits within the loan bracket of ₹{(activeScheme.maxLoan || 500000).toLocaleString('en-IN')}.
+              {t('explainCostFits', 'Your required project cost (₹{cost}) fits within the loan bracket of ₹{limit}.')
+                .replace('{cost}', (passedCriteria.cost || 350000).toLocaleString('en-IN'))
+                .replace('{limit}', (activeScheme.maxLoan || 500000).toLocaleString('en-IN'))}
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0' }}>
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
             <div style={{ fontSize: '0.95rem', color: '#065F46', fontWeight: 600 }}>
-              SC Beneficiary priority access applied with margin money subsidy support.
+              {t('explainScPriority', 'SC Beneficiary priority access applied with margin money subsidy support.')}
             </div>
           </div>
         </div>

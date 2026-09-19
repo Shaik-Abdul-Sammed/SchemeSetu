@@ -331,13 +331,38 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
 
     if (url.includes('/voice/parse')) {
       const body = options.body ? JSON.parse(options.body) : {};
+      const transcript = (body.transcript || '').toLowerCase();
+      const topSchemes = MOCK_SCHEMES.slice(0, 3);
+      let responseText = `Found top verified schemes for your query: ${topSchemes.map(s => s.name).join(', ')}.`;
+      let bankResults = [];
+
+      if (transcript.includes('bank') || transcript.includes('शाखा') || transcript.includes('బ్యాంక్') || transcript.includes('near')) {
+        const userLat = body.lat || 17.3850;
+        const userLng = body.lng || 78.4867;
+        bankResults = MOCK_PARTNERS.slice(0, 3).map(p => {
+          const pLat = p.coordinates?.lat || 17.3850;
+          const pLng = p.coordinates?.lng || 78.4867;
+          const dist = calculateDistance(userLat, userLng, pLat, pLng);
+          return {
+            ...p,
+            distance: dist,
+            distanceText: `${dist} km`
+          };
+        }).sort((a, b) => a.distance - b.distance);
+        if (bankResults.length > 0) {
+          responseText = `The nearest verified banking partner is ${bankResults[0].name}, approximately ${bankResults[0].distanceText} away at ${bankResults[0].address || 'nearby'}.`;
+        }
+      }
+
       return {
         success: true,
-        intent: 'DISCOVER_SCHEMES',
-        confidence: 0.9,
+        intent: bankResults.length > 0 ? 'FIND_NEAREST_BANK' : 'DISCOVER_SCHEMES',
+        confidence: 0.95,
         action: 'execute',
         userProfile: body.userProfile || {},
-        matchedSchemes: MOCK_SCHEMES.slice(0, 3)
+        matchedSchemes: topSchemes,
+        bankResults,
+        responseText
       };
     }
 

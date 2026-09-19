@@ -15,11 +15,15 @@ import {
   ExternalLink,
   Bot,
   User,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 import AudioWaveform from './AudioWaveform';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from '../../context/LocationContext';
+import { api } from '../../services/api';
 import { mockSchemes } from '../../data/mock/schemes';
 import { formatIndianCurrency } from '../../utils/numberValidator';
 import { parseUserInput } from '../../utils/voiceAssistantEngine';
@@ -50,11 +54,13 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { lang, changeLanguage, availableLanguages, t } = useLanguage();
   const { user } = useAuth();
+  const { location } = useLocation();
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [voiceError, setVoiceError] = useState(null);
   const [contextSchemes, setContextSchemes] = useState([]);
 
@@ -164,19 +170,79 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Speech Synthesis
+  // Speech Synthesis Helper: Get best matching voice for the target locale
+  const getBestVoice = (targetLocale) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      if (!voices.length) return null;
+      // Exact locale match (e.g. 'hi-IN', 'te-IN')
+      let match = voices.find(v => v.lang === targetLocale || v.lang.replace('_', '-') === targetLocale);
+      if (match) return match;
+      // Language prefix match (e.g. 'hi', 'te', 'ta')
+      const prefix = targetLocale.split('-')[0].toLowerCase();
+      match = voices.find(v => v.lang.toLowerCase().startsWith(prefix));
+      if (match) return match;
+      // Indian English / regional fallback
+      match = voices.find(v => v.lang === 'en-IN' || v.lang.toLowerCase().includes('india'));
+      if (match) return match;
+      return voices[0] || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // Helper to chunk long text into sentence segments (<=160 chars) to prevent Chrome speech truncation
+  const chunkText = (text, maxLength = 160) => {
+    if (!text) return [];
+    // Split on sentence terminators: full-stops, question marks, exclamation marks, Hindi danda '।', or newlines
+    const rawSentences = text.match(/[^.!?\n।]+[.!?\n।]*/g) || [text];
+    const chunks = [];
+    for (const s of rawSentences) {
+      const trimmed = s.trim();
+      if (!trimmed) continue;
+      if (trimmed.length <= maxLength) {
+        chunks.push(trimmed);
+      } else {
+        const words = trimmed.split(/\s+/);
+        let current = '';
+        for (const w of words) {
+          if ((current + ' ' + w).trim().length <= maxLength) {
+            current = (current + ' ' + w).trim();
+          } else {
+            if (current) chunks.push(current);
+            current = w;
+          }
+        }
+        if (current) chunks.push(current);
+      }
+    }
+    return chunks;
+  };
+
+  // Speech Synthesis with chunking to prevent Chrome >180-char freeze
   const speakText = (text, customLocale = null) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = customLocale || getVoiceLocale();
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
+      const locale = customLocale || getVoiceLocale();
+      const voice = getBestVoice(locale);
+      const chunks = chunkText(text, 160);
+      if (!chunks.length) return;
+
+      setIsSpeaking(true);
+      chunks.forEach((chunk, index) => {
+        const utterance = new SpeechSynthesisUtterance(chunk);
+        utterance.lang = locale;
+        if (voice) utterance.voice = voice;
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        if (index === chunks.length - 1) {
+          utterance.onend = () => setIsSpeaking(false);
+          utterance.onerror = () => setIsSpeaking(false);
+        }
+        window.speechSynthesis.speak(utterance);
+      });
     } catch (e) {
       setIsSpeaking(false);
     }
@@ -374,25 +440,73 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     };
   };
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     const userText = textToSend || inputText;
     if (!userText || !userText.trim()) return;
 
     const userMsg = { sender: 'user', text: userText, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
+    setIsProcessing(true);
 
-    setTimeout(() => {
-      const response = processQuery(userText);
+    try {
+      // 1. Unified backend query via /api/v1/voice/parse with real user GPS coordinates and profile
+      let backendRes = null;
+      try {
+        backendRes = await api.post('/voice/parse', {
+          transcript: userText.trim(),
+          lang: activeLangCode,
+          lat: location?.lat,
+          lng: location?.lng,
+          userProfile: user || {}
+        });
+      } catch (err) {
+        console.warn('[VoiceAssistantModal] Backend voice parse fallback:', err.message);
+      }
+
+      if (backendRes && backendRes.responseText) {
+        // Find matched schemes if returned or contextual
+        let matched = backendRes.matchedSchemes || [];
+        if (!matched.length && backendRes.verifiedFact?.schemeId) {
+          matched = mockSchemes.filter(s => s.id === backendRes.verifiedFact.schemeId);
+        }
+
+        const botMsg = { 
+          sender: 'bot', 
+          text: backendRes.responseText, 
+          schemes: matched,
+          bankResults: backendRes.bankResults || [],
+          verifiedFact: backendRes.verifiedFact || null,
+          targetPage: backendRes.targetPage || null,
+          timestamp: new Date() 
+        };
+        setMessages(prev => [...prev, botMsg]);
+        speakText(backendRes.responseText);
+      } else {
+        // Seamless fallback to client-side intent and knowledge base engine
+        const fallback = processQuery(userText);
+        const botMsg = { 
+          sender: 'bot', 
+          text: fallback.text, 
+          schemes: fallback.schemes || [], 
+          timestamp: new Date() 
+        };
+        setMessages(prev => [...prev, botMsg]);
+        speakText(fallback.text);
+      }
+    } catch (e) {
+      const fallback = processQuery(userText);
       const botMsg = { 
         sender: 'bot', 
-        text: response.text, 
-        schemes: response.schemes || [], 
+        text: fallback.text, 
+        schemes: fallback.schemes || [], 
         timestamp: new Date() 
       };
       setMessages(prev => [...prev, botMsg]);
-      speakText(response.text);
-    }, 400);
+      speakText(fallback.text);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -673,6 +787,65 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                       ))}
                     </div>
                   )}
+
+                  {/* Optional Bank Results Preview */}
+                  {msg.bankResults && msg.bankResults.length > 0 && (
+                    <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0369A1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Building2 size={15} />
+                        <span>{t('nearbyBranches', 'Nearby Bank Branches')}:</span>
+                      </div>
+                      {msg.bankResults.map((bank, bIdx) => (
+                        <div 
+                          key={bIdx}
+                          style={{
+                            padding: '0.65rem 0.85rem',
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: '8px',
+                            border: '1px solid #BAE6FD',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>{bank.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
+                              <MapPin size={12} />
+                              <span>{bank.address || bank.district || 'Branch Service Center'}</span>
+                            </div>
+                          </div>
+                          {bank.distanceText && (
+                            <span className="badge" style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontWeight: 800, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                              {bank.distanceText}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Optional Verified Fact Source Link */}
+                  {msg.verifiedFact && msg.verifiedFact.source && (
+                    <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', backgroundColor: '#ECFDF5', borderRadius: '8px', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#065F46', fontWeight: 700 }}>
+                        <ShieldCheck size={16} style={{ color: '#059669', flexShrink: 0 }} />
+                        <span>{msg.verifiedFact.source.title || 'Official Government Source'}</span>
+                      </div>
+                      {msg.verifiedFact.source.url && (
+                        <a
+                          href={msg.verifiedFact.source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '0.75rem', color: '#0284C7', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none', fontWeight: 700 }}
+                        >
+                          <span>.gov.in</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {msg.sender === 'bot' && (
@@ -693,6 +866,18 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
               )}
             </div>
           ))}
+
+          {isProcessing && (
+            <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', alignSelf: 'flex-start' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#0284C7', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bot size={16} />
+              </div>
+              <div style={{ padding: '0.6rem 1rem', borderRadius: '14px', backgroundColor: '#F1F5F9', color: '#64748B', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span className="animate-pulse" style={{ color: '#0284C7' }}>●</span>
+                <span>{t('processingQuery', 'Analyzing government schemes...')}</span>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 

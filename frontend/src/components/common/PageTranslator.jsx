@@ -3,9 +3,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import { getTranslation } from '../../context/languageStore';
 
 const originalTextNodes = new WeakMap();
+const translatedTextNodes = new WeakMap();
 const originalPlaceholders = new WeakMap();
 const originalTitles = new WeakMap();
 const originalAriaLabels = new WeakMap();
+const originalValues = new WeakMap();
 
 // Skip tags that should not have their text translated
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT', 'SVG', 'PATH']);
@@ -37,6 +39,13 @@ export default function PageTranslator() {
 
       if (!originalTextNodes.has(textNode)) {
         originalTextNodes.set(textNode, currentVal);
+      } else {
+        const oldOrig = originalTextNodes.get(textNode);
+        const lastTrans = translatedTextNodes.get(textNode);
+        // If React or fetch set new content different from both old original and translation
+        if (currentVal !== oldOrig && currentVal !== lastTrans) {
+          originalTextNodes.set(textNode, currentVal);
+        }
       }
 
       const original = originalTextNodes.get(textNode);
@@ -54,13 +63,31 @@ export default function PageTranslator() {
         return;
       }
 
-      const translated = getTranslation(lang, trimmed);
-      if (translated && translated !== trimmed) {
+      // 1. Direct translation
+      let translated = getTranslation(lang, trimmed);
+      let prefix = '';
+      let suffix = '';
+
+      // 2. If no direct match, check for list prefixes (e.g., "1. ", "• ", "📄 ", "⚡ ", "✅ ")
+      if (!translated || translated === trimmed) {
+        const prefixMatch = trimmed.match(/^(\d+\.|\u2022|[•📄⚡✅✓\-*]+)\s+(.+)$/);
+        if (prefixMatch) {
+          const core = prefixMatch[2].trim();
+          const coreTrans = getTranslation(lang, core);
+          if (coreTrans && coreTrans !== core) {
+            translated = coreTrans;
+            prefix = prefixMatch[1] + ' ';
+          }
+        }
+      }
+
+      if (translated && (translated !== trimmed || prefix)) {
         const leadingSpace = original.match(/^\s*/)?.[0] || '';
         const trailingSpace = original.match(/\s*$/)?.[0] || '';
-        const newVal = leadingSpace + translated + trailingSpace;
+        const newVal = leadingSpace + prefix + translated + suffix + trailingSpace;
         if (textNode.nodeValue !== newVal) {
           textNode.nodeValue = newVal;
+          translatedTextNodes.set(textNode, newVal);
         }
       }
     }
@@ -110,6 +137,20 @@ export default function PageTranslator() {
           if (trans && trans !== orig) el.setAttribute('aria-label', trans);
         }
       }
+
+      // 4. Button / Submit Value
+      if ((el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) && el.value) {
+        if (!originalValues.has(el)) {
+          originalValues.set(el, el.value);
+        }
+        const orig = originalValues.get(el);
+        if (lang === 'EN') {
+          el.value = orig;
+        } else {
+          const trans = getTranslation(lang, orig);
+          if (trans && trans !== orig) el.value = trans;
+        }
+      }
     }
 
     function translateSubtree(target) {
@@ -137,8 +178,8 @@ export default function PageTranslator() {
             translateTextNode(node);
           }
 
-          // Check child elements for attributes (placeholder, title, aria-label)
-          const attrEls = target.querySelectorAll('input[placeholder], textarea[placeholder], [title], [aria-label]');
+          // Check child elements for attributes (placeholder, title, aria-label, input values)
+          const attrEls = target.querySelectorAll('input[placeholder], textarea[placeholder], [title], [aria-label], input[type="button"], input[type="submit"]');
           attrEls.forEach(translateAttributes);
         }
       } finally {
@@ -156,26 +197,31 @@ export default function PageTranslator() {
     // Initial translation pass
     scheduleTranslation();
 
-    // Observer for dynamic additions
+    // Observer for dynamic additions & text content mutations
     const observer = new MutationObserver((mutations) => {
       if (isTranslatingRef.current) return;
 
-      let hasNewNodes = false;
+      let shouldUpdate = false;
       for (const m of mutations) {
         if (m.type === 'childList' && m.addedNodes.length > 0) {
-          hasNewNodes = true;
+          shouldUpdate = true;
+          break;
+        }
+        if (m.type === 'characterData') {
+          shouldUpdate = true;
           break;
         }
       }
 
-      if (hasNewNodes) {
+      if (shouldUpdate) {
         scheduleTranslation();
       }
     });
 
     observer.observe(root, {
       childList: true,
-      subtree: true
+      subtree: true,
+      characterData: true
     });
 
     return () => {

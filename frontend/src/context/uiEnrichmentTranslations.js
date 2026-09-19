@@ -2332,3 +2332,151 @@ export const UI_ENRICHMENT_TRANSLATIONS = {
     "demoCreds": "डेमो लॉगिन क्रेडेंशियल्स:"
   }
 };
+
+// Additional MoSJE and Voice/Results dynamic keys
+const ADDITIONAL_RESULTS_KEYS = {
+  "HI": {
+    "mosjeVerification": "सामाजिक न्याय और अधिकारिता मंत्रालय (MoSJE) आय लक्ष्य सत्यापन",
+    "incomeGoalSatisfied": "✅ आय लक्ष्य संतुष्ट — MoSJE SC सीमा (₹5,00,000) के भीतर",
+    "incomeGoalExceeded": "⚠️ SC आय सीमा लक्ष्य (₹5,00,000) से अधिक है",
+    "declaredHouseholdIncome": "घोषित पारिवारिक आय",
+    "mosjeThreshold": "MoSJE सब्सिडी पात्रता सीमा",
+    "subsidyUnlocked": "100% सब्सिडी स्वीकृत",
+    "standardTerms": "मानक शर्तें",
+    "explainIncomeBelow": "आपकी वार्षिक पारिवारिक आय (₹{income}) योजना की सीमा ₹{limit} से कम है।",
+    "explainCostFits": "आपकी आवश्यक परियोजना लागत (₹{cost}) ऋण सीमा ₹{limit} के भीतर है।",
+    "explainScPriority": "मार्जिन मनी सब्सिडी सहायता के साथ SC लाभार्थी प्राथमिकता पहुंच लागू की गई।",
+    "nearbyBranches": "निकटवर्ती बैंक शाखाएं",
+    "processingQuery": "सरकारी योजनाओं का विश्लेषण किया जा रहा है..."
+  },
+  "TE": {
+    "mosjeVerification": "సామాజిక న్యాయం మరియు సాధికారత మంత్రిత్వ శాఖ (MoSJE) ఆదాయ ధృవీకరణ",
+    "incomeGoalSatisfied": "✅ ఆదాయ లక్ష్యం నెరవేరింది — MoSJE SC పరిమితి (₹5,00,000) లోపు",
+    "incomeGoalExceeded": "⚠️ SC ఆదాయ పరిమితి (₹5,00,000) దాటింది",
+    "declaredHouseholdIncome": "ధృవీకరించిన కుటుంబ ఆదాయం",
+    "mosjeThreshold": "MoSJE సబ్సిడీ అర్హత పరిమితి",
+    "subsidyUnlocked": "100% సబ్సిడీ అందుబాటులో ఉంది",
+    "standardTerms": "ప్రామాణిక నిబంధనలు",
+    "explainIncomeBelow": "మీ వార్షిక కుటుంబ ఆదాయం (₹{income}) పథక పరిమితి ₹{limit} కంటే తక్కువగా ఉంది.",
+    "explainCostFits": "మీ ప్రాజెక్ట్ ఖర్చు (₹{cost}) పథక రుణం పరిమితి ₹{limit} లోపు ఉంది.",
+    "explainScPriority": "మార్జిన్ మనీ సబ్సిడీతో SC లబ్ధిదారుల ప్రాధాన్యత వర్తిస్తుంది.",
+    "nearbyBranches": "సమీపంలోని బ్యాంక్ శాఖలు",
+    "processingQuery": "ప్రభుత్వ పథకాలను పరిశీలిస్తున్నాము..."
+  },
+  "TA": {
+    "mosjeVerification": "MoSJE SC வருமான வரம்பு சரிபார்ப்பு",
+    "incomeGoalSatisfied": "✅ வருமான இலக்கு திருப்திகரமானது — MoSJE SC உச்சவரம்புக்குள் (₹5,00,000)",
+    "incomeGoalExceeded": "⚠️ SC வருமான வரம்பை மீறியுள்ளது (₹5,00,000)",
+    "declaredHouseholdIncome": "குடும்ப வருமானம்",
+    "mosjeThreshold": "MoSJE மானிய வரம்பு",
+    "subsidyUnlocked": "100% மானியம் திறக்கப்பட்டது",
+    "standardTerms": "வழக்கமான விதிமுறைகள்",
+    "explainIncomeBelow": "உங்கள் குடும்ப ஆண்டு வருமானம் (₹{income}) திட்ட வரம்பான ₹{limit}-க்கு குறைவாக உள்ளது.",
+    "explainCostFits": "உங்கள் திட்ட செலவு (₹{cost}) கடன் வரம்பான ₹{limit}-க்குள் அடங்குகிறது.",
+    "explainScPriority": "விளிம்பு தொகை மானியத்துடன் SC பயனாளிகளுக்கு முன்னுரிமை அளிக்கப்படுகிறது.",
+    "nearbyBranches": "அருகிலுள்ள வங்கி கிளைகள்",
+    "processingQuery": "அரசு திட்டங்கள் ஆராயப்படுகின்றன..."
+  },
+  "KN": {
+    "mosjeVerification": "MoSJE SC ಆದಾಯ ಮಿತಿ ಪರಿಶೀಲನೆ",
+    "incomeGoalSatisfied": "✅ ಆದಾಯ ಗುರಿ ತೃಪ್ತಿಕರವಾಗಿದೆ — MoSJE SC ಮಿತಿಯೊಳಗೆ (₹5,00,000)",
+    "incomeGoalExceeded": "⚠️ SC ಆದಾಯ ಮಿತಿಯನ್ನು ಮೀರಿದೆ (₹5,00,000)",
+    "declaredHouseholdIncome": "ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯ",
+    "mosjeThreshold": "MoSJE ಸಬ್ಸಿಡಿ ಅರ್ಹತಾ ಮಿತಿ",
+    "subsidyUnlocked": "100% ಸಬ್ಸಿಡಿ ಲಭ್ಯವಿದೆ",
+    "standardTerms": "ಸಾಮಾನ್ಯ ನಿಯಮಗಳು",
+    "explainIncomeBelow": "ನಿಮ್ಮ ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯ (₹{income}) ಯೋಜನೆಯ ಮಿತಿ ₹{limit} ಗಿಂತ ಕಡಿಮೆಯಿದೆ.",
+    "explainCostFits": "ನಿಮ್ಮ ಯೋಜನಾ ವೆಚ್ಚ (₹{cost}) ಸಾಲದ ಮಿತಿ ₹{limit} ಯೊಳಗೆ ಬರುತ್ತದೆ.",
+    "explainScPriority": "ಮಾರ್ಜಿನ್ ಮನಿ ಸಬ್ಸಿಡಿಯೊಂದಿಗೆ SC ಫಲಾನುಭವಿಗಳಿಗೆ ಆದ್ಯತೆಯ ಪ್ರವೇಶ.",
+    "nearbyBranches": "ಹತ್ತಿರದ ಬ್ಯಾಂಕ್ ಶಾಖೆಗಳು",
+    "processingQuery": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ..."
+  },
+  "ML": {
+    "mosjeVerification": "MoSJE SC വരുമാന പരിധി പരിശോധന",
+    "incomeGoalSatisfied": "✅ വരുമാന ലക്ഷ്യം തൃപ്തികരം — MoSJE പരിധിക്കുള്ളിൽ (₹5,00,000)",
+    "incomeGoalExceeded": "⚠️ SC വരുമാന പരിധി കവിഞ്ഞു (₹5,00,000)",
+    "declaredHouseholdIncome": "കുടുംബ വാർഷിക വരുമാനം",
+    "mosjeThreshold": "MoSJE സബ്‌സിഡി പരിധി",
+    "subsidyUnlocked": "100% സബ്‌സിഡി ലഭ്യമാണ്",
+    "standardTerms": "സാധാരണ നിബന്ധനകൾ",
+    "explainIncomeBelow": "നിങ്ങളുടെ വാർഷിക വരുമാനം (₹{income}) പദ്ധതി പരിധിയായ ₹{limit}-ൽ താഴെയാണ്.",
+    "explainCostFits": "നിങ്ങളുടെ പ്രോജക്റ്റ് തുക (₹{cost}) വായ്പാ പരിധിയായ ₹{limit}-ൽ ഉൾപ്പെടുന്നു.",
+    "explainScPriority": "മാർജിൻ മണി സബ്‌സിഡിയോടെ SC ഗുണഭോക്താക്കൾക്ക് മുൻഗണന.",
+    "nearbyBranches": "സമീപത്തുള്ള ബാങ്ക് ശാഖകൾ",
+    "processingQuery": "സർക്കാർ പദ്ധതികൾ പരിശോധിക്കുന്നു..."
+  },
+  "BN": {
+    "mosjeVerification": "MoSJE SC আয় যাচাইকরণ",
+    "incomeGoalSatisfied": "✅ আয়ের লক্ষ্য সন্তোষজনক — MoSJE SC সীমার মধ্যে (₹৫,০০,০০০)",
+    "incomeGoalExceeded": "⚠️ SC আয়ের সীমা অতিক্রম করেছে (₹৫,০০,০০০)",
+    "declaredHouseholdIncome": "ঘোষিত পারিবারিক আয়",
+    "mosjeThreshold": "MoSJE ভর্তুকি যোগ্যতা সীমা",
+    "subsidyUnlocked": "১০০% ভর্তুকি আনলক হয়েছে",
+    "standardTerms": "সাধারণ শর্তাবলী",
+    "explainIncomeBelow": "আপনার পারিবারিক বার্ষিক আয় (₹{income}) প্রকল্প সীমা ₹{limit} এর নিচে রয়েছে।",
+    "explainCostFits": "আপনার প্রকল্পের ব্যয় (₹{cost}) ঋণ সীমা ₹{limit} এর মধ্যে রয়েছে।",
+    "explainScPriority": "মার্জিন মানি ভর্তুকি সহ SC সুবিধাভোগীদের অগ্রাধিকার অ্যাক্সেস।",
+    "nearbyBranches": "নিকটস্থ ব্যাংক শাখা",
+    "processingQuery": "সরকারি প্রকল্প বিশ্লেষণ করা হচ্ছে..."
+  },
+  "MR": {
+    "mosjeVerification": "MoSJE SC उत्पन्न मर्यादा पडताळणी",
+    "incomeGoalSatisfied": "✅ उत्पन्नाचे उद्दिष्ट पूर्ण — MoSJE SC मर्यादेत (₹५,००,०००)",
+    "incomeGoalExceeded": "⚠️ SC उत्पन्न मर्यादा ओलांडली (₹५,००,०००)",
+    "declaredHouseholdIncome": "घोषित कौटुंबिक उत्पन्न",
+    "mosjeThreshold": "MoSJE अनुदान पात्रता मर्यादा",
+    "subsidyUnlocked": "100% अनुदान उपलब्ध",
+    "standardTerms": "मानक अटी",
+    "explainIncomeBelow": "तुमचे वार्षिक कौटुंबिक उत्पन्न (₹{income}) योजनेच्या मर्यादेपेक्षा ₹{limit} कमी आहे.",
+    "explainCostFits": "तुमचा प्रकल्प खर्च (₹{cost}) कर्ज मर्यादा ₹{limit} च्या आत बसतो.",
+    "explainScPriority": "मार्जिन मनी अनुदानासह SC लाभार्थ्यांना प्राधान्य.",
+    "nearbyBranches": "जवळील बँक शाखा",
+    "processingQuery": "सरकारी योजनांचे विश्लेषण होत आहे..."
+  },
+  "GON": {
+    "mosjeVerification": "MoSJE कमाई जांच",
+    "incomeGoalSatisfied": "✅ कमाई सीमा ठीक आय — ₹5,00,000 ता अंदर",
+    "incomeGoalExceeded": "⚠️ कमाई सीमा ₹5,00,000 लें जादा आय",
+    "declaredHouseholdIncome": "घर ता कमाई",
+    "mosjeThreshold": "सरकारी सहायता सीमा",
+    "subsidyUnlocked": "100% सहायता चालू",
+    "standardTerms": "नियम",
+    "explainIncomeBelow": "तुमारी कमाई (₹{income}) योजना सीमा ₹{limit} लें कम आय।",
+    "explainCostFits": "काम बर लागत (₹{cost}) लोन सीमा ₹{limit} मंदी आय।",
+    "explainScPriority": "SC समाज बर सरकारी सहायता।",
+    "nearbyBranches": "पास ता बैंक शाखा",
+    "processingQuery": "योजना ता पता लगावट आय..."
+  },
+  "BHI": {
+    "mosjeVerification": "MoSJE आवक तपासणी",
+    "incomeGoalSatisfied": "✅ आवक ठीक छे — ₹5,00,000 नी अंदर",
+    "incomeGoalExceeded": "⚠️ आवक ₹5,00,000 थी वधी गइ",
+    "declaredHouseholdIncome": "घर नी आवक",
+    "mosjeThreshold": "सरकारी मदद सीमा",
+    "subsidyUnlocked": "100% मदद मळशे",
+    "standardTerms": "नियमो",
+    "explainIncomeBelow": "तमारी आवक (₹{income}) योजना सीमा ₹{limit} थी ओछी छे।",
+    "explainCostFits": "काम नो खर्च (₹{cost}) लोन सीमा ₹{limit} मां छे।",
+    "explainScPriority": "SC समाज ने प्राथमिकता मळशे।",
+    "nearbyBranches": "नजीक नी बैंक शाखा",
+    "processingQuery": "सरकारी योजना तपासे छे..."
+  },
+  "EN": {
+    "mosjeVerification": "MoSJE SC Income Goal Verification",
+    "incomeGoalSatisfied": "✅ Income Goal Satisfied — Within MoSJE SC Ceiling (₹5,00,000)",
+    "incomeGoalExceeded": "⚠️ Exceeds SC Income Ceiling Goal (₹5,00,000)",
+    "declaredHouseholdIncome": "Declared Household Income",
+    "mosjeThreshold": "MoSJE Subsidy Entitlement Threshold",
+    "subsidyUnlocked": "100% Subsidy Unlocked",
+    "standardTerms": "Standard Terms",
+    "explainIncomeBelow": "Your household annual income (₹{income}) is below the scheme limit of ₹{limit}.",
+    "explainCostFits": "Your required project cost (₹{cost}) fits within the loan bracket of ₹{limit}.",
+    "explainScPriority": "SC Beneficiary priority access applied with margin money subsidy support.",
+    "nearbyBranches": "Nearby Bank Branches",
+    "processingQuery": "Analyzing government schemes..."
+  }
+};
+for (const [langKey, entries] of Object.entries(ADDITIONAL_RESULTS_KEYS)) {
+  if (!UI_ENRICHMENT_TRANSLATIONS[langKey]) UI_ENRICHMENT_TRANSLATIONS[langKey] = {};
+  Object.assign(UI_ENRICHMENT_TRANSLATIONS[langKey], entries);
+}

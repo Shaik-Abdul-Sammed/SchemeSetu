@@ -192,7 +192,7 @@ export default function SchemeDetails() {
                     {idx + 1}
                   </div>
                   <div style={{ fontSize: '0.95rem', color: '#334155', paddingTop: '0.2rem' }}>
-                    {step}
+                    {t(step, step)}
                   </div>
                 </div>
               ))}
@@ -210,7 +210,7 @@ export default function SchemeDetails() {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {(scheme.documentsRequired || []).map((doc, idx) => (
                 <li key={idx} style={{ padding: '0.65rem 0.85rem', backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: '#1E293B', fontWeight: 500 }}>
-                  📄 {doc}
+                  📄 {t(doc, doc)}
                 </li>
               ))}
             </ul>
@@ -222,7 +222,7 @@ export default function SchemeDetails() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.9rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.4rem' }}>
                 <span style={{ color: '#64748B' }}>{t('targetBeneficiary', 'Target Beneficiary:')}</span>
-                <strong style={{ color: '#0F172A' }}>{scheme.beneficiary}</strong>
+                <strong style={{ color: '#0F172A' }}>{t(scheme.beneficiary, scheme.beneficiary)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.4rem' }}>
                 <span style={{ color: '#64748B' }}>{t('ageLimit', 'Age Limit:')}</span>
@@ -267,12 +267,12 @@ export default function SchemeDetails() {
                         alignItems: 'center'
                       }}
                     >
-                      <span>{faq.question}</span>
+                      <span>{t(faq.question, faq.question)}</span>
                       {openFaq === idx ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
                     {openFaq === idx && (
                       <div style={{ padding: '0.85rem 1rem', fontSize: '0.9rem', color: '#475569', backgroundColor: '#FFFFFF', borderTop: '1px solid #E2E8F0' }}>
-                        {faq.answer}
+                        {t(faq.answer, faq.answer)}
                       </div>
                     )}
                   </div>

@@ -702,6 +702,18 @@ export function LocationProvider({ children }) {
       }
 
       if (ipData) {
+        // India Bounding Box: Latitude 6.0°N to 38.0°N, Longitude 68.0°E to 98.0°E
+        const numLat = Number(ipData.lat);
+        const numLng = Number(ipData.lng);
+        const isInsideIndia = !isNaN(numLat) && !isNaN(numLng) &&
+          numLat >= 6.0 && numLat <= 38.0 &&
+          numLng >= 68.0 && numLng <= 98.0;
+
+        if (!isInsideIndia) {
+          console.warn('IP geolocation coordinates outside India boundary, skipping:', numLat, numLng);
+          return false;
+        }
+
         const ipAddress = [ipData.district, ipData.state].filter(Boolean).join(', ');
         const ipLoc = {
           lat: ipData.lat,

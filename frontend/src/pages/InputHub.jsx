@@ -1185,8 +1185,38 @@ export default function InputHub() {
             )}
 
             {inputMode === 'scan' && (
-              <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.88rem', padding: '0.5rem' }}>
-                📄 Document scanning coming soon. Please use Voice or Text mode for now.
+              <div style={{ 
+                textAlign: 'center', 
+                color: '#475569', 
+                fontSize: '0.88rem', 
+                padding: '1rem', 
+                backgroundColor: '#F8FAFC', 
+                borderRadius: '12px', 
+                border: '1px dashed #CBD5E1',
+                margin: '0.5rem 0'
+              }}>
+                <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <FileText size={18} style={{ color: '#2563EB' }} />
+                  <span>Document & Media OCR Intake</span>
+                </div>
+                <p style={{ margin: '0 0 0.85rem', fontSize: '0.82rem', color: '#64748B', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                  Extract scheme eligibility details instantly from Aadhaar, Income Certificates, or Caste Certificates via our Media OCR Scanner.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => navigate('/media')}
+                  style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '0.45rem', 
+                    fontSize: '0.84rem', 
+                    padding: '0.5rem 1.1rem',
+                    borderRadius: '20px'
+                  }}
+                >
+                  <FileText size={15} /> Launch Document Scanner
+                </button>
               </div>
             )}
           </div>

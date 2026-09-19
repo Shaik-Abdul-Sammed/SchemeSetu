@@ -5,7 +5,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
 import LanguageSelectorIcon from './LanguageSelectorIcon';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
-import VoiceAssistantModal from '../voice/VoiceAssistantModal';
 import Logo from './Logo';
 import {
   Building2,
@@ -30,13 +29,12 @@ import {
   UserCheck
 } from 'lucide-react';
 
-export default function Navbar() {
+export default function Navbar({ onOpenVoiceAssistant }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { lang, t } = useLanguage();
   const { location, locationStatus } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
   const navigate = useNavigate();
@@ -82,6 +80,7 @@ export default function Navbar() {
 
   const getLocationDisplayText = () => {
     if (locationStatus === 'detecting') return t('detectingLocation', 'Detecting…');
+    if (location.district && location.state) return `${location.district}, ${location.state}`;
     if (location.district) return location.district;
     if (location.state) return location.state;
     if (locationStatus === 'denied' || locationStatus === 'unavailable')
@@ -286,7 +285,7 @@ export default function Navbar() {
             <button
               type="button"
               className="navbar-voice-btn"
-              onClick={() => setVoiceModalOpen(true)}
+              onClick={onOpenVoiceAssistant}
               title={t('voiceAssistant', 'AI Voice Assistant')}
               aria-label={t('voiceAssistant', 'AI Voice Assistant')}
             >
@@ -324,12 +323,6 @@ export default function Navbar() {
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
-
-      {/* Voice Assistant Modal */}
-      <VoiceAssistantModal
-        isOpen={voiceModalOpen}
-        onClose={() => setVoiceModalOpen(false)}
-      />
     </>
   );
 }

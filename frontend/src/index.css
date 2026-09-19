@@ -427,7 +427,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
   flex-shrink: 0;
 }
 .navbar-location-text {
-  max-width: 100px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

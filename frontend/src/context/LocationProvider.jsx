@@ -9,8 +9,67 @@ import { MOCK_PARTNERS } from '../data/mock/partners';
  * 
  * Coverage: Major districts across 15+ states to minimize centroid-to-actual distance.
  */
+/**
+ * Normalize common Indian district and administrative naming quirks
+ * to match canonical SchemeSetu district records.
+ */
+export function normalizeDistrictName(rawDistrict = '', state = '') {
+  if (!rawDistrict) return '';
+  const d = String(rawDistrict).trim();
+  const lower = d.toLowerCase();
+  
+  // Andhra Pradesh
+  if (lower.includes('y.s.r') || lower.includes('ysr') || lower.includes('cuddapah') || lower.includes('kadapa')) return 'YSR Kadapa';
+  if (lower.includes('n.t.r') || lower.includes('ntr') || lower.includes('vijayawada')) return 'Vijayawada (NTR)';
+  if (lower.includes('spsr') || lower.includes('potti sriramulu') || lower.includes('nellore')) return 'Nellore (SPSR)';
+  if (lower.includes('sathya sai') || lower.includes('puttaparthi')) return 'Sri Sathya Sai (Puttaparthi)';
+  if (lower.includes('annamayya') || lower.includes('rayachoty')) return 'Annamayya (Rayachoty)';
+  if (lower.includes('prakasam') || lower.includes('ongole')) return 'Prakasam (Ongole)';
+  if (lower.includes('palnadu') || lower.includes('narasaraopet')) return 'Palnadu (Narasaraopet)';
+  if (lower.includes('bapatla')) return 'Bapatla';
+  if (lower.includes('eluru')) return 'Eluru (West Godavari)';
+  if (lower.includes('rajahmundry') || lower.includes('east godavari')) return 'Rajahmundry (East Godavari)';
+  if (lower.includes('machilipatnam') || lower.includes('krishna')) return 'Machilipatnam (Krishna)';
+
+  // Telangana
+  if (lower.includes('rangareddi') || lower.includes('ranga reddy')) return 'Rangareddy';
+  if (lower.includes('hanamkonda') || lower.includes('warangal')) return 'Warangal (Hanamkonda)';
+  if (lower.includes('medchal') || lower.includes('malkajgiri')) return 'Medchal-Malkajgiri';
+
+  // Karnataka
+  if (lower.includes('bangalore') || lower.includes('bengaluru')) return 'Bengaluru (Bangalore)';
+  if (lower.includes('mysore') || lower.includes('mysuru')) return 'Mysuru (Mysore)';
+  if (lower.includes('belgaum') || lower.includes('belagavi')) return 'Belagavi (Belgaum)';
+  if (lower.includes('gulbarga') || lower.includes('kalaburagi')) return 'Kalaburagi (Gulbarga)';
+  if (lower.includes('bellary') || lower.includes('ballari')) return 'Ballari (Bellary)';
+  if (lower.includes('mangaluru') || lower.includes('mangalore') || lower.includes('dakshina kannada')) return 'Mangaluru (Mangalore)';
+  if (lower.includes('hubli') || lower.includes('dharwad')) return 'Hubli-Dharwad';
+
+  // Maharashtra
+  if (lower.includes('aurangabad') || lower.includes('sambhajinagar')) return 'Chhatrapati Sambhajinagar (Aurangabad)';
+  if (lower.includes('mumbai')) return 'Mumbai';
+  
+  // Uttar Pradesh
+  if (lower.includes('allahabad') || lower.includes('prayagraj')) return 'Prayagraj (Allahabad)';
+  if (lower.includes('gautam buddha nagar') || lower.includes('noida')) return 'Noida (Gautam Buddha Nagar)';
+  if (lower.includes('faizabad') || lower.includes('ayodhya')) return 'Ayodhya';
+
+  // Haryana
+  if (lower.includes('gurgaon') || lower.includes('gurugram')) return 'Gurugram (Gurgaon)';
+
+  // Kerala
+  if (lower.includes('ernakulam') || lower.includes('kochi')) return 'Kochi (Ernakulam)';
+
+  // Return cleaned original if no special normalization rule applies
+  return d.replace(/\s+district$/i, '').trim();
+}
+
+/**
+ * District-level centroids for offline reverse-geocoding fallback and manual selection.
+ * Covers all 28 States and 8 Union Territories across India.
+ */
 export const INDIAN_LOCATIONS = [
-  // Andhra Pradesh (All Major Districts)
+  // ── 1. Andhra Pradesh ──
   { state: 'Andhra Pradesh', district: 'Vijayawada (NTR)', lat: 16.5062, lng: 80.6480 },
   { state: 'Andhra Pradesh', district: 'YSR Kadapa', lat: 14.4673, lng: 78.8242 },
   { state: 'Andhra Pradesh', district: 'Visakhapatnam', lat: 17.6868, lng: 83.2185 },
@@ -34,7 +93,181 @@ export const INDIAN_LOCATIONS = [
   { state: 'Andhra Pradesh', district: 'Vizianagaram', lat: 18.1067, lng: 83.3956 },
   { state: 'Andhra Pradesh', district: 'Anakapalli', lat: 17.6913, lng: 83.0039 },
 
-  // Telangana
+  // ── 2. Arunachal Pradesh ──
+  { state: 'Arunachal Pradesh', district: 'Itanagar (Papum Pare)', lat: 27.0844, lng: 93.6053 },
+  { state: 'Arunachal Pradesh', district: 'Tawang', lat: 27.5861, lng: 91.8594 },
+  { state: 'Arunachal Pradesh', district: 'Pasighat (East Siang)', lat: 28.0664, lng: 95.3267 },
+
+  // ── 3. Assam ──
+  { state: 'Assam', district: 'Guwahati (Kamrup Metro)', lat: 26.1445, lng: 91.7362 },
+  { state: 'Assam', district: 'Silchar (Cachar)', lat: 24.8333, lng: 92.7789 },
+  { state: 'Assam', district: 'Dibrugarh', lat: 27.4728, lng: 94.9120 },
+  { state: 'Assam', district: 'Jorhat', lat: 26.7509, lng: 94.2037 },
+  { state: 'Assam', district: 'Tezpur (Sonitpur)', lat: 26.6528, lng: 92.7926 },
+  { state: 'Assam', district: 'Nagaon', lat: 26.3466, lng: 92.6840 },
+
+  // ── 4. Bihar ──
+  { state: 'Bihar', district: 'Patna', lat: 25.5941, lng: 85.1376 },
+  { state: 'Bihar', district: 'Gaya', lat: 24.7914, lng: 85.0002 },
+  { state: 'Bihar', district: 'Muzaffarpur', lat: 26.1209, lng: 85.3647 },
+  { state: 'Bihar', district: 'Bhagalpur', lat: 25.2425, lng: 86.9842 },
+  { state: 'Bihar', district: 'Darbhanga', lat: 26.1542, lng: 85.8918 },
+  { state: 'Bihar', district: 'Purnia', lat: 25.7771, lng: 87.4753 },
+
+  // ── 5. Chhattisgarh ──
+  { state: 'Chhattisgarh', district: 'Raipur', lat: 21.2514, lng: 81.6296 },
+  { state: 'Chhattisgarh', district: 'Bilaspur', lat: 22.0797, lng: 82.1409 },
+  { state: 'Chhattisgarh', district: 'Durg-Bhilai', lat: 21.1904, lng: 81.2849 },
+  { state: 'Chhattisgarh', district: 'Korba', lat: 22.3595, lng: 82.7501 },
+  { state: 'Chhattisgarh', district: 'Bastar (Jagdalpur)', lat: 19.0734, lng: 82.0206 },
+
+  // ── 6. Goa ──
+  { state: 'Goa', district: 'North Goa (Panaji)', lat: 15.4909, lng: 73.8278 },
+  { state: 'Goa', district: 'South Goa (Margao)', lat: 15.2736, lng: 73.9582 },
+
+  // ── 7. Gujarat ──
+  { state: 'Gujarat', district: 'Ahmedabad', lat: 23.0225, lng: 72.5714 },
+  { state: 'Gujarat', district: 'Surat', lat: 21.1702, lng: 72.8311 },
+  { state: 'Gujarat', district: 'Vadodara', lat: 22.3072, lng: 73.1812 },
+  { state: 'Gujarat', district: 'Rajkot', lat: 22.3039, lng: 70.8022 },
+  { state: 'Gujarat', district: 'Bhavnagar', lat: 21.7645, lng: 72.1519 },
+  { state: 'Gujarat', district: 'Gandhinagar', lat: 23.2156, lng: 72.6369 },
+
+  // ── 8. Haryana ──
+  { state: 'Haryana', district: 'Gurugram (Gurgaon)', lat: 28.4595, lng: 77.0266 },
+  { state: 'Haryana', district: 'Faridabad', lat: 28.4089, lng: 77.3178 },
+  { state: 'Haryana', district: 'Panipat', lat: 29.3909, lng: 76.9635 },
+  { state: 'Haryana', district: 'Ambala', lat: 30.3782, lng: 76.7767 },
+  { state: 'Haryana', district: 'Rohtak', lat: 28.8955, lng: 76.6066 },
+  { state: 'Haryana', district: 'Hisar', lat: 29.1492, lng: 75.7217 },
+
+  // ── 9. Himachal Pradesh ──
+  { state: 'Himachal Pradesh', district: 'Shimla', lat: 31.1048, lng: 77.1734 },
+  { state: 'Himachal Pradesh', district: 'Dharamshala (Kangra)', lat: 32.2190, lng: 76.3234 },
+  { state: 'Himachal Pradesh', district: 'Mandi', lat: 31.7087, lng: 76.9320 },
+  { state: 'Himachal Pradesh', district: 'Solan', lat: 30.9045, lng: 77.0967 },
+  { state: 'Himachal Pradesh', district: 'Kullu', lat: 31.9579, lng: 77.1095 },
+
+  // ── 10. Jharkhand ──
+  { state: 'Jharkhand', district: 'Ranchi', lat: 23.3441, lng: 85.3096 },
+  { state: 'Jharkhand', district: 'Jamshedpur (East Singhbhum)', lat: 22.8046, lng: 86.2029 },
+  { state: 'Jharkhand', district: 'Dhanbad', lat: 23.7957, lng: 86.4304 },
+  { state: 'Jharkhand', district: 'Bokaro', lat: 23.6693, lng: 86.1511 },
+  { state: 'Jharkhand', district: 'Deoghar', lat: 24.4826, lng: 86.7013 },
+  { state: 'Jharkhand', district: 'Hazaribagh', lat: 23.9961, lng: 85.3637 },
+
+  // ── 11. Karnataka ──
+  { state: 'Karnataka', district: 'Bengaluru (Bangalore)', lat: 12.9716, lng: 77.5946 },
+  { state: 'Karnataka', district: 'Mysuru (Mysore)', lat: 12.2958, lng: 76.6394 },
+  { state: 'Karnataka', district: 'Hubli-Dharwad', lat: 15.3647, lng: 75.1240 },
+  { state: 'Karnataka', district: 'Mangaluru (Mangalore)', lat: 12.8714, lng: 74.8431 },
+  { state: 'Karnataka', district: 'Belagavi (Belgaum)', lat: 15.8497, lng: 74.4977 },
+  { state: 'Karnataka', district: 'Kalaburagi (Gulbarga)', lat: 17.3297, lng: 76.8343 },
+  { state: 'Karnataka', district: 'Ballari (Bellary)', lat: 15.1394, lng: 76.9214 },
+  { state: 'Karnataka', district: 'Shivamogga (Shimoga)', lat: 13.9299, lng: 75.5681 },
+  { state: 'Karnataka', district: 'Davanagere', lat: 14.4644, lng: 75.9218 },
+  { state: 'Karnataka', district: 'Tumakuru (Tumkur)', lat: 13.3379, lng: 77.1173 },
+
+  // ── 12. Kerala ──
+  { state: 'Kerala', district: 'Thiruvananthapuram', lat: 8.5241, lng: 76.9366 },
+  { state: 'Kerala', district: 'Kochi (Ernakulam)', lat: 9.9312, lng: 76.2673 },
+  { state: 'Kerala', district: 'Kozhikode', lat: 11.2588, lng: 75.7804 },
+  { state: 'Kerala', district: 'Thrissur', lat: 10.5276, lng: 76.2144 },
+  { state: 'Kerala', district: 'Kollam', lat: 8.8932, lng: 76.6141 },
+  { state: 'Kerala', district: 'Palakkad', lat: 10.7867, lng: 76.6548 },
+  { state: 'Kerala', district: 'Kannur', lat: 11.8745, lng: 75.3704 },
+  { state: 'Kerala', district: 'Kottayam', lat: 9.5916, lng: 76.5222 },
+
+  // ── 13. Madhya Pradesh ──
+  { state: 'Madhya Pradesh', district: 'Bhopal', lat: 23.2599, lng: 77.4126 },
+  { state: 'Madhya Pradesh', district: 'Indore', lat: 22.7196, lng: 75.8577 },
+  { state: 'Madhya Pradesh', district: 'Gwalior', lat: 26.2183, lng: 78.1828 },
+  { state: 'Madhya Pradesh', district: 'Jabalpur', lat: 23.1815, lng: 79.9864 },
+  { state: 'Madhya Pradesh', district: 'Ujjain', lat: 23.1765, lng: 75.7885 },
+  { state: 'Madhya Pradesh', district: 'Sagar', lat: 23.8388, lng: 78.7378 },
+  { state: 'Madhya Pradesh', district: 'Rewa', lat: 24.5362, lng: 81.3037 },
+
+  // ── 14. Maharashtra ──
+  { state: 'Maharashtra', district: 'Mumbai', lat: 19.0760, lng: 72.8777 },
+  { state: 'Maharashtra', district: 'Pune', lat: 18.5204, lng: 73.8567 },
+  { state: 'Maharashtra', district: 'Nagpur', lat: 21.1458, lng: 79.0882 },
+  { state: 'Maharashtra', district: 'Nashik', lat: 19.9975, lng: 73.7898 },
+  { state: 'Maharashtra', district: 'Chhatrapati Sambhajinagar (Aurangabad)', lat: 19.8762, lng: 75.3433 },
+  { state: 'Maharashtra', district: 'Thane', lat: 19.2183, lng: 72.9781 },
+  { state: 'Maharashtra', district: 'Solapur', lat: 17.6599, lng: 75.9064 },
+  { state: 'Maharashtra', district: 'Kolhapur', lat: 16.7050, lng: 74.2433 },
+  { state: 'Maharashtra', district: 'Amravati', lat: 20.9374, lng: 77.7796 },
+  { state: 'Maharashtra', district: 'Nanded', lat: 19.1383, lng: 77.3210 },
+  { state: 'Maharashtra', district: 'Jalgaon', lat: 21.0077, lng: 75.5626 },
+
+  // ── 15. Manipur ──
+  { state: 'Manipur', district: 'Imphal (Imphal West)', lat: 24.8170, lng: 93.9368 },
+  { state: 'Manipur', district: 'Churachandpur', lat: 24.3333, lng: 93.6833 },
+  { state: 'Manipur', district: 'Thoubal', lat: 24.6387, lng: 94.0044 },
+
+  // ── 16. Meghalaya ──
+  { state: 'Meghalaya', district: 'Shillong (East Khasi Hills)', lat: 25.5788, lng: 91.8933 },
+  { state: 'Meghalaya', district: 'Tura (West Garo Hills)', lat: 25.5144, lng: 90.2034 },
+  { state: 'Meghalaya', district: 'Jowai (West Jaintia Hills)', lat: 25.4528, lng: 92.2036 },
+
+  // ── 17. Mizoram ──
+  { state: 'Mizoram', district: 'Aizawl', lat: 23.7271, lng: 92.7176 },
+  { state: 'Mizoram', district: 'Lunglei', lat: 22.8833, lng: 92.7333 },
+  { state: 'Mizoram', district: 'Champhai', lat: 23.4566, lng: 93.3282 },
+
+  // ── 18. Nagaland ──
+  { state: 'Nagaland', district: 'Kohima', lat: 25.6751, lng: 94.1086 },
+  { state: 'Nagaland', district: 'Dimapur', lat: 25.9063, lng: 93.7271 },
+  { state: 'Nagaland', district: 'Mokokchung', lat: 26.3262, lng: 94.5228 },
+
+  // ── 19. Odisha ──
+  { state: 'Odisha', district: 'Bhubaneswar', lat: 20.2961, lng: 85.8245 },
+  { state: 'Odisha', district: 'Cuttack', lat: 20.4625, lng: 85.8828 },
+  { state: 'Odisha', district: 'Rourkela (Sundargarh)', lat: 22.2604, lng: 84.8536 },
+  { state: 'Odisha', district: 'Berhampur (Ganjam)', lat: 19.3150, lng: 84.7941 },
+  { state: 'Odisha', district: 'Sambalpur', lat: 21.4669, lng: 83.9812 },
+  { state: 'Odisha', district: 'Puri', lat: 19.8135, lng: 85.8312 },
+  { state: 'Odisha', district: 'Balasore', lat: 21.4934, lng: 86.9135 },
+
+  // ── 20. Punjab ──
+  { state: 'Punjab', district: 'Chandigarh', lat: 30.7333, lng: 76.7794 },
+  { state: 'Punjab', district: 'Amritsar', lat: 31.6340, lng: 74.8723 },
+  { state: 'Punjab', district: 'Ludhiana', lat: 30.9010, lng: 75.8573 },
+  { state: 'Punjab', district: 'Jalandhar', lat: 31.3260, lng: 75.5762 },
+  { state: 'Punjab', district: 'Patiala', lat: 30.3398, lng: 76.3869 },
+  { state: 'Punjab', district: 'Bathinda', lat: 30.2110, lng: 74.9455 },
+
+  // ── 21. Rajasthan ──
+  { state: 'Rajasthan', district: 'Jaipur', lat: 26.9124, lng: 75.7873 },
+  { state: 'Rajasthan', district: 'Jodhpur', lat: 26.2389, lng: 73.0243 },
+  { state: 'Rajasthan', district: 'Udaipur', lat: 24.5854, lng: 73.7125 },
+  { state: 'Rajasthan', district: 'Kota', lat: 25.2138, lng: 75.8648 },
+  { state: 'Rajasthan', district: 'Bikaner', lat: 28.0229, lng: 73.3119 },
+  { state: 'Rajasthan', district: 'Ajmer', lat: 26.4499, lng: 74.6399 },
+  { state: 'Rajasthan', district: 'Alwar', lat: 27.5530, lng: 76.6346 },
+  { state: 'Rajasthan', district: 'Bhilwara', lat: 25.3474, lng: 74.6408 },
+
+  // ── 22. Sikkim ──
+  { state: 'Sikkim', district: 'Gangtok (East Sikkim)', lat: 27.3389, lng: 88.6065 },
+  { state: 'Sikkim', district: 'Namchi (South Sikkim)', lat: 27.1667, lng: 88.3500 },
+  { state: 'Sikkim', district: 'Geyzing (West Sikkim)', lat: 27.2889, lng: 88.2431 },
+  { state: 'Sikkim', district: 'Mangan (North Sikkim)', lat: 27.5097, lng: 88.5292 },
+
+  // ── 23. Tamil Nadu ──
+  { state: 'Tamil Nadu', district: 'Chennai', lat: 13.0827, lng: 80.2707 },
+  { state: 'Tamil Nadu', district: 'Coimbatore', lat: 11.0168, lng: 76.9558 },
+  { state: 'Tamil Nadu', district: 'Madurai', lat: 9.9252, lng: 78.1198 },
+  { state: 'Tamil Nadu', district: 'Tiruchirappalli', lat: 10.7905, lng: 78.7047 },
+  { state: 'Tamil Nadu', district: 'Salem', lat: 11.6643, lng: 78.1460 },
+  { state: 'Tamil Nadu', district: 'Tirunelveli', lat: 8.7139, lng: 77.7567 },
+  { state: 'Tamil Nadu', district: 'Vellore', lat: 12.9165, lng: 79.1325 },
+  { state: 'Tamil Nadu', district: 'Erode', lat: 11.3410, lng: 77.7172 },
+  { state: 'Tamil Nadu', district: 'Thanjavur', lat: 10.7870, lng: 79.1378 },
+  { state: 'Tamil Nadu', district: 'Tiruppur', lat: 11.1085, lng: 77.3411 },
+  { state: 'Tamil Nadu', district: 'Dindigul', lat: 10.3673, lng: 77.9803 },
+  { state: 'Tamil Nadu', district: 'Thoothukudi', lat: 8.7642, lng: 78.1348 },
+
+  // ── 24. Telangana ──
   { state: 'Telangana', district: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
   { state: 'Telangana', district: 'Secunderabad', lat: 17.4399, lng: 78.4983 },
   { state: 'Telangana', district: 'Warangal (Hanamkonda)', lat: 17.9689, lng: 79.5941 },
@@ -50,43 +283,15 @@ export const INDIAN_LOCATIONS = [
   { state: 'Telangana', district: 'Adilabad', lat: 19.6641, lng: 78.5320 },
   { state: 'Telangana', district: 'Mancherial', lat: 18.8679, lng: 79.4639 },
   { state: 'Telangana', district: 'Suryapet', lat: 17.1439, lng: 79.6239 },
+  { state: 'Telangana', district: 'Jagtial', lat: 18.7972, lng: 78.9140 },
+  { state: 'Telangana', district: 'Kamareddy', lat: 18.3242, lng: 78.3410 },
 
-  // Tamil Nadu
-  { state: 'Tamil Nadu', district: 'Chennai', lat: 13.0827, lng: 80.2707 },
-  { state: 'Tamil Nadu', district: 'Coimbatore', lat: 11.0168, lng: 76.9558 },
-  { state: 'Tamil Nadu', district: 'Madurai', lat: 9.9252, lng: 78.1198 },
-  { state: 'Tamil Nadu', district: 'Tiruchirappalli', lat: 10.7905, lng: 78.7047 },
-  { state: 'Tamil Nadu', district: 'Salem', lat: 11.6643, lng: 78.1460 },
-  { state: 'Tamil Nadu', district: 'Tirunelveli', lat: 8.7139, lng: 77.7567 },
-  { state: 'Tamil Nadu', district: 'Vellore', lat: 12.9165, lng: 79.1325 },
-  { state: 'Tamil Nadu', district: 'Erode', lat: 11.3410, lng: 77.7172 },
-  { state: 'Tamil Nadu', district: 'Thanjavur', lat: 10.7870, lng: 79.1378 },
+  // ── 25. Tripura ──
+  { state: 'Tripura', district: 'Agartala (West Tripura)', lat: 23.8315, lng: 91.2868 },
+  { state: 'Tripura', district: 'Gomati (Udaipur)', lat: 23.5333, lng: 91.4833 },
+  { state: 'Tripura', district: 'Dharmanagar (North Tripura)', lat: 24.3807, lng: 92.1648 },
 
-  // Karnataka
-  { state: 'Karnataka', district: 'Bengaluru (Bangalore)', lat: 12.9716, lng: 77.5946 },
-  { state: 'Karnataka', district: 'Mysuru (Mysore)', lat: 12.2958, lng: 76.6394 },
-  { state: 'Karnataka', district: 'Hubli-Dharwad', lat: 15.3647, lng: 75.1240 },
-  { state: 'Karnataka', district: 'Mangaluru (Mangalore)', lat: 12.8714, lng: 74.8431 },
-  { state: 'Karnataka', district: 'Belagavi (Belgaum)', lat: 15.8497, lng: 74.4977 },
-  { state: 'Karnataka', district: 'Kalaburagi (Gulbarga)', lat: 17.3297, lng: 76.8343 },
-  { state: 'Karnataka', district: 'Ballari (Bellary)', lat: 15.1394, lng: 76.9214 },
-
-  // Maharashtra
-  { state: 'Maharashtra', district: 'Mumbai', lat: 19.0760, lng: 72.8777 },
-  { state: 'Maharashtra', district: 'Pune', lat: 18.5204, lng: 73.8567 },
-  { state: 'Maharashtra', district: 'Nagpur', lat: 21.1458, lng: 79.0882 },
-  { state: 'Maharashtra', district: 'Nashik', lat: 19.9975, lng: 73.7898 },
-  { state: 'Maharashtra', district: 'Chhatrapati Sambhajinagar (Aurangabad)', lat: 19.8762, lng: 75.3433 },
-  { state: 'Maharashtra', district: 'Thane', lat: 19.2183, lng: 72.9781 },
-  { state: 'Maharashtra', district: 'Solapur', lat: 17.6599, lng: 75.9064 },
-  { state: 'Maharashtra', district: 'Kolhapur', lat: 16.7050, lng: 74.2433 },
-
-  // Delhi NCT
-  { state: 'Delhi', district: 'New Delhi', lat: 28.6139, lng: 77.2090 },
-  { state: 'Delhi', district: 'Central Delhi', lat: 28.6500, lng: 77.2200 },
-  { state: 'Delhi', district: 'South Delhi', lat: 28.5355, lng: 77.2410 },
-
-  // Uttar Pradesh
+  // ── 26. Uttar Pradesh ──
   { state: 'Uttar Pradesh', district: 'Lucknow', lat: 26.8467, lng: 80.9462 },
   { state: 'Uttar Pradesh', district: 'Varanasi', lat: 25.3176, lng: 82.9739 },
   { state: 'Uttar Pradesh', district: 'Kanpur', lat: 26.4499, lng: 80.3319 },
@@ -94,46 +299,75 @@ export const INDIAN_LOCATIONS = [
   { state: 'Uttar Pradesh', district: 'Prayagraj (Allahabad)', lat: 25.4358, lng: 81.8463 },
   { state: 'Uttar Pradesh', district: 'Noida (Gautam Buddha Nagar)', lat: 28.5355, lng: 77.3910 },
   { state: 'Uttar Pradesh', district: 'Ghaziabad', lat: 28.6692, lng: 77.4538 },
+  { state: 'Uttar Pradesh', district: 'Meerut', lat: 28.9845, lng: 77.7064 },
+  { state: 'Uttar Pradesh', district: 'Bareilly', lat: 28.3670, lng: 79.4304 },
+  { state: 'Uttar Pradesh', district: 'Aligarh', lat: 27.8974, lng: 78.0880 },
+  { state: 'Uttar Pradesh', district: 'Moradabad', lat: 28.8353, lng: 78.7747 },
+  { state: 'Uttar Pradesh', district: 'Gorakhpur', lat: 26.7606, lng: 83.3732 },
+  { state: 'Uttar Pradesh', district: 'Ayodhya', lat: 26.7922, lng: 82.1998 },
+  { state: 'Uttar Pradesh', district: 'Jhansi', lat: 25.4484, lng: 78.5685 },
+  { state: 'Uttar Pradesh', district: 'Mathura', lat: 27.4924, lng: 77.6737 },
 
-  // Madhya Pradesh
-  { state: 'Madhya Pradesh', district: 'Bhopal', lat: 23.2599, lng: 77.4126 },
-  { state: 'Madhya Pradesh', district: 'Indore', lat: 22.7196, lng: 75.8577 },
-  { state: 'Madhya Pradesh', district: 'Gwalior', lat: 26.2183, lng: 78.1828 },
-  { state: 'Madhya Pradesh', district: 'Jabalpur', lat: 23.1815, lng: 79.9864 },
+  // ── 27. Uttarakhand ──
+  { state: 'Uttarakhand', district: 'Dehradun', lat: 30.3165, lng: 78.0322 },
+  { state: 'Uttarakhand', district: 'Haridwar', lat: 29.9457, lng: 78.1642 },
+  { state: 'Uttarakhand', district: 'Nainital', lat: 29.3919, lng: 79.4542 },
+  { state: 'Uttarakhand', district: 'Haldwani', lat: 29.2183, lng: 79.5130 },
+  { state: 'Uttarakhand', district: 'Almora', lat: 29.5971, lng: 79.6591 },
+  { state: 'Uttarakhand', district: 'Rishikesh', lat: 30.0869, lng: 78.2676 },
+  { state: 'Uttarakhand', district: 'Roorkee', lat: 29.8543, lng: 77.8880 },
 
-  // West Bengal
+  // ── 28. West Bengal ──
   { state: 'West Bengal', district: 'Kolkata', lat: 22.5726, lng: 88.3639 },
   { state: 'West Bengal', district: 'Howrah', lat: 22.5958, lng: 88.2636 },
+  { state: 'West Bengal', district: 'Siliguri (Darjeeling)', lat: 26.7271, lng: 88.3953 },
+  { state: 'West Bengal', district: 'Asansol (Paschim Bardhaman)', lat: 23.6739, lng: 86.9524 },
+  { state: 'West Bengal', district: 'Durgapur', lat: 23.5204, lng: 87.3119 },
+  { state: 'West Bengal', district: 'Kharagpur (Paschim Medinipur)', lat: 22.3400, lng: 87.2300 },
+  { state: 'West Bengal', district: 'Malda', lat: 25.0108, lng: 88.1411 },
+  { state: 'West Bengal', district: 'Burdwan (Purba Bardhaman)', lat: 23.2324, lng: 87.8615 },
 
-  // Kerala
-  { state: 'Kerala', district: 'Thiruvananthapuram', lat: 8.5241, lng: 76.9366 },
-  { state: 'Kerala', district: 'Kochi (Ernakulam)', lat: 9.9312, lng: 76.2673 },
-  { state: 'Kerala', district: 'Kozhikode', lat: 11.2588, lng: 75.7804 },
+  // ── UNION TERRITORIES ──
+  // ── 29. Andaman and Nicobar Islands ──
+  { state: 'Andaman and Nicobar Islands', district: 'Port Blair (South Andaman)', lat: 11.6234, lng: 92.7265 },
+  { state: 'Andaman and Nicobar Islands', district: 'Nicobar', lat: 9.1550, lng: 92.8180 },
 
-  // Gujarat
-  { state: 'Gujarat', district: 'Ahmedabad', lat: 23.0225, lng: 72.5714 },
-  { state: 'Gujarat', district: 'Surat', lat: 21.1702, lng: 72.8311 },
-  { state: 'Gujarat', district: 'Vadodara', lat: 22.3072, lng: 73.1812 },
+  // ── 30. Chandigarh ──
+  { state: 'Chandigarh', district: 'Chandigarh', lat: 30.7333, lng: 76.7794 },
 
-  // Rajasthan
-  { state: 'Rajasthan', district: 'Jaipur', lat: 26.9124, lng: 75.7873 },
-  { state: 'Rajasthan', district: 'Jodhpur', lat: 26.2389, lng: 73.0243 },
-  { state: 'Rajasthan', district: 'Udaipur', lat: 24.5854, lng: 73.7125 },
+  // ── 31. Dadra and Nagar Haveli and Daman and Diu ──
+  { state: 'Dadra and Nagar Haveli and Daman and Diu', district: 'Daman', lat: 20.3974, lng: 72.8328 },
+  { state: 'Dadra and Nagar Haveli and Daman and Diu', district: 'Diu', lat: 20.7144, lng: 70.9874 },
+  { state: 'Dadra and Nagar Haveli and Daman and Diu', district: 'Silvassa', lat: 20.2763, lng: 73.0083 },
 
-  // Bihar
-  { state: 'Bihar', district: 'Patna', lat: 25.5941, lng: 85.1376 },
-  { state: 'Bihar', district: 'Gaya', lat: 24.7914, lng: 85.0002 },
+  // ── 32. Delhi ──
+  { state: 'Delhi', district: 'New Delhi', lat: 28.6139, lng: 77.2090 },
+  { state: 'Delhi', district: 'Central Delhi', lat: 28.6500, lng: 77.2200 },
+  { state: 'Delhi', district: 'South Delhi', lat: 28.5355, lng: 77.2410 },
+  { state: 'Delhi', district: 'North Delhi', lat: 28.7180, lng: 77.1680 },
+  { state: 'Delhi', district: 'East Delhi', lat: 28.6300, lng: 77.2900 },
+  { state: 'Delhi', district: 'West Delhi', lat: 28.6400, lng: 77.1000 },
 
-  // Punjab & Haryana
-  { state: 'Punjab', district: 'Chandigarh', lat: 30.7333, lng: 76.7794 },
-  { state: 'Punjab', district: 'Amritsar', lat: 31.6340, lng: 74.8723 },
-  { state: 'Punjab', district: 'Ludhiana', lat: 30.9010, lng: 75.8573 },
-  { state: 'Haryana', district: 'Gurugram (Gurgaon)', lat: 28.4595, lng: 77.0266 },
-  { state: 'Haryana', district: 'Faridabad', lat: 28.4089, lng: 77.3178 },
+  // ── 33. Jammu and Kashmir ──
+  { state: 'Jammu and Kashmir', district: 'Srinagar', lat: 34.0837, lng: 74.7973 },
+  { state: 'Jammu and Kashmir', district: 'Jammu', lat: 32.7266, lng: 74.8570 },
+  { state: 'Jammu and Kashmir', district: 'Anantnag', lat: 33.7311, lng: 75.1522 },
+  { state: 'Jammu and Kashmir', district: 'Baramulla', lat: 34.2000, lng: 74.3400 },
+  { state: 'Jammu and Kashmir', district: 'Udhampur', lat: 32.9250, lng: 75.1410 },
 
-  // Odisha
-  { state: 'Odisha', district: 'Bhubaneswar', lat: 20.2961, lng: 85.8245 },
-  { state: 'Odisha', district: 'Cuttack', lat: 20.4625, lng: 85.8828 }
+  // ── 34. Ladakh ──
+  { state: 'Ladakh', district: 'Leh', lat: 34.1526, lng: 77.5771 },
+  { state: 'Ladakh', district: 'Kargil', lat: 34.5539, lng: 76.1349 },
+
+  // ── 35. Lakshadweep ──
+  { state: 'Lakshadweep', district: 'Kavaratti', lat: 10.5667, lng: 72.6417 },
+  { state: 'Lakshadweep', district: 'Agatti', lat: 10.8533, lng: 72.1931 },
+
+  // ── 36. Puducherry ──
+  { state: 'Puducherry', district: 'Puducherry', lat: 11.9416, lng: 79.8083 },
+  { state: 'Puducherry', district: 'Karaikal', lat: 10.9254, lng: 79.8380 },
+  { state: 'Puducherry', district: 'Mahe', lat: 11.7002, lng: 75.5340 },
+  { state: 'Puducherry', district: 'Yanam', lat: 16.7333, lng: 82.2167 }
 ];
 
 /** Maximum acceptable distance (km) between GPS coords and nearest centroid
@@ -260,15 +494,14 @@ export function LocationProvider({ children }) {
     let outState = '';
     let outCountry = 'India';
 
-    // --- Attempt online reverse geocoding ---
+    // --- Primary attempt: OpenStreetMap Nominatim (without forbidden User-Agent header) ---
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&zoom=14`,
         {
-          signal: controller.signal,
-          headers: { 'User-Agent': 'SchemeSetu-SIH-DevApp/1.0' }
+          signal: controller.signal
         }
       );
       clearTimeout(timeoutId);
@@ -276,13 +509,14 @@ export function LocationProvider({ children }) {
         const data = await res.json();
         const addr = data.address || {};
         outState = addr.state || addr.region || '';
-        outDistrict = addr.state_district || addr.county || addr.district || '';
+        const rawDistrict = addr.state_district || addr.county || addr.district || addr.city || '';
+        outDistrict = normalizeDistrictName(rawDistrict, outState);
         outCity = addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || '';
         outCountry = addr.country || 'India';
         const displayName = data.display_name || '';
 
         console.log('\n==============================');
-        console.log('REVERSE GEOCODER OUTPUT (ONLINE)');
+        console.log('REVERSE GEOCODER OUTPUT (ONLINE - NOMINATIM)');
         console.log(`city = ${outCity || '(none)'}`);
         console.log(`district = ${outDistrict || '(none)'}`);
         console.log(`state = ${outState || '(none)'}`);
@@ -296,17 +530,60 @@ export function LocationProvider({ children }) {
             district: outDistrict || outCity,
             country: outCountry,
             address: displayName || [outCity, outDistrict, outState].filter(Boolean).join(', '),
-            source: 'online',
+            source: 'online_nominatim',
             centroidDistanceKm: null,
             centroidTrusted: true
           };
         }
       }
     } catch (e) {
-      // Graceful offline fallback
+      // Graceful fallback to secondary geocoder
     }
 
-    // --- Offline fallback: find nearest centroid ---
+    // --- Secondary attempt: BigDataCloud free client reverse geocoder (CORS safe, browser native) ---
+    try {
+      const bdcController = new AbortController();
+      const bdcTimeout = setTimeout(() => bdcController.abort(), 3500);
+      const bdcRes = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
+        { signal: bdcController.signal }
+      );
+      clearTimeout(bdcTimeout);
+      if (bdcRes.ok) {
+        const bdcData = await bdcRes.json();
+        const bdcState = bdcData.principalSubdivision || '';
+        const admin2 = bdcData.localityInfo?.administrative?.find(a => a.adminLevel === 6 || a.adminLevel === 5)?.name || '';
+        const rawDist = admin2 || bdcData.city || bdcData.locality || '';
+        const bdcDistrict = normalizeDistrictName(rawDist, bdcState);
+        const bdcCity = bdcData.city || bdcData.locality || '';
+        const bdcCountry = bdcData.countryName || 'India';
+
+        if (bdcState || bdcDistrict || bdcCity) {
+          console.log('\n==============================');
+          console.log('REVERSE GEOCODER OUTPUT (ONLINE - BIGDATACLOUD)');
+          console.log(`city = ${bdcCity || '(none)'}`);
+          console.log(`district = ${bdcDistrict || '(none)'}`);
+          console.log(`state = ${bdcState || '(none)'}`);
+          console.log('==============================\n');
+
+          const addrParts = [bdcCity, bdcDistrict, bdcState].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+          return {
+            city: bdcCity,
+            state: bdcState,
+            district: bdcDistrict || bdcCity,
+            country: bdcCountry,
+            address: addrParts.join(', ') || `${bdcDistrict}, ${bdcState}`,
+            source: 'online_bigdatacloud',
+            centroidDistanceKm: null,
+            centroidTrusted: true
+          };
+        }
+      }
+    } catch (e) {
+      // Graceful fallback to offline centroid
+    }
+
+    // --- Offline fallback: find nearest centroid across all 36 Indian states & UTs ---
     let closest = null;
     let minD = Infinity;
     for (const item of INDIAN_LOCATIONS) {
@@ -376,40 +653,77 @@ export function LocationProvider({ children }) {
         } catch (e) {}
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-      clearTimeout(timeoutId);
+      let ipData = null;
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.latitude && data.longitude) {
-          const ipState = data.region || data.region_code || '';
-          const ipDistrict = data.city || '';
-          const ipAddress = [ipDistrict, ipState].filter(Boolean).join(', ');
-
-          const ipLoc = {
-            lat: data.latitude,
-            lng: data.longitude,
-            accuracy: 5000,
-            timestamp: Date.now(),
-            state: ipState,
-            district: ipDistrict,
-            address: ipAddress ? `${ipAddress} (IP Approximate)` : 'Approximate IP Location',
-            isGPS: false,
-            isIP: true,
-            isManual: false,
-            isDemo: false,
-            accuracyWarning: 'Location estimated via IP address (approximate)',
-            geocodeSource: 'ipapi'
-          };
-          setLocation(ipLoc);
-          setLocationStatus('detected');
-          localStorage.setItem('schemesetu_location', JSON.stringify(ipLoc));
-          localStorage.setItem('schemesetu_location_status', 'detected');
-          refreshPartnerDistances(data.latitude, data.longitude);
-          return true;
+      // Primary IP Endpoint: ipapi.co
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.latitude && d.longitude) {
+            ipData = {
+              lat: d.latitude,
+              lng: d.longitude,
+              state: d.region || d.region_code || '',
+              district: normalizeDistrictName(d.city || '', d.region || ''),
+              source: 'ipapi'
+            };
+          }
         }
+      } catch (e) {
+        // Fall through to secondary IP provider
+      }
+
+      // Secondary IP Endpoint: ipwho.is (CORS friendly, fast global CDN)
+      if (!ipData) {
+        try {
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(() => controller2.abort(), 3500);
+          const res2 = await fetch('https://ipwho.is/', { signal: controller2.signal });
+          clearTimeout(timeoutId2);
+          if (res2.ok) {
+            const d2 = await res2.json();
+            if (d2.success && d2.latitude && d2.longitude) {
+              ipData = {
+                lat: d2.latitude,
+                lng: d2.longitude,
+                state: d2.region || '',
+                district: normalizeDistrictName(d2.city || '', d2.region || ''),
+                source: 'ipwhois'
+              };
+            }
+          }
+        } catch (e) {
+          // Both IP services failed
+        }
+      }
+
+      if (ipData) {
+        const ipAddress = [ipData.district, ipData.state].filter(Boolean).join(', ');
+        const ipLoc = {
+          lat: ipData.lat,
+          lng: ipData.lng,
+          accuracy: 5000,
+          timestamp: Date.now(),
+          state: ipData.state,
+          district: ipData.district,
+          address: ipAddress ? `${ipAddress} (IP Approximate)` : 'Approximate IP Location',
+          isGPS: false,
+          isIP: true,
+          isManual: false,
+          isDemo: false,
+          accuracyWarning: 'Location estimated via IP address (approximate)',
+          geocodeSource: ipData.source
+        };
+        setLocation(ipLoc);
+        setLocationStatus('detected');
+        localStorage.setItem('schemesetu_location', JSON.stringify(ipLoc));
+        localStorage.setItem('schemesetu_location_status', 'detected');
+        refreshPartnerDistances(ipData.lat, ipData.lng);
+        return true;
       }
     } catch (e) {
       console.log('IP Location fallback note:', e.message);

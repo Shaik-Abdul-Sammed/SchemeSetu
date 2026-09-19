@@ -24,6 +24,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
 import SchemeCard from '../components/scheme/SchemeCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import SnapchatLocationPicker from '../components/location/SnapchatLocationPicker';
 
 export default function Home({ onOpenVoiceAssistant }) {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function Home({ onOpenVoiceAssistant }) {
 
   const [featuredSchemes, setFeaturedSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchFeatured() {
@@ -131,23 +133,40 @@ export default function Home({ onOpenVoiceAssistant }) {
             {t('heroSubtitle', 'Concessional credit assistance, term loans, education support, & margin subsidies for SC entrepreneurs & citizens up to ₹5.00L annual income.')}
           </p>
 
-          {/* Location Bar Pill */}
-          {location && (location.district || location.state) && (
-            <div style={{ 
+          {/* Location Bar Pill (Interactive) */}
+          <button
+            type="button"
+            onClick={() => setLocationModalOpen(true)}
+            aria-label={t('changeLocation', 'Change your detected location')}
+            title={t('clickToChangeLocation', 'Click to change or detect location')}
+            style={{ 
               display: 'inline-flex', 
               alignItems: 'center', 
               gap: '0.4rem', 
               fontSize: '0.8rem', 
               color: '#CBD5E1', 
               backgroundColor: 'rgba(255,255,255,0.08)',
-              padding: '0.35rem 0.75rem',
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.12)'
-            }}>
-              <MapPin size={14} style={{ color: '#F59E0B' }} />
-              <span>{t('locationLabel', 'Location:')} <strong>{location.district || location.state}</strong></span>
-            </div>
-          )}
+              padding: '0.4rem 0.85rem',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.18)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+          >
+            <MapPin size={14} style={{ color: '#F59E0B', flexShrink: 0 }} />
+            <span>
+              {t('locationLabel', 'Location:')}{' '}
+              <strong style={{ color: '#FFFFFF' }}>
+                {location?.district && location?.state
+                  ? `${location.district}, ${location.state}`
+                  : location?.district || location?.state || t('detectLocation', 'Detect Location')}
+              </strong>
+            </span>
+            <ChevronRight size={12} style={{ color: '#94A3B8', marginLeft: '0.2rem' }} />
+          </button>
         </div>
       </section>
 
@@ -301,6 +320,11 @@ export default function Home({ onOpenVoiceAssistant }) {
         </section>
 
       </div>
+
+      {/* Location Radar Modal */}
+      {locationModalOpen && (
+        <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
+      )}
     </div>
   );
 }

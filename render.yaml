@@ -27,7 +27,7 @@ services:
         fromService:
           type: web
           name: schemesetu-frontend
-          property: host
+          property: url
 
   # ==========================================
   # 2. Frontend Static Site (React / Vite SPA)
@@ -37,7 +37,6 @@ services:
     env: static
     rootDir: frontend
     plan: free
-    region: singapore
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     routes:
@@ -56,5 +55,4 @@ services:
         fromService:
           type: web
           name: schemesetu-backend
-          property: host
-        value: 5000
+          property: url

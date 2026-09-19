@@ -16,7 +16,7 @@ console.log('   • Frontend Web App:   http://localhost:5173');
 console.log('====================================================\n');
 
 // Start Backend
-const backend = spawn('node', ['backend/src/server.js'], {
+const backend = spawn('node', ['backend/src/index.js'], {
   stdio: 'inherit',
   shell: true,
   cwd: __dirname,

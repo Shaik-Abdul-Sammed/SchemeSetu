@@ -15,12 +15,17 @@ import {
   Info,
   X,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check,
+  Mail,
+  Share2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
 import { MOCK_PARTNERS } from '../data/mock/partners';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
+import BranchComparisonTable from '../components/partners/BranchComparisonTable';
 
 export default function Locations() {
   const { t } = useLanguage();
@@ -44,7 +49,19 @@ export default function Locations() {
   const [selectedType, setSelectedType] = useState('All');
   const [onlyEligible, setOnlyEligible] = useState(true);
   const [selectedCenter, setSelectedCenter] = useState(null);
+  const [copiedIfsc, setCopiedIfsc] = useState(false);
   const isUserFiltering = React.useRef(false);
+
+  const handleCopyIfsc = (code) => {
+    if (!code) return;
+    try {
+      navigator.clipboard?.writeText(code);
+      setCopiedIfsc(true);
+      setTimeout(() => setCopiedIfsc(false), 2000);
+    } catch (e) {
+      // clipboard fallback
+    }
+  };
 
   // Synchronize state and district when location changes externally (GPS or initial load)
   useEffect(() => {
@@ -103,7 +120,10 @@ export default function Locations() {
     const matchesMandal = selectedMandal === 'All' || 
       (partner.mandal && partner.mandal === selectedMandal) || 
       (partner.address && partner.address.toLowerCase().includes(selectedMandal.toLowerCase()));
-    const matchesType = selectedType === 'All' || partner.type === selectedType;
+    const matchesType = selectedType === 'All' || 
+      (selectedType === 'All Banks (Public Sector & RRB)'
+        ? (partner.type === 'Public Sector Bank' || partner.type === 'Regional Rural Bank (RRB)' || partner.type === 'NBFC-MFI')
+        : partner.type === selectedType);
     const matchesNpa = !onlyEligible || (partner.fundAvailable && partner.npaStatus !== 'high');
 
     return matchesSearch && matchesState && matchesDistrict && matchesMandal && matchesType && matchesNpa;
@@ -111,11 +131,12 @@ export default function Locations() {
 
   const typeOptions = [
     'All',
-    'State Channelizing Agency (SCA)',
+    'All Banks (Public Sector & RRB)',
     'Public Sector Bank',
     'Regional Rural Bank (RRB)',
-    'NBFC-MFI',
+    'State Channelizing Agency (SCA)',
     'Common Services Centre (CSC)',
+    'NBFC-MFI',
     'District Welfare Center',
     'KVIC Facilitation Center'
   ];
@@ -297,12 +318,20 @@ export default function Locations() {
       {/* Results Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
         <h2 style={{ fontSize: '1.25rem', color: '#0B192C', fontWeight: 800, margin: 0 }}>
-          Assistance Centers ({filteredPartners.length})
+          Assistance Centers & Bank Branches ({filteredPartners.length})
         </h2>
         <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
           {(location && location.lat && location.lng) ? 'Sorted by proximity to your current location' : 'Showing verified partner locations'}
         </span>
       </div>
+
+      {/* Multi-Branch Comparative Matrix for Nearby Bank Branches */}
+      {filteredPartners.some(p => p.type?.includes('Bank') || p.type?.includes('RRB') || p.type?.includes('SCA')) && (
+        <BranchComparisonTable 
+          partners={filteredPartners.filter(p => p.type?.includes('Bank') || p.type?.includes('RRB') || p.type?.includes('SCA'))} 
+          onSelectPartner={(partner) => setSelectedCenter(partner)}
+        />
+      )}
 
       {/* Centers Grid */}
       {filteredPartners.length === 0 ? (
@@ -330,37 +359,47 @@ export default function Locations() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
-          {filteredPartners.map(partner => (
-            <div 
-              key={partner.id} 
-              className="card"
-              style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '12px',
-                border: '1px solid #E2E8F0',
-                padding: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
-              }}
-            >
-              <div>
-                {/* Type & Distance Bar */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
-                  <span className="badge badge-central" style={{ fontSize: '0.72rem' }}>
-                    {partner.type}
-                  </span>
-                  
-                  {(() => {
-                    const distVal = partner.calculatedDistance !== undefined && partner.calculatedDistance !== null
-                      ? partner.calculatedDistance
-                      : partner.distanceKm;
-                    const isVal = distVal !== undefined && distVal !== null;
-                    const numDist = isVal ? Number(distVal) : null;
-                    return isVal && !isNaN(numDist) ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.35rem' }}>
+          {filteredPartners.map(partner => {
+            const distVal = partner.calculatedDistance !== undefined && partner.calculatedDistance !== null
+              ? partner.calculatedDistance
+              : (partner.distanceKm || partner.distance);
+            const numDist = distVal !== undefined && distVal !== null ? Number(distVal) : null;
+            const dirUrl = (partner.coordinates?.lat && partner.coordinates?.lng)
+              ? `https://www.google.com/maps/dir/?api=1&destination=${partner.coordinates.lat},${partner.coordinates.lng}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${partner.name} ${partner.address}`)}`;
+
+            return (
+              <div 
+                key={partner.id} 
+                className="card"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '14px',
+                  border: '1px solid #E2E8F0',
+                  padding: '1.35rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.04)'
+                }}
+              >
+                <div>
+                  {/* Type, NPA status & Distance Bar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span className="badge badge-central" style={{ fontSize: '0.72rem', fontWeight: 800 }}>
+                        {partner.type}
+                      </span>
+                      {partner.fundAvailable && (
+                        <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontSize: '0.7rem', fontWeight: 700 }}>
+                          ✓ Active Funds
+                        </span>
+                      )}
+                    </div>
+                    
+                    {numDist !== null && !isNaN(numDist) ? (
                       <span 
                         className="badge" 
                         style={{ 
@@ -373,82 +412,126 @@ export default function Locations() {
                         }}
                       >
                         <Compass size={12} style={{ display: 'inline', marginRight: '3px' }} />
-                        {numDist <= 1 ? 'Within 1 km' : `${numDist.toFixed(1)} km away`}
+                        {numDist <= 1 ? 'Within 1 km' : `${numDist.toFixed(1)} km`}
                       </span>
                     ) : (
-                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Distance unavailable</span>
-                    );
-                  })()}
-                </div>
-
-                {/* Center Title */}
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0B192C', margin: '0 0 0.35rem' }}>
-                  {partner.name}
-                </h3>
-
-                {/* Address */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.85rem', color: '#475569', marginBottom: '0.75rem', lineHeight: 1.4 }}>
-                  <MapPin size={16} style={{ shrink: 0, marginTop: '2px', color: '#D97706' }} />
-                  <span>{partner.address}</span>
-                </div>
-
-                {/* Operating Hours */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#64748B', marginBottom: '0.75rem' }}>
-                  <Clock size={14} style={{ color: '#059669' }} />
-                  <span>{partner.timing || '10:00 AM - 4:30 PM (Mon-Fri)'}</span>
-                </div>
-
-                {/* Supported Services Tags */}
-                {partner.supportedServices && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1rem' }}>
-                    {partner.supportedServices.slice(0, 3).map((srv, idx) => (
-                      <span key={idx} style={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9', color: '#334155', padding: '0.2rem 0.45rem', borderRadius: '4px' }}>
-                        ✓ {srv}
-                      </span>
-                    ))}
+                      <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Distance unavailable</span>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${partner.name} ${partner.address}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline btn-sm"
-                  style={{ flexGrow: 1, fontSize: '0.78rem', justifyContent: 'center' }}
-                  title="Open in Google Maps"
-                >
-                  <Navigation size={13} /> Directions
-                </a>
+                  {/* Center Title */}
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0B192C', margin: '0 0 0.35rem', lineHeight: 1.3 }}>
+                    {partner.name}
+                  </h3>
 
-                {partner.phone && (
+                  {/* IFSC & Travel Estimate Pill Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                    {partner.ifscCode && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#FEF3C7', color: '#92400E', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 700 }}>
+                        <span>IFSC: {partner.ifscCode}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyIfsc(partner.ifscCode)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B45309', padding: '0 0.15rem' }}
+                          title="Copy IFSC Code"
+                        >
+                          {copiedIfsc ? <Check size={12} style={{ color: '#059669' }} /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    )}
+
+                    {numDist !== null && !isNaN(numDist) && (
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                        ~{Math.max(2, Math.ceil(numDist * 2.5))} min drive
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Address */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.85rem', color: '#475569', marginBottom: '0.65rem', lineHeight: 1.4 }}>
+                    <MapPin size={16} style={{ shrink: 0, marginTop: '2px', color: '#D97706' }} />
+                    <span>{partner.address}</span>
+                  </div>
+
+                  {/* Operating Hours & Lunch */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#64748B', marginBottom: '0.65rem' }}>
+                    <Clock size={14} style={{ color: '#059669', shrink: 0 }} />
+                    <span>{partner.timing || '10:00 AM - 4:00 PM (Mon-Fri)'}{partner.lunchTime ? ` • Lunch: ${partner.lunchTime}` : ''}</span>
+                  </div>
+
+                  {/* Phone Helpline Contact */}
+                  {partner.phone && (
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <a
+                        href={`tel:${partner.phone.replace(/[^+\d]/g, '')}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700, fontSize: '0.82rem' }}
+                      >
+                        <Phone size={13} />
+                        <span>{partner.phone}</span>
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Key Facilities or Supported Services */}
+                  {partner.facilities && partner.facilities.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1rem' }}>
+                      {partner.facilities.slice(0, 3).map((f, idx) => (
+                        <span key={idx} style={{ fontSize: '0.72rem', backgroundColor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #DBEAFE', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 600 }}>
+                          • {f}
+                        </span>
+                      ))}
+                    </div>
+                  ) : partner.supportedServices && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1rem' }}>
+                      {partner.supportedServices.slice(0, 3).map((srv, idx) => (
+                        <span key={idx} style={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9', color: '#334155', padding: '0.2rem 0.45rem', borderRadius: '4px' }}>
+                          ✓ {srv}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
                   <a
-                    href={`tel:${partner.phone.replace(/[^+\d]/g, '')}`}
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem' }}
-                    title={`Call ${partner.phone}`}
+                    href={dirUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline btn-sm"
+                    style={{ flexGrow: 1, fontSize: '0.78rem', justifyContent: 'center', color: '#0369A1', borderColor: '#BAE6FD' }}
+                    title="Open Live GPS Route in Google Maps"
                   >
-                    <Phone size={13} />
+                    <Navigation size={13} /> GPS Route
                   </a>
-                )}
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedCenter(partner)}
-                  className="btn btn-primary btn-sm"
-                  style={{ fontSize: '0.78rem' }}
-                >
-                  Details
-                </button>
+                  {partner.phone && (
+                    <a
+                      href={`tel:${partner.phone.replace(/[^+\d]/g, '')}`}
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.78rem', padding: '0.35rem 0.7rem', color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0' }}
+                      title={`Call ${partner.phone}`}
+                    >
+                      <Phone size={13} /> Call
+                    </a>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCenter(partner)}
+                    className="btn btn-primary btn-sm"
+                    style={{ fontSize: '0.78rem', fontWeight: 700 }}
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Center Details Modal */}
+      {/* Enhanced Center & Bank Details Modal */}
       {selectedCenter && (
         <div style={{
           position: 'fixed',
@@ -465,42 +548,171 @@ export default function Locations() {
           padding: '1rem'
         }}>
           <div className="card" style={{
-            maxWidth: '560px',
+            maxWidth: '640px',
             width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
+            borderRadius: '18px',
             padding: '1.75rem',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-            border: '1px solid #E2E8F0'
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #CBD5E1'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-              <div>
-                <span className="badge badge-central">{selectedCenter.type}</span>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0B192C', margin: '0.35rem 0 0' }}>
-                  {selectedCenter.name}
-                </h2>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#0B192C', color: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0 }}>
+                  <Building2 size={22} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <span className="badge badge-central" style={{ fontSize: '0.72rem', fontWeight: 800 }}>
+                      {selectedCenter.type}
+                    </span>
+                    <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontSize: '0.72rem', fontWeight: 700 }}>
+                      ✓ Official Verified Partner
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0B192C', margin: '0.25rem 0 0' }}>
+                    {selectedCenter.name}
+                  </h2>
+                </div>
               </div>
-              <button onClick={() => setSelectedCenter(null)} className="btn btn-sm btn-outline">
+              <button 
+                onClick={() => setSelectedCenter(null)} 
+                className="btn btn-sm btn-outline"
+                style={{ padding: '0.3rem 0.5rem' }}
+              >
                 <X size={16} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem', color: '#334155', marginBottom: '1.5rem' }}>
-              <div><strong>Address:</strong> {selectedCenter.address}</div>
-              <div><strong>Nodal Manager:</strong> {selectedCenter.manager || 'Authorized CSC VLE Operator'}</div>
-              <div><strong>Contact Number:</strong> {selectedCenter.phone || 'Information not available in dataset'}</div>
-              <div><strong>Operating Timings:</strong> {selectedCenter.timing || '10:00 AM - 4:30 PM'}</div>
-              <div>
-                <strong>Supported Welfare Schemes & Services:</strong>
-                <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.25rem', lineHeight: 1.4 }}>
-                  {(selectedCenter.supportedServices || ['MUDRA Sanction', 'PMEGP Subsidy Desk', 'DBT Seed Verification']).map((srv, idx) => (
-                    <li key={idx}>{srv}</li>
+            {/* Main Info Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
+              {selectedCenter.ifscCode && (
+                <div style={{ padding: '0.75rem', backgroundColor: '#FFFBEB', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#92400E', fontWeight: 700 }}>IFSC Code</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 800, fontFamily: 'monospace', color: '#78350F' }}>
+                      {selectedCenter.ifscCode}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyIfsc(selectedCenter.ifscCode)}
+                      className="btn btn-sm btn-outline"
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem', color: '#92400E', borderColor: '#FCD34D' }}
+                    >
+                      {copiedIfsc ? <Check size={13} style={{ color: '#059669' }} /> : <Copy size={13} />}
+                      <span>{copiedIfsc ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedCenter.branchCode && (
+                <div style={{ padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>Branch Code</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, fontFamily: 'monospace', color: '#0F172A', marginTop: '0.2rem' }}>
+                    {selectedCenter.branchCode}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>Nodal Officer / Branch Head</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem' }}>
+                  {selectedCenter.manager || 'Authorized Nodal Officer'}
+                </div>
+              </div>
+
+              {selectedCenter.phone && (
+                <div style={{ padding: '0.75rem', backgroundColor: '#F0FDF4', borderRadius: '10px', border: '1px solid #BBF7D0' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 700 }}>Official Helpline Phone</div>
+                  <div style={{ marginTop: '0.2rem' }}>
+                    <a
+                      href={`tel:${selectedCenter.phone.replace(/[^+\d]/g, '')}`}
+                      style={{ fontSize: '0.92rem', fontWeight: 800, color: '#15803D', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <Phone size={14} /> {selectedCenter.phone}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Address & Timings Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem', color: '#334155', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <MapPin size={18} style={{ color: '#D97706', shrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong style={{ color: '#0F172A' }}>Full Street Address:</strong>
+                  <div style={{ marginTop: '0.15rem' }}>{selectedCenter.address}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '0.2rem' }}>
+                    District: <strong>{selectedCenter.district}</strong> | State: <strong>{selectedCenter.state}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <Clock size={18} style={{ color: '#059669', shrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong style={{ color: '#0F172A' }}>Operating Schedule & Timings:</strong>
+                  <div style={{ marginTop: '0.15rem' }}>
+                    {selectedCenter.timing || '10:00 AM - 4:00 PM (Mon-Fri)'}
+                    {selectedCenter.lunchTime && <span style={{ color: '#D97706', fontWeight: 600 }}> (Lunch: {selectedCenter.lunchTime})</span>}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '0.2rem' }}>
+                    Closed on 2nd & 4th Saturdays, Sundays & National Gazetted Holidays
+                  </div>
+                </div>
+              </div>
+
+              {selectedCenter.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <Mail size={16} style={{ color: '#2563EB', shrink: 0 }} />
+                  <div>
+                    <strong style={{ color: '#0F172A' }}>Email:</strong>{' '}
+                    <a href={`mailto:${selectedCenter.email}`} style={{ color: '#2563EB', textDecoration: 'none', fontWeight: 600 }}>
+                      {selectedCenter.email}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Facilities Checklist */}
+            {selectedCenter.facilities && selectedCenter.facilities.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <ShieldCheck size={16} style={{ color: '#059669' }} />
+                  <span>Available Banking Facilities & Desks:</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  {selectedCenter.facilities.map((fac, fIdx) => (
+                    <span key={fIdx} style={{ fontSize: '0.78rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.6rem', borderRadius: '8px', fontWeight: 600 }}>
+                      ✓ {fac}
+                    </span>
                   ))}
-                </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Supported Welfare Schemes */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>
+                Supported Welfare Schemes & Credit Windows:
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {(selectedCenter.supportedServices || ['MUDRA Sanction', 'PMEGP Subsidy Desk', 'DBT Seed Verification']).map((srv, idx) => (
+                  <span key={idx} style={{ fontSize: '0.78rem', backgroundColor: '#F1F5F9', color: '#334155', padding: '0.25rem 0.6rem', borderRadius: '8px', fontWeight: 600 }}>
+                    {srv}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap', paddingTop: '1rem', borderTop: '1px solid #E2E8F0' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -511,16 +723,26 @@ export default function Locations() {
                 className="btn btn-outline btn-sm"
                 title="Anchor your radar to this center's location"
               >
-                <MapPin size={14} /> Set as My Location
+                <MapPin size={14} /> Set as My Radar
               </button>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedCenter.name} ${selectedCenter.address}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary btn-sm"
-              >
-                <Navigation size={14} /> Open Maps
-              </a>
+
+              {(() => {
+                const dirUrl = (selectedCenter.coordinates?.lat && selectedCenter.coordinates?.lng)
+                  ? `https://www.google.com/maps/dir/?api=1&destination=${selectedCenter.coordinates.lat},${selectedCenter.coordinates.lng}`
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedCenter.name} ${selectedCenter.address}`)}`;
+                return (
+                  <a
+                    href={dirUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <Navigation size={14} /> GPS Navigation
+                  </a>
+                );
+              })()}
+
               <button
                 type="button"
                 onClick={() => {
@@ -528,8 +750,9 @@ export default function Locations() {
                   navigate('/applications', { state: { prefilledNodal: selectedCenter.name } });
                 }}
                 className="btn btn-primary btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}
               >
-                <FileText size={14} /> Apply Assistance Here
+                <FileText size={14} /> Apply Loan at this Branch
               </button>
             </div>
           </div>

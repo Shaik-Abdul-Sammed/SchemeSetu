@@ -17,7 +17,11 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
-  MapPin
+  MapPin,
+  Phone,
+  Navigation,
+  Clock,
+  Compass
 } from 'lucide-react';
 import AudioWaveform from './AudioWaveform';
 import { useLanguage } from '../../context/LanguageContext';
@@ -27,6 +31,7 @@ import { api } from '../../services/api';
 import { mockSchemes } from '../../data/mock/schemes';
 import { formatIndianCurrency } from '../../utils/numberValidator';
 import { parseUserInput } from '../../utils/voiceAssistantEngine';
+import { detectLanguage, askChatGptVoiceAssistant } from '../../utils/voiceChatGptEngine';
 
 // Web Audio API Beep Synthesizer for mic activation feedback
 const playTone = (freq = 600, duration = 0.15) => {
@@ -63,11 +68,27 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [voiceError, setVoiceError] = useState(null);
   const [contextSchemes, setContextSchemes] = useState([]);
+  const [autoDetectedLang, setAutoDetectedLang] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);       // mute TTS output
+  const [interimText, setInterimText] = useState('');  // live transcript preview
 
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const noSpeechRetriesRef = useRef(0);  // auto-retry counter for no-speech
 
   const activeLangCode = typeof lang === 'string' ? lang : (lang?.code || 'EN');
+
+  // Helper to render bold markdown and clean formatted lines like ChatGPT
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
 
   // Helper for voice locales by language code
   const getVoiceLocaleForCode = (code) => {
@@ -119,30 +140,30 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     }, 150);
   };
 
-  // Sample prompt suggestion pills per language
+  // Sample prompt suggestion pills per language (ChatGPT conversational style)
   const getSamplePrompts = () => {
     switch (activeLangCode) {
       case 'HI':
-        return ['₹5 लाख मुद्रा लोन', 'दलित बंधु ₹10L सब्सिडी', 'जरूरी दस्तावेज', 'पास का बैंक सेंटर'];
+        return ['सब्सिडी क्या होती है आसान शब्दों में?', 'किराना दुकान खोलने के लिए लोन', '₹5 लाख मुद्रा लोन बिना गारंटी', 'दलित बंधु ₹10 लाख सरकारी सहायता'];
       case 'TE':
-        return ['₹5 లక్షల ముద్రా రుణం', 'దళిత బంధు ₹10L గ్రాంట్', 'అవసరమైన పత్రాలు', 'దగ్గరలోని బ్యాంక్'];
+        return ['సబ్సిడీ అంటే ఏమిటి సులభంగా?', 'కిరాణా షాపు కోసం లోన్', 'రూ. 5 లక్షల ముద్రా లోన్ వివరాలు', 'దళిత బంధు ₹10లక్షల ఉచిత గ్రాంట్'];
       case 'TA':
-        return ['₹5 லட்சம் முத்ரா கடன்', 'தேவையான ஆவணங்கள்', 'அருகிலுள்ள வங்கி'];
+        return ['மானிய உதவி என்றால் என்ன?', '₹5 லட்சம் முத்ரா கடன்', 'தேவையான ஆவணங்கள்', 'அருகிலுள்ள வங்கி'];
       case 'KN':
-        return ['₹5 ಲಕ್ಷ ಮುದ್ರಾ ಸಾಲ', 'ಅಗತ್ಯ ದಾಖಲೆಗಳು', 'ಹತ್ತಿರದ ಬ್ಯಾಂಕ್'];
+        return ['ಸಬ್ಸಿಡಿ ಎಂದರೇನು ಸುಲಭವಾಗಿ?', '₹5 ಲಕ್ಷ ಮುದ್ರಾ ಸಾಲ', 'ಅಗತ್ಯ ದಾಖಲೆಗಳು', 'ಹತ್ತಿರದ ಬ್ಯಾಂಕ್'];
       case 'ML':
-        return ['₹5 ലക്ഷം മുദ്ര വായ്പ', 'ആവശ്യമായ രേഖകൾ', 'സമീപത്തെ ബാങ്ക്'];
+        return ['സബ്‌സിഡി എന്നാൽ എന്താണ്?', '₹5 ലക്ഷം മുദ്ര വായ്പ', 'ആവശ്യമായ രേഖകൾ', 'സമീപത്തെ ബാങ്ക്'];
       case 'BN':
-        return ['₹৫ লাখ মুদ্রা ঋণ', 'প্রয়োজনীয় নথি', 'নিকটস্থ ব্যাংক'];
+        return ['ভর্তুকি বলতে কী বোঝায়?', '₹৫ লাখ মুদ্রা ঋণ', 'প্রয়োজনীয় নথি', 'নিকটস্থ ব্যাংক'];
       case 'MR':
-        return ['₹५ लाख मुद्रा कर्ज', 'आवश्यक कागदपत्रे', 'जवळील बँक'];
+        return ['सब्सिडी म्हणजे काय सोप्या भाषेत?', '₹५ लाख मुद्रा कर्ज', 'आवश्यक कागदपत्रे', 'जवळील बँक'];
       case 'GON':
-        return ['₹5 लाख लोन सवाल', 'सरकारी सहायता', 'पास के बैंक'];
+        return ['सब्सिडी काय आय?', '₹5 लाख लोन सवाल', 'सरकारी सहायता', 'पास के बैंक'];
       case 'BHI':
-        return ['₹5 लाख लोन पूछो', 'सरकारी योजना', 'नजीक बैंक'];
+        return ['सब्सिडी शुं छे?', '₹5 लाख लोन पूछो', 'सरकारी योजना', 'नजीक बैंक'];
       case 'EN':
       default:
-        return ['₹5L MUDRA Loan', 'SC Dalit Bandhu Grant', 'Required Documents', 'Find Nearest Bank'];
+        return ['What is subsidy in simple words?', 'Loan for opening grocery shop', '₹5L MUDRA collateral-free', 'Dalit Bandhu ₹10L grant'];
     }
   };
 
@@ -255,11 +276,13 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     }
   };
 
-  // Speech Recognition
+  // Speech Recognition — continuous with live interim transcript and auto-retry
   const startListening = () => {
     setVoiceError(null);
+    setInterimText('');
     stopSpeaking();
     playTone(880, 0.12);
+    noSpeechRetriesRef.current = 0;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -267,43 +290,105 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = getVoiceLocale();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setIsListening(false);
-        playTone(440, 0.15);
-        if (transcript && transcript.trim()) {
-          handleSendMessage(transcript.trim());
+    const launchRecognition = (lang) => {
+      try {
+        // Stop previous session if any
+        if (recognitionRef.current) {
+          try { recognitionRef.current.abort(); } catch(e) {}
+          recognitionRef.current = null;
         }
-      };
-      recognition.onerror = (event) => {
-        setIsListening(false);
-        if (event.error !== 'no-speech') {
-          setVoiceError('Speech capture note: Voice recognition ended. You can also type below.');
-        }
-      };
-      recognition.onend = () => setIsListening(false);
 
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (e) {
-      setIsListening(false);
-      setVoiceError('Microphone initialized in text mode.');
-    }
+        const recognition = new SpeechRecognition();
+        recognition.lang = lang || getVoiceLocale();
+        recognition.continuous = true;         // keep mic open until user taps stop
+        recognition.interimResults = true;     // show live transcript as user speaks
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          setIsListening(true);
+          setInterimText('');
+        };
+
+        recognition.onresult = (event) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript;
+            } else {
+              interimTranscript += result[0].transcript;
+            }
+          }
+
+          // Show live preview of what's being spoken
+          if (interimTranscript) setInterimText(interimTranscript);
+
+          // When a final utterance is captured, send it
+          if (finalTranscript.trim()) {
+            setInterimText('');
+            noSpeechRetriesRef.current = 0; // reset retry counter on successful speech
+            playTone(440, 0.15);
+
+            // Auto-detect language and restart recognition in that language if changed
+            const detectedLocale = getVoiceLocaleForCode(detectLanguage(finalTranscript, activeLangCode));
+            const currentLocale = recognition.lang;
+
+            handleSendMessage(finalTranscript.trim());
+
+            // If language changed, restart recognition in new language
+            if (detectedLocale !== currentLocale) {
+              try { recognition.lang = detectedLocale; } catch(e) {}
+            }
+          }
+        };
+
+        recognition.onerror = (event) => {
+          if (event.error === 'no-speech') {
+            // Auto-retry up to 2 times on silence
+            if (noSpeechRetriesRef.current < 2) {
+              noSpeechRetriesRef.current++;
+              try { recognition.start(); } catch(e) {}
+              return;
+            }
+            setInterimText('');
+            setIsListening(false);
+          } else if (event.error === 'aborted') {
+            setIsListening(false);
+            setInterimText('');
+          } else {
+            setIsListening(false);
+            setInterimText('');
+            setVoiceError('Microphone issue. Please tap the mic button to try again, or type below.');
+          }
+        };
+
+        recognition.onend = () => {
+          // Only mark as not listening if we truly stopped (not mid-sentence)
+          if (!interimText) setIsListening(false);
+          setInterimText('');
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (e) {
+        setIsListening(false);
+        setVoiceError('Could not start microphone. Please type your query below.');
+      }
+    };
+
+    launchRecognition(getVoiceLocale());
   };
 
   const stopListening = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      playTone(440, 0.15);
+      try { recognitionRef.current.stop(); } catch(e) {}
+      recognitionRef.current = null;
     }
+    setIsListening(false);
+    setInterimText('');
+    playTone(440, 0.15);
   };
 
   // Local Intent & Knowledge Base Engine
@@ -444,18 +529,23 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     const userText = textToSend || inputText;
     if (!userText || !userText.trim()) return;
 
+    const detected = detectLanguage(userText.trim(), activeLangCode);
+    if (detected !== activeLangCode) {
+      setAutoDetectedLang(detected);
+    }
+
     const userMsg = { sender: 'user', text: userText, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
     setIsProcessing(true);
 
     try {
-      // 1. Unified backend query via /api/v1/voice/parse with real user GPS coordinates and profile
+      // 1. Unified backend query via /api/v1/voice/parse with real user GPS coordinates, detected language, and profile
       let backendRes = null;
       try {
         backendRes = await api.post('/voice/parse', {
           transcript: userText.trim(),
-          lang: activeLangCode,
+          lang: detected,
           lat: location?.lat,
           lng: location?.lng,
           userProfile: user || {}
@@ -471,6 +561,11 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
           matched = mockSchemes.filter(s => s.id === backendRes.verifiedFact.schemeId);
         }
 
+        const effectiveLang = backendRes.detectedLang || detected;
+        if (effectiveLang !== activeLangCode) {
+          setAutoDetectedLang(effectiveLang);
+        }
+
         const botMsg = { 
           sender: 'bot', 
           text: backendRes.responseText, 
@@ -478,32 +573,46 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
           bankResults: backendRes.bankResults || [],
           verifiedFact: backendRes.verifiedFact || null,
           targetPage: backendRes.targetPage || null,
+          quickFollowUps: backendRes.quickFollowUps || [],
+          detectedLang: effectiveLang,
           timestamp: new Date() 
         };
         setMessages(prev => [...prev, botMsg]);
-        speakText(backendRes.responseText);
+        speakText(backendRes.responseText, getVoiceLocaleForCode(effectiveLang));
       } else {
-        // Seamless fallback to client-side intent and knowledge base engine
-        const fallback = processQuery(userText);
+        // Seamless high-intelligence client-side ChatGPT engine fallback
+        const response = askChatGptVoiceAssistant(userText, detected, location, user);
+        const effectiveLang = response.detectedLang || detected;
         const botMsg = { 
           sender: 'bot', 
-          text: fallback.text, 
-          schemes: fallback.schemes || [], 
+          text: response.text, 
+          schemes: response.schemes || [], 
+          bankResults: response.bankResults || [],
+          verifiedFact: response.verifiedFact || null,
+          targetPage: response.targetPage || null,
+          quickFollowUps: response.quickFollowUps || [],
+          detectedLang: effectiveLang,
           timestamp: new Date() 
         };
         setMessages(prev => [...prev, botMsg]);
-        speakText(fallback.text);
+        speakText(response.text, getVoiceLocaleForCode(effectiveLang));
       }
     } catch (e) {
-      const fallback = processQuery(userText);
+      const response = askChatGptVoiceAssistant(userText, detected, location, user);
+      const effectiveLang = response.detectedLang || detected;
       const botMsg = { 
         sender: 'bot', 
-        text: fallback.text, 
-        schemes: fallback.schemes || [], 
+        text: response.text, 
+        schemes: response.schemes || [], 
+        bankResults: response.bankResults || [],
+        verifiedFact: response.verifiedFact || null,
+        targetPage: response.targetPage || null,
+        quickFollowUps: response.quickFollowUps || [],
+        detectedLang: effectiveLang,
         timestamp: new Date() 
       };
       setMessages(prev => [...prev, botMsg]);
-      speakText(fallback.text);
+      speakText(response.text, getVoiceLocaleForCode(effectiveLang));
     } finally {
       setIsProcessing(false);
     }
@@ -558,9 +667,14 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                 <span className="badge" style={{ backgroundColor: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 800 }}>
                   {activeLangCode}
                 </span>
+                {autoDetectedLang && autoDetectedLang !== activeLangCode && (
+                  <span className="badge" style={{ backgroundColor: '#10B981', color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Sparkles size={11} /> Auto: {autoDetectedLang}
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-                Real-time scheme intelligence & voice responses in {activeLangCode}
+                {autoDetectedLang && autoDetectedLang !== activeLangCode ? `Language auto-detected as ${autoDetectedLang}` : `Real-time scheme intelligence & voice responses in ${activeLangCode}`}
               </div>
             </div>
           </div>
@@ -694,10 +808,30 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AudioWaveform isActive={isListening || isSpeaking} />
             <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              {isListening && <span className="animate-pulse" style={{ color: '#DC2626', fontWeight: 700 }}>● Listening in {lang}...</span>}
+              {isListening && <span className="animate-pulse" style={{ color: '#DC2626', fontWeight: 700 }}>● Listening...</span>}
               {isSpeaking && <span style={{ color: '#059669', fontWeight: 600 }}>🔊 Speaking response...</span>}
             </div>
           </div>
+
+          {/* Live Interim Transcript Preview */}
+          {interimText && (
+            <div style={{
+              margin: '0.4rem 0 0 0',
+              padding: '0.5rem 0.9rem',
+              background: 'rgba(100,116,139,0.08)',
+              borderRadius: '12px',
+              border: '1px dashed #CBD5E1',
+              fontSize: '0.88rem',
+              color: '#64748B',
+              fontStyle: 'italic',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}>
+              <span style={{ fontSize: '0.75rem' }}>🎤</span>
+              <span>{interimText}</span>
+            </div>
+          )}
         </div>
 
         {/* Quick Voice Prompt Pills */}
@@ -758,10 +892,11 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                   backgroundColor: msg.sender === 'user' ? '#0284C7' : '#F1F5F9',
                   color: msg.sender === 'user' ? '#FFFFFF' : '#0F172A',
                   fontSize: '0.92rem',
-                  lineHeight: 1.5,
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-wrap',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                 }}>
-                  {msg.text}
+                  {renderFormattedText(msg.text)}
 
                   {/* Optional Scheme Cards Preview */}
                   {msg.schemes && msg.schemes.length > 0 && (
@@ -788,41 +923,91 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Optional Bank Results Preview */}
+                  {/* Enhanced Bank Results Display */}
                   {msg.bankResults && msg.bankResults.length > 0 && (
-                    <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0369A1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Building2 size={15} />
-                        <span>{t('nearbyBranches', 'Nearby Bank Branches')}:</span>
-                      </div>
-                      {msg.bankResults.map((bank, bIdx) => (
-                        <div 
-                          key={bIdx}
-                          style={{
-                            padding: '0.65rem 0.85rem',
-                            backgroundColor: '#FFFFFF',
-                            borderRadius: '8px',
-                            border: '1px solid #BAE6FD',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                          }}
+                    <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0369A1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Building2 size={16} style={{ color: '#0284C7' }} />
+                          <span>{t('nearbyBranches', 'Verified Nearby Bank Branches')}:</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { onClose(); navigate('/locations'); }}
+                          style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'underline' }}
                         >
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>{bank.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
-                              <MapPin size={12} />
+                          View All on Radar →
+                        </button>
+                      </div>
+                      {msg.bankResults.map((bank, bIdx) => {
+                        const dirUrl = (bank.coordinates?.lat && bank.coordinates?.lng)
+                          ? `https://www.google.com/maps/dir/?api=1&destination=${bank.coordinates.lat},${bank.coordinates.lng}`
+                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bank.name + ' ' + (bank.address || ''))}`;
+                        return (
+                          <div 
+                            key={bIdx}
+                            style={{
+                              padding: '0.75rem 0.9rem',
+                              backgroundColor: '#FFFFFF',
+                              borderRadius: '10px',
+                              border: '1px solid #BAE6FD',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.45rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                              <div>
+                                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0F172A' }}>{bank.name}</div>
+                                <span className="badge" style={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '0.68rem', marginTop: '0.2rem', padding: '0.15rem 0.45rem' }}>
+                                  {bank.type || 'Public Sector Bank'}
+                                </span>
+                              </div>
+                              {bank.distanceText && (
+                                <span className="badge" style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontWeight: 800, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                                  <Compass size={11} style={{ display: 'inline', marginRight: '2px' }} />
+                                  {bank.distanceText}
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'flex-start', gap: '0.3rem', lineHeight: 1.35 }}>
+                              <MapPin size={13} style={{ color: '#D97706', shrink: 0, marginTop: '2px' }} />
                               <span>{bank.address || bank.district || 'Branch Service Center'}</span>
                             </div>
+
+                            {bank.timing && (
+                              <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <Clock size={12} style={{ color: '#059669', shrink: 0 }} />
+                                <span>{bank.timing}</span>
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem', paddingTop: '0.45rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
+                              <a
+                                href={dirUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-outline btn-sm"
+                                style={{ fontSize: '0.74rem', padding: '0.25rem 0.6rem', color: '#0369A1', borderColor: '#BAE6FD', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                              >
+                                <Navigation size={12} /> Directions
+                              </a>
+                              {bank.phone && (
+                                <a
+                                  href={`tel:${bank.phone.replace(/[^+\d]/g, '')}`}
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ fontSize: '0.74rem', padding: '0.25rem 0.6rem', color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                >
+                                  <Phone size={12} /> Call {bank.phone}
+                                </a>
+                              )}
+                            </div>
                           </div>
-                          {bank.distanceText && (
-                            <span className="badge" style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontWeight: 800, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                              {bank.distanceText}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -846,12 +1031,44 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                       )}
                     </div>
                   )}
+
+                  {/* Interactive ChatGPT Follow-up Chips */}
+                  {msg.quickFollowUps && msg.quickFollowUps.length > 0 && (
+                    <div style={{ marginTop: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                      {msg.quickFollowUps.map((chip, cIdx) => (
+                        <button
+                          key={cIdx}
+                          type="button"
+                          onClick={() => handleSendMessage(chip)}
+                          style={{
+                            fontSize: '0.75rem',
+                            backgroundColor: '#EFF6FF',
+                            color: '#1D4ED8',
+                            border: '1px solid #BFDBFE',
+                            borderRadius: '14px',
+                            padding: '0.25rem 0.65rem',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#EFF6FF'; }}
+                        >
+                          <Sparkles size={11} style={{ color: '#2563EB' }} />
+                          <span>{chip}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {msg.sender === 'bot' && (
                   <button
                     type="button"
-                    onClick={() => speakText(msg.text)}
+                    onClick={() => speakText(msg.text, getVoiceLocaleForCode(msg.detectedLang || activeLangCode))}
                     style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}
                   >
                     <Volume2 size={13} /> {t('replayAudio', 'Replay Voice')}

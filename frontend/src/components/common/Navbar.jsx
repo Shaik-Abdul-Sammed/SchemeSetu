@@ -78,9 +78,17 @@ export default function Navbar({ onOpenVoiceAssistant }) {
 
   const closeMobile = () => setMobileOpen(false);
 
+  const getLocationSourceBadge = () => {
+    if (!location.locationSource) return '';
+    if (location.locationSource === 'gps') return ' 📡';
+    if (location.locationSource === 'network') return ' 📶';
+    if (location.locationSource === 'ip') return ' 🌐';
+    return '';
+  };
+
   const getLocationDisplayText = () => {
     if (locationStatus === 'detecting') return t('detectingLocation', 'Detecting…');
-    if (location.district && location.state) return `${location.district}, ${location.state}`;
+    if (location.district && location.state) return `${location.district}${getLocationSourceBadge()}`;
     if (location.district) return location.district;
     if (location.state) return location.state;
     if (locationStatus === 'denied' || locationStatus === 'unavailable')

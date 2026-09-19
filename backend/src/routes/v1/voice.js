@@ -25,12 +25,45 @@ const { parseVoiceIntent, extractSlots, normalizeTranscript } = require('../../s
 const dataService = require('../../services/dataService');
 const { verifySchemeFact } = require('../../services/verificationEngine');
 const { haversineDistance, isValidCoordinate } = require('../../utils/haversine');
+const { queryKnowledgeBase } = require('../../services/ragService');
 
 // ── Language → Google Translate code ────────────────────────────────────────
 const LANG_TO_GOOGLE = {
   EN: 'en', HI: 'hi', TE: 'te', TA: 'ta',
   KN: 'kn', ML: 'ml', BN: 'bn', MR: 'mr',
 };
+
+/**
+ * Detect language from script or transliteration keywords
+ */
+function detectLanguage(text = '', defaultLang = 'EN') {
+  if (!text || typeof text !== 'string') return defaultLang || 'EN';
+  const trimmed = text.trim();
+  if (!trimmed) return defaultLang || 'EN';
+
+  // 1. Script-based detection
+  if (/[\u0C00-\u0C7F]/.test(trimmed)) return 'TE';
+  if (/[\u0B80-\u0BFF]/.test(trimmed)) return 'TA';
+  if (/[\u0C80-\u0CFF]/.test(trimmed)) return 'KN';
+  if (/[\u0D00-\u0D7F]/.test(trimmed)) return 'ML';
+  if (/[\u0980-\u09FF]/.test(trimmed)) return 'BN';
+  if (/[\u0900-\u097F]/.test(trimmed)) {
+    if (/(?:^|\s|[.,!?।])(आहे|कशी|सांगा|माझे|मला|नाही|काय|करावे|पाहिजे|मिळेल)(?:$|\s|[.,!?।])/u.test(trimmed)) return 'MR';
+    return 'HI';
+  }
+
+  // 2. Romanized keywords
+  const lower = trimmed.toLowerCase();
+  if (/\b(naaku|ela|kavali|cheppandi|pathakam|dharakhasthu|daggara|namaskaram|undi|raaledu|chudandi|ayithe|enti|edhi|sahayam)\b/.test(lower)) return 'TE';
+  if (/\b(mujhe|kya|kaise|karo|batao|chahiye|yojana|yojna|paise|kisan|dastavej|aavedan|shuru|kitna|milega|samjhao|bataiye|namaste)\b/.test(lower)) return 'HI';
+  if (/\b(enakku|eppadi|venum|thittam|solunga|kadan|vanakkam|illai|evvalavu)\b/.test(lower)) return 'TA';
+  if (/\b(nanage|hege|beku|yojane|heli|namaskara|sallisi)\b/.test(lower)) return 'KN';
+  if (/\b(enikku|enganeya|venam|padhathi|parayu|namaskaram)\b/.test(lower)) return 'ML';
+  if (/\b(aamar|kivabe|chai|prokolpo|bolun|nomoshkar|taka)\b/.test(lower)) return 'BN';
+  if (/\b(mala|kasa|pahije|yojana|saanga|namaskar|ahe)\b/.test(lower)) return 'MR';
+
+  return defaultLang || 'EN';
+}
 
 // ── Multilingual response templates ─────────────────────────────────────────
 const BANK_RESPONSES = {
@@ -81,7 +114,9 @@ router.post('/parse', async (req, res) => {
       return res.status(400).json({ error: 'transcript must not exceed 500 characters.' });
     }
 
-    const appLang = (String(lang).toUpperCase().trim().slice(0, 2)) || 'EN';
+    // Auto-detect language from transcript if different from passed lang
+    const detectedLang = detectLanguage(transcript, String(lang).toUpperCase().trim().slice(0, 2) || 'EN');
+    const appLang = detectedLang;
     const googleLang = LANG_TO_GOOGLE[appLang] || 'en';
 
     // ── 1. Parse intent & extract slots ──────────────────────────────────
@@ -109,6 +144,8 @@ router.post('/parse', async (req, res) => {
     // ── 3. Handle FIND_NEAREST_BANK ──────────────────────────────────────
     let bankResults = null;
     let responseText = null;
+    let quickFollowUps = ['Find Nearest Bank', 'Required Documents', 'Check Eligibility'];
+    let matchedSchemes = [];
 
     if (parsed.intent === 'FIND_NEAREST_BANK') {
       const hasCoords = lat !== undefined && lng !== undefined &&
@@ -145,6 +182,7 @@ router.post('/parse', async (req, res) => {
 
         const templateFn = BANK_RESPONSES[appLang] || BANK_RESPONSES.EN;
         responseText = templateFn(withDist);
+        quickFollowUps = ['Required Documents for Bank', '₹5L MUDRA Loan', 'Apply Online'];
       } else {
         const locationPrompts = {
           EN: 'To find nearby banks, I need your location. Please allow location access or type your city name.',
@@ -156,57 +194,83 @@ router.post('/parse', async (req, res) => {
       }
     }
 
-    // ── 4. Progressive Profile & Source-Backed Responses ────────────────
+    // ── 4. Conversational Knowledge & RAG-Backed ChatGPT Answering ────────
     if (!responseText) {
-      // Check if verifiedFact matches a specific scheme
-      if (verifiedFact && verifiedFact.verificationStatus !== 'uncertain') {
+      const qLower = transcript.toLowerCase();
+      let rawEnResponse = '';
+
+      // Check RAG Knowledge Base first
+      let ragResult = null;
+      try {
+        ragResult = queryKnowledgeBase(transcript, 2, 0.18);
+      } catch (e) {
+        // RAG optional
+      }
+
+      // Greetings
+      if (/^(hi|hello|hey|namaste|vanakkam|namaskaram|nomoshkar|pranam)\b/i.test(qLower) || qLower === 'hi' || qLower === 'hello') {
+        rawEnResponse = "Hello! I am SchemeSetu AI Assistant, here to answer your welfare questions in simple words just like ChatGPT. Ask me about loans, subsidies, eligibility, or how to apply for schemes!";
+        quickFollowUps = ['₹5L MUDRA Loan', 'What is Subsidy?', 'SC Dalit Bandhu Grant', 'Find Nearest Bank'];
+      }
+      // Explanation: What is subsidy?
+      else if (qLower.includes('what is subsidy') || qLower.includes('subsidy kya') || qLower.includes('subsidy ante') || qLower.includes('subsidy')) {
+        rawEnResponse = "In simple words: A subsidy is free financial grant money from the government that you NEVER have to pay back! For example, under PMEGP, if you start a business with ₹10 Lakhs, the government provides up to 35% (₹3.5 Lakh) as a grant, and you only borrow ₹6.5 Lakh from the bank.";
+        quickFollowUps = ['PMEGP 35% Subsidy', 'Collateral-free Loan', 'Required Documents'];
+      }
+      // Explanation: What is collateral-free?
+      else if (qLower.includes('collateral') || qLower.includes('guarantee') || qLower.includes('girvi') || qLower.includes('bina guarantee')) {
+        rawEnResponse = "A collateral-free loan means you do NOT need to mortgage your house, land, or gold. Under government credit guarantee funds (like CGTMSE & CGFMU), the Government of India acts as your guarantor for loans up to ₹20 Lakhs in MUDRA and ₹50 Lakhs in PMEGP.";
+        quickFollowUps = ['Apply for MUDRA', 'PMEGP Subsidy', 'Required Documents'];
+      }
+      // Specific scheme verification fact matched
+      else if (verifiedFact && verifiedFact.verificationStatus !== 'uncertain') {
         const greetingPrefix = mergedProfile.name ? `Hello ${mergedProfile.name}! ` : '';
         const stateNote = mergedProfile.state ? `Based on guidelines for ${mergedProfile.state}, ` : '';
-        const rawEnResponse = `${greetingPrefix}${stateNote}${verifiedFact.schemeName}: ${verifiedFact.structuredFacts.benefitText} Verified via ${verifiedFact.source.title}.`;
-
-        if (googleLang !== 'en') {
-          const translateFn = getTranslateFn();
-          responseText = await translateFn(rawEnResponse, googleLang);
-        } else {
-          responseText = rawEnResponse;
-        }
-      } else {
-        // Generic responses
+        rawEnResponse = `${greetingPrefix}${stateNote}${verifiedFact.schemeName}: ${verifiedFact.structuredFacts.benefitText} Verified via ${verifiedFact.source.title}.`;
+        quickFollowUps = ['What documents are required?', 'Find Nearest Bank', 'Check My Eligibility'];
+      }
+      // RAG Knowledge Base match
+      else if (ragResult && ragResult.found && ragResult.results.length > 0) {
+        const topChunk = ragResult.results[0];
+        const cleanContent = topChunk.excerpt.replace(/\s+/g, ' ').slice(0, 320);
+        rawEnResponse = `Based on verified official guidelines from ${topChunk.docTitle}: ${cleanContent}.`;
+        quickFollowUps = ['How do I apply?', 'Find Nearest Bank', 'Check My Eligibility'];
+      }
+      // Generic Intent responses fallback
+      else {
         const genericResponses = {
-          NAVIGATE_SCHEMES: {
-            EN: 'Opening the government schemes portal for you.',
-            HI: 'आपके लिए सरकारी योजनाओं का पोर्टल खोल रहा हूँ।',
-            TE: 'మీ కోసం ప్రభుత్వ పథకాల పోర్టల్ తెరుస్తున్నాను.',
-          },
-          DISCOVER_SCHEMES: {
-            EN: 'Finding verified government schemes matching your profile.',
-            HI: 'आपकी प्रोफ़ाइल से मेल खाने वाली सत्यापित सरकारी योजनाएं खोज रहा हूँ।',
-            TE: 'మీ ప్రొఫైల్‌కు సరిపోయే ధృవీకరించబడిన ప్రభుత్వ పథకాలను కనుగొంటున్నాను.',
-          },
-          CHECK_STATUS: {
-            EN: 'Opening your application tracking status.',
-            HI: 'आपके आवेदन की स्थिति देख रहा हूँ।',
-            TE: 'మీ దరఖాస్తు స్థితిని చూపిస్తున్నాను.',
-          },
-          CHECK_ELIGIBILITY: {
-            EN: 'Evaluating verified eligibility rules for your profile.',
-            HI: 'आपकी प्रोफ़ाइल के लिए सत्यापित पात्रता नियमों का मूल्यांकन कर रहा हूँ।',
-            TE: 'మీ ప్రొఫైల్ కోసం ధృవీకరించబడిన అర్హత నియమాలను పరిశీలిస్తున్నాను.',
-          },
+          NAVIGATE_SCHEMES: 'Opening the government schemes portal for you. You can explore Central and State welfare initiatives matching your goals.',
+          DISCOVER_SCHEMES: 'Finding verified government schemes matching your profile and business category.',
+          CHECK_STATUS: 'Opening your application tracking status to check live progress.',
+          CHECK_ELIGIBILITY: 'Evaluating verified eligibility rules and subsidy entitlement for your profile.',
         };
 
         const intentResp = genericResponses[parsed.intent];
         if (intentResp) {
-          responseText = intentResp[appLang] || intentResp.EN;
-        } else if (googleLang !== 'en') {
-          const translateFn = getTranslateFn();
-          responseText = await translateFn(
-            `Processing request for ${parsed.intent.replace(/_/g, ' ').toLowerCase()}.`,
-            googleLang
-          );
+          rawEnResponse = intentResp;
         } else {
-          responseText = `Processing request for ${parsed.intent.replace(/_/g, ' ').toLowerCase()}.`;
+          rawEnResponse = `SchemeSetu can assist you with government loans up to ₹20 Lakhs without collateral, subsidies up to 35%, and welfare schemes for entrepreneurs, artisans, farmers, and citizens. What specific assistance would you like to explore?`;
         }
+      }
+
+      // Check for matching schemes in database
+      const allSchemes = dataService.getSchemes ? dataService.getSchemes() : [];
+      matchedSchemes = allSchemes.filter(s => {
+        const sName = (s.name || '').toLowerCase();
+        const sDesc = (s.description || s.summary || '').toLowerCase();
+        return qLower.split(' ').some(w => w.length > 3 && (sName.includes(w) || sDesc.includes(w)));
+      }).slice(0, 3);
+
+      // Translate response to target language if not English
+      if (googleLang !== 'en' && rawEnResponse) {
+        try {
+          const translateFn = getTranslateFn();
+          responseText = await translateFn(rawEnResponse, googleLang);
+        } catch (e) {
+          responseText = rawEnResponse;
+        }
+      } else {
+        responseText = rawEnResponse;
       }
     }
 
@@ -222,8 +286,11 @@ router.post('/parse', async (req, res) => {
       userProfile: mergedProfile,
       verifiedFact,
       bankResults,
+      matchedSchemes,
+      quickFollowUps,
       responseText,
       responseLang: appLang,
+      detectedLang: appLang,
       normalized: parsed.normalized,
     });
 
@@ -239,3 +306,4 @@ router.get('/health', (_req, res) => {
 });
 
 module.exports = router;
+module.exports.detectLanguage = detectLanguage;

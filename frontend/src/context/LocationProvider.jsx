@@ -743,14 +743,76 @@ export function LocationProvider({ children }) {
     return false;
   }, [refreshPartnerDistances]);
 
-  // Real Browser Geolocation API
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3-Layer Location Detection: GPS → Cell/WiFi → IP
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const applyGPSPosition = useCallback(async (pos, sourceLabel) => {
+    const { latitude, longitude, accuracy } = pos.coords;
+    const timestamp = pos.timestamp || Date.now();
+
+    const debugData = {
+      rawLat: latitude,
+      rawLng: longitude,
+      rawAccuracy: accuracy ? Math.round(accuracy) : null,
+      rawTimestamp: new Date(timestamp).toISOString(),
+      reverseGeocodeResult: null,
+      reverseGeocodeSource: sourceLabel,
+      centroidDistanceKm: null,
+      centroidTrusted: null
+    };
+
+    const details = await reverseGeocode(latitude, longitude);
+    debugData.reverseGeocodeResult = `${details.district || details.city || '(unknown district)'}, ${details.state || '(unknown state)'}`;
+    debugData.reverseGeocodeSource = details.source;
+    debugData.centroidDistanceKm = details.centroidDistanceKm;
+    debugData.centroidTrusted = details.centroidTrusted;
+    setGpsDebug(debugData);
+
+    let accuracyWarning = '';
+    if (accuracy && accuracy > 1000) {
+      accuracyWarning = `Location accuracy is low (±${Math.round(accuracy)} m). Move to an open area for a better reading.`;
+    }
+
+    const gpsLoc = {
+      lat: latitude,
+      lng: longitude,
+      accuracy: accuracy ? Math.round(accuracy) : null,
+      timestamp,
+      state: details.state,
+      district: details.district,
+      address: details.address,
+      isGPS: true,
+      isDemo: false,
+      accuracyWarning,
+      geocodeSource: details.source,
+      centroidTrusted: details.centroidTrusted,
+      locationSource: sourceLabel  // 'gps' | 'network' | 'ip'
+    };
+
+    setLocation(gpsLoc);
+    setLocationStatus('detected');
+    localStorage.setItem('schemesetu_location', JSON.stringify(gpsLoc));
+    localStorage.setItem('schemesetu_location_status', 'detected');
+    refreshPartnerDistances(latitude, longitude);
+  }, [reverseGeocode, refreshPartnerDistances]);
+
+  // Layer 2 — Cell tower / WiFi network triangulation
+  const detectNetworkLocation = useCallback(() => {
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => { await applyGPSPosition(pos, 'network'); resolve(true); },
+        () => resolve(false),
+        { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+      );
+    });
+  }, [applyGPSPosition]);
+
+  // Main entry — 3-layer detection: GPS → Network → IP
   const detectCurrentGPSLocation = useCallback((forceFresh = false) => {
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       detectIPLocation().then(success => {
-        if (!success) {
-          setLocationStatus('unsupported');
-          setErrorMessage('GPS location is not supported by this browser.');
-        }
+        if (!success) { setLocationStatus('unsupported'); setErrorMessage('GPS location is not supported by this browser.'); }
       });
       return;
     }
@@ -758,140 +820,54 @@ export function LocationProvider({ children }) {
     setLocationStatus('detecting');
     setErrorMessage('');
 
-    const geoOptions = {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0 // Always request fresh — never rely on cached
-    };
+    // Layer 1 — GPS chip (high accuracy, ≤300m preferred)
+    const geoOptionsGPS = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
-        const timestamp = pos.timestamp || Date.now();
-
-        console.log('\n==============================');
-        console.log('GPS RAW RESULT');
-        console.log(`latitude = ${latitude}`);
-        console.log(`longitude = ${longitude}`);
-        console.log(`accuracy = ${accuracy} m`);
-        console.log(`timestamp = ${new Date(timestamp).toISOString()}`);
-        console.log('==============================\n');
-
-        console.log('\n==============================');
-        console.log('LOCATION STATE');
-        console.log(`latitude = ${latitude}`);
-        console.log(`longitude = ${longitude}`);
-        console.log(`accuracy = ${accuracy} m`);
-        console.log('==============================\n');
-
-        // Store raw debug data FIRST, before any transformation
-        const debugData = {
-          rawLat: latitude,
-          rawLng: longitude,
-          rawAccuracy: accuracy ? Math.round(accuracy) : null,
-          rawTimestamp: new Date(timestamp).toISOString(),
-          reverseGeocodeResult: null,
-          reverseGeocodeSource: null,
-          centroidDistanceKm: null,
-          centroidTrusted: null
-        };
-
-        const details = await reverseGeocode(latitude, longitude);
-
-        console.log('\n==============================');
-        console.log('PARTNER SEARCH INPUT');
-        console.log(`latitude = ${latitude}`);
-        console.log(`longitude = ${longitude}`);
-        console.log('==============================\n');
-
-        // Update debug with reverse geocode results
-        debugData.reverseGeocodeResult = `${details.district || details.city || '(unknown district)'}, ${details.state || '(unknown state)'}`;
-        debugData.reverseGeocodeSource = details.source;
-        debugData.centroidDistanceKm = details.centroidDistanceKm;
-        debugData.centroidTrusted = details.centroidTrusted;
-        setGpsDebug(debugData);
-
-        let accuracyWarning = '';
-        if (accuracy && accuracy > 1000) {
-          accuracyWarning = `GPS accuracy is low (±${Math.round(accuracy)} m). Move to an open area and try again.`;
+        const { accuracy } = pos.coords;
+        // If GPS accuracy is very poor (>300m), try network layer first, then accept whichever is better
+        if (accuracy && accuracy > 300) {
+          const networkSuccess = await detectNetworkLocation();
+          // Only fall back to raw GPS if network also fails
+          if (!networkSuccess) {
+            await applyGPSPosition(pos, 'gps');
+          }
+        } else {
+          await applyGPSPosition(pos, 'gps');
         }
-
-        const gpsLoc = {
-          lat: latitude,
-          lng: longitude,
-          accuracy: accuracy ? Math.round(accuracy) : null,
-          timestamp,
-          state: details.state,
-          district: details.district,
-          address: details.address,
-          isGPS: true,
-          isDemo: false,
-          accuracyWarning,
-          geocodeSource: details.source,
-          centroidTrusted: details.centroidTrusted
-        };
-
-        setLocation(gpsLoc);
-        setLocationStatus('detected');
-        localStorage.setItem('schemesetu_location', JSON.stringify(gpsLoc));
-        localStorage.setItem('schemesetu_location_status', 'detected');
-        refreshPartnerDistances(latitude, longitude);
       },
-      (err) => {
-        let status = 'unavailable';
-        let msg = 'Your device could not determine the current location.';
-        
-        if (err.code === 1) { // PERMISSION_DENIED
-          status = 'denied';
-          msg = 'Location permission was denied. Please select your State & District manually.';
-          setLocationStatus(status);
-          setErrorMessage(msg);
-          localStorage.setItem('schemesetu_location_status', status);
-          setGpsDebug({
-            rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
-            reverseGeocodeResult: `Error: ${msg}`,
-            reverseGeocodeSource: 'permission_denied',
-            centroidDistanceKm: null,
-            centroidTrusted: null
-          });
+      async (err) => {
+        if (err.code === 1) { // PERMISSION_DENIED — no fallback possible
+          setLocationStatus('denied');
+          setErrorMessage('Location permission was denied. Please select your State & District manually.');
+          localStorage.setItem('schemesetu_location_status', 'denied');
+          setGpsDebug({ rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
+            reverseGeocodeResult: 'Permission denied', reverseGeocodeSource: 'permission_denied',
+            centroidDistanceKm: null, centroidTrusted: null });
           return;
-        } else if (err.code === 2) { // POSITION_UNAVAILABLE
-          status = 'unavailable';
-          msg = 'Device could not determine precise GPS coordinates. You can select your State & District manually.';
-        } else if (err.code === 3) { // TIMEOUT
-          status = 'timeout';
-          msg = 'GPS detection timed out. Please try again or select your location manually.';
         }
 
-        setLocationStatus(status);
-        setErrorMessage(msg);
-        localStorage.setItem('schemesetu_location_status', status);
+        // Layer 2 — Cell tower / WiFi triangulation
+        const networkSuccess = await detectNetworkLocation();
+        if (networkSuccess) return;
 
-        setGpsDebug({
-          rawLat: null, rawLng: null, rawAccuracy: null, rawTimestamp: null,
-          reverseGeocodeResult: `Error: ${msg}`,
-          reverseGeocodeSource: 'error',
-          centroidDistanceKm: null,
-          centroidTrusted: null
-        });
-
-        // Only attempt IP fallback if user does not already have a valid manual or saved location
+        // Layer 3 — IP geolocation (always gives at least city/state)
         const savedLoc = localStorage.getItem('schemesetu_location');
         let hasSaved = false;
-        if (savedLoc) {
-          try {
-            const p = JSON.parse(savedLoc);
-            if (p.state && p.district) hasSaved = true;
-          } catch (e) {}
-        }
+        if (savedLoc) { try { const p = JSON.parse(savedLoc); if (p.state && p.district) hasSaved = true; } catch(e) {} }
 
         if (!hasSaved) {
-          detectIPLocation();
+          const ipSuccess = await detectIPLocation();
+          if (!ipSuccess) {
+            setLocationStatus('unavailable');
+            setErrorMessage('Could not determine your location. Please select State & District manually.');
+          }
         }
       },
-      geoOptions
+      geoOptionsGPS
     );
-  }, [reverseGeocode, refreshPartnerDistances, detectIPLocation]);
+  }, [applyGPSPosition, detectNetworkLocation, detectIPLocation]);
 
   // Refresh Location Action: Forces a fresh GPS reading
   const refreshLocation = useCallback(() => {

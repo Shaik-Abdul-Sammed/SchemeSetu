@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import InstallAppBanner from './components/common/InstallAppBanner';
@@ -36,7 +36,7 @@ export default function App() {
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useRouterLocation();
 
   useEffect(() => {
     setupCapacitorApp({
@@ -57,7 +57,7 @@ export default function App() {
         <InstallAppBanner />
         <OfflineIndicator />
         <Navbar onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />
-        <main style={{ flexGrow: 1, paddingBottom: '70px' }}>
+        <main style={{ flexGrow: 1, paddingBottom: '70px', paddingTop: '0' }}>
           <Routes>
             <Route path="/" element={<Home onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />} />
             <Route path="/home" element={<Home onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />} />

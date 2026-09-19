@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node start.js",
     "dev": "node start.js",
-    "test": "node test_deep_architecture_suite.js && node test_location_accuracy_suite.js && node test_all_states_location_accuracy.js && node test_voice_accuracy_suite.js && node test_adversarial_accuracy.js && node test_multilingual_v3.js && node test_v4_assistant.js && node test_100_improvements.js && node test_100_pages_deploy.js",
+    "test": "node test_deep_architecture_suite.js && node test_location_accuracy_suite.js && node test_all_states_location_accuracy.js && node test_voice_accuracy_suite.js && node test_adversarial_accuracy.js && node test_multilingual_v3.js && node test_v4_assistant.js && node test_100_improvements.js && node test_100_pages_deploy.js && node test_chatgpt_voice_assistant.js",
     "build": "cd frontend && npm run build"
   },
   "devDependencies": {

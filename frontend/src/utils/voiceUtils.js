@@ -7,6 +7,7 @@
 const FILLER_WORDS_RE = /\b(umm?|uh+|er+|ah+|like|you know|basically|actually|please|kindly|i want to|i'd like to|i need|help me|show me|take me to|open|go to|navigate to|let me see)\b/gi;
 
 const SPOKEN_NUMBERS = {
+  // English
   zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5,
   six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
@@ -15,6 +16,30 @@ const SPOKEN_NUMBERS = {
   eighty: 80, ninety: 90, hundred: 100, thousand: 1000,
   lakh: 100000, lakhs: 100000, lac: 100000, lacs: 100000,
   crore: 10000000, crores: 10000000,
+
+  // Telugu
+  'ఒకటి': 1, 'ఒక': 1, 'రెండు': 2, 'మూడు': 3, 'నాలుగు': 4, 'ఐదు': 5,
+  'ఆరు': 6, 'ఏడు': 7, 'ఎనిమిది': 8, 'తొమ్మిది': 9, 'పది': 10,
+  'ఇరవై': 20, 'ముప్పై': 30, 'నలభై': 40, 'అభై': 50, 'యాభై': 50,
+  'అరవై': 60, 'డెబ్బై': 70, 'ఎనభై': 80, 'తొంబై': 90, 'వంద': 100,
+  'వేలు': 1000, 'వేల': 1000, 'లక్ష': 100000, 'లక్షలు': 100000, 'లక్షల': 100000, 'లాఖ్': 100000,
+  'కోటి': 10000000, 'కోట్లు': 10000000,
+
+  // Hindi (Devanagari)
+  'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
+  'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+  'बीस': 20, 'तीस': 30, 'चालिस': 40, 'पचास': 50, 'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90, 'सौ': 100,
+  'हजार': 1000, 'हज़ार': 1000, 'लाख': 100000, 'करोड़': 10000000,
+
+  // Kannada
+  'ಒಂದು': 1, 'ಎರಡು': 2, 'ಮೂರು': 3, 'ನಾಲ್ಕು': 4, 'ಐದು': 5,
+  'ಆರು': 6, 'ಏಳು': 7, 'ಎಂಟು': 8, 'ಒಂಬತ್ತು': 9, 'ಹತ್ತು': 10,
+  'ಸಾವಿರ': 1000, 'ಲಕ್ಷ': 100000, 'ಕೋಟಿ': 10000000,
+
+  // Tamil
+  'ஒன்று': 1, 'இரண்டு': 2, 'மூன்று': 3, 'நான்கு': 4, 'ஐந்து': 5,
+  'ஆறு': 6, 'ஏழு': 7, 'எட்டு': 8, 'ஒன்பது': 9, 'பத்து': 10,
+  'ஆயிரம்': 1000, 'லட்சம்': 100000, 'கோடி': 10000000,
 };
 
 /**
@@ -23,12 +48,25 @@ const SPOKEN_NUMBERS = {
  * "two crore" → "20000000"
  */
 export function parseSpokenCurrency(text) {
+  if (!text) return '';
+  let result = text;
+
+  // 1. English spoken numbers
   const pattern = /(\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b)\s*(\b(?:lakh|lac|crore|lacs|lakhs|crores|thousand|million|billion)\b)/gi;
-  return text.replace(pattern, (_, numWord, multWord) => {
+  result = result.replace(pattern, (_, numWord, multWord) => {
     const n = SPOKEN_NUMBERS[numWord.toLowerCase()] || 0;
     const m = SPOKEN_NUMBERS[multWord.toLowerCase()] || 1;
     return String(n * m);
   });
+
+  // 2. Indic spoken numbers
+  for (const [word, val] of Object.entries(SPOKEN_NUMBERS)) {
+    if (word.length > 1 && !/^[a-z]+$/i.test(word) && result.includes(word)) {
+      result = result.replace(new RegExp(word, 'g'), String(val));
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -71,18 +109,40 @@ export function normalizeTranscript(raw = '') {
  * Extract the best numeric amount from a normalized transcript.
  * Returns null if no number found.
  *
- * Handles: "500000", "3L", "3.5 lakh", "₹50,000"
+ * Handles: "500000", "3L", "3.5 lakh", "₹50,000", "10 లక్షలు", "పది లక్షలు"
  */
 export function extractAmount(text) {
+  if (!text) return null;
   const cleaned = text.replace(/₹/g, '').replace(/,/g, '');
 
-  const lakhShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[lL](?:akh)?/);
-  if (lakhShort) return Math.round(parseFloat(lakhShort[1]) * 100000);
+  let normalizedDigits = cleaned;
+  for (const [word, val] of Object.entries(SPOKEN_NUMBERS)) {
+    if (word.length > 1 && !/^[a-z]+$/i.test(word) && normalizedDigits.includes(word)) {
+      normalizedDigits = normalizedDigits.replace(new RegExp(word, 'g'), String(val));
+    }
+  }
 
-  const kShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[kK]/);
-  if (kShort) return Math.round(parseFloat(kShort[1]) * 1000);
+  // 1. Lakhs multiplier (English & 9 Indic scripts)
+  const lakhMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l|लाख|लक्ष|లక్ష|లక్షలు|లక్షల|లాఖ్|லட்சம்|லட்சங்கள்|ലക്ഷം|ലാഖ്|ലാഖ്|লাখ|লক্ষ|ಲಕ್ಷ|ಲಕ್ಷಗಳು)/i)
+                 || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l|लाख|लक्ष|లక్ష|లక్షలు|లక్షల|లాఖ్|லட்சம்|லட்சங்கள்|ലക്ഷം|ലാഖ്|লাখ|লক্ষ|ಲಕ್ಷ|ಲಕ್ಷಗಳು)/i);
+  if (lakhMatch) return Math.round(parseFloat(lakhMatch[1]) * 100000);
 
-  const plain = cleaned.match(/\d+(?:\.\d+)?/);
+  // 2. Thousands multiplier
+  const kMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand|हजार|हज़ार|వేలు|వేల|ஆயிரம்|ஆயிரங்கள்|ஆയിരം|ഹাজার|হাজ়ার|ಸಾಫಿರ|ಸಾವಿರ)/i)
+              || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand|हजार|हज़ार|వేలు|వేల|ஆயிரம்|ஆயிரங்கள்|ஆയിരം|ഹাজার|হাজ়ার|ಸಾಫಿರ|ಸಾವಿರ)/i);
+  if (kMatch) return Math.round(parseFloat(kMatch[1]) * 1000);
+
+  // 3. Crores multiplier
+  const croreMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:cr|crore|crores|करोड़|करोड|కోటి|కోట్లు|గోడి|கோடிகள்|കോടി|കോട്ടി|ಕೋಟಿ)/i)
+                  || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:cr|crore|crores|करोड़|करोड|కోటి|కోట్లు|గోడి|கோடிகள்|കോടി|കോട്ടി|ಕೋಟಿ)/i);
+  if (croreMatch) return Math.round(parseFloat(croreMatch[1]) * 10000000);
+
+  // 4. Large plain numbers (e.g. 500000)
+  const plainNum = normalizedDigits.match(/\b\d{4,9}\b/) || cleaned.match(/\b\d{4,9}\b/);
+  if (plainNum) return Math.round(parseFloat(plainNum[0]));
+
+  // 5. Fallback plain numbers
+  const plain = normalizedDigits.match(/\d+(?:\.\d+)?/) || cleaned.match(/\d+(?:\.\d+)?/);
   if (plain) return Math.round(parseFloat(plain[0]));
 
   return null;

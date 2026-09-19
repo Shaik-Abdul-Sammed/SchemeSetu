@@ -53,12 +53,18 @@ function calculateEmi(req, res, next) {
       });
     }
 
+    const moratoriumMode = (body.moratoriumMode || 'INTEREST_PAID_DURING_MORATORIUM').toUpperCase();
     const monthlyRate = nAnnualRate > 0 ? (nAnnualRate / 12 / 100) : 0;
     const repaymentMonths = nTenureMonths - nMoratoriumMonths;
 
-    // During moratorium, accrue simple monthly interest on principal
-    const accruedInterest = nPrincipal * monthlyRate * nMoratoriumMonths;
-    const loanAmount = nPrincipal + accruedInterest;
+    // Moratorium interest calculation based on explicit scheme rule
+    const monthlyMoratoriumInterest = Math.round(nPrincipal * monthlyRate * 100) / 100;
+    const accruedInterest = Math.round(nPrincipal * monthlyRate * nMoratoriumMonths * 100) / 100;
+
+    let loanAmount = nPrincipal;
+    if (moratoriumMode === 'INTEREST_CAPITALIZED') {
+      loanAmount = nPrincipal + accruedInterest;
+    }
 
     let emi = 0;
     if (nAnnualRate === 0 || monthlyRate === 0) {
@@ -68,23 +74,37 @@ function calculateEmi(req, res, next) {
       emi = loanAmount * ((monthlyRate * compoundFactor) / (compoundFactor - 1));
     }
 
-    const totalPayment = emi * repaymentMonths;
-    const totalInterest = totalPayment - nPrincipal;
+    emi = Math.round(emi * 100) / 100;
+    
+    let totalPayment = 0;
+    let totalInterest = 0;
+
+    if (moratoriumMode === 'INTEREST_PAID_DURING_MORATORIUM') {
+      totalPayment = Math.round(((emi * repaymentMonths) + accruedInterest) * 100) / 100;
+      totalInterest = Math.round((totalPayment - nPrincipal) * 100) / 100;
+    } else {
+      totalPayment = Math.round((emi * repaymentMonths) * 100) / 100;
+      totalInterest = Math.round((totalPayment - nPrincipal) * 100) / 100;
+    }
 
     return res.status(200).json({
       principal: Math.round(nPrincipal * 100) / 100,
-      accruedInterest: Math.round(accruedInterest * 100) / 100,
+      monthlyMoratoriumInterest,
+      accruedInterest,
       loanAmount: Math.round(loanAmount * 100) / 100,
       annualRate: nAnnualRate,
       tenureMonths: nTenureMonths,
       moratoriumMonths: nMoratoriumMonths,
+      moratoriumMode,
       repaymentMonths,
       monthlyRate: Math.round(monthlyRate * 100000000) / 100000000,
-      emi: Math.round(emi * 100) / 100,
-      totalPayment: Math.round(totalPayment * 100) / 100,
-      totalInterest: Math.round(totalInterest * 100) / 100,
+      emi,
+      totalPayment,
+      totalInterest,
       currency: 'INR',
-      moratoriumAssumption: 'Simple monthly interest is accrued during the moratorium period on the principal and capitalized into the total loan amount before standard EMI calculation across the remaining repayment tenure.'
+      moratoriumAssumption: moratoriumMode === 'INTEREST_PAID_DURING_MORATORIUM'
+        ? 'Beneficiary pays simple monthly interest during moratorium period; EMI applies strictly to original principal across remaining tenure.'
+        : 'Simple monthly interest accrued during moratorium is capitalized into principal prior to standard EMI calculation.'
     });
   } catch (err) {
     next(err);

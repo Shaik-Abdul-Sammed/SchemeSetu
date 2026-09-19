@@ -10,9 +10,10 @@
  * Also provides the correct BCP-47 locale for Web Speech API
  * and the Google Translate code for backend calls.
  */
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { detectLanguage, resolveEffectiveLang, getMixedLanguageLabel } from '../utils/languageDetector';
 import { getDefaultLangForState, SUPPORTED_LANGUAGES } from '../data/stateLanguageMap';
+import { useLanguage } from '../context/LanguageContext';
 
 const CONFIDENCE_THRESHOLD = 0.65; // Minimum confidence to trust detection
 
@@ -22,10 +23,19 @@ const CONFIDENCE_THRESHOLD = 0.65; // Minimum confidence to trust detection
  * @param {string|null} [options.initialExplicit] - Pre-set user choice from localStorage
  */
 export default function useLanguageDetection({ stateName, initialExplicit = null } = {}) {
+  const { lang: globalLang } = useLanguage();
+
   // Tier 1: Explicit user preference ('AUTO' = let system decide)
   const [explicitLang, setExplicitLang] = useState(
-    () => initialExplicit || localStorage.getItem('schemesetu_lang_pref') || 'AUTO'
+    () => initialExplicit || localStorage.getItem('schemesetu_lang') || localStorage.getItem('schemesetu_lang_pref') || 'AUTO'
   );
+
+  // Sync with global language context when updated via Navbar or elsewhere
+  useEffect(() => {
+    if (globalLang && globalLang !== 'AUTO' && SUPPORTED_LANGUAGES[globalLang] && explicitLang !== globalLang) {
+      setExplicitLang(globalLang);
+    }
+  }, [globalLang, explicitLang]);
 
   // Tier 2: Detection result from last transcript
   const [detectionResult, setDetectionResult] = useState(null);

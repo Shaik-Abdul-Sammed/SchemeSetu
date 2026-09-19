@@ -48,6 +48,7 @@ const BANK_RESPONSES = {
 // ── Helper: translate via google-translate-api ──────────────────────────────
 let _translateFn = null;
 function getTranslateFn() {
+  if (!process.env.XDG_CONFIG_HOME) process.env.XDG_CONFIG_HOME = '/tmp';
   if (!_translateFn) {
     try {
       const translate = require('google-translate-api');

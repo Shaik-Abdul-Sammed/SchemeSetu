@@ -1,3 +1,4 @@
+process.env.XDG_CONFIG_HOME = '/tmp';
 process.env.NODE_ENV = 'test';
 const http = require('http');
 const assert = require('assert');
@@ -1112,7 +1113,8 @@ async function runAllTests() {
     });
 
     await test('Downloads sample data directory contains demo person files', async () => {
-      const dlDir = '/home/user/Downloads/Sampledata/demo-person';
+      const fallbackDir = path.resolve(__dirname, '../../../database/sample-data/demo-person');
+      const dlDir = fs.existsSync('/home/user/Downloads/Sampledata/demo-person') ? '/home/user/Downloads/Sampledata/demo-person' : fallbackDir;
       assert(fs.existsSync(path.join(dlDir, 'demo-person-sc-profile.json')));
       assert(fs.existsSync(path.join(dlDir, 'demo-person-multiple-profiles.csv')));
     });

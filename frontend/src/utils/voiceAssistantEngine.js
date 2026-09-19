@@ -141,22 +141,49 @@ export const SEQUENTIAL_FIELD_PROMPTS = {
   }
 };
 
+const WORD_TO_NUMBER = {
+  'ek': 1, 'एक': 1, 'ఒకటి': 1, 'ఒక': 1, 'ஒரு': 1, '<ctrl42>ఒందు': 1, 'ഒരു': 1, 'এক': 1,
+  'do': 2, 'दो': 2, 'రెండు': 2, 'இரண்டு': 2, 'ఎరడు': 2, 'രണ്ട്': 2, 'দুই': 2,
+  'teen': 3, 'तीन': 3, 'మూడు': 3, 'మూణ్ణు': 3, 'மூன்று': 3, 'మూరు': 3, 'മൂന്ന്': 3, 'তিন': 3,
+  'char': 4, 'चार': 4, 'నాలుగు': 4, 'நான்கு': 4, 'నాలుకు': 4, 'നാല്': 4, 'চার': 4,
+  'paanch': 5, 'पांच': 5, 'पंच': 5, 'ఐదు': 5, 'ஐந்து': 5, 'ഐദു': 5, 'അഞ്ച്': 5, 'পাঁচ': 5,
+  'chah': 6, 'छह': 6, 'ఆరు': 6, 'ஆறு': 6, 'ఆరు': 6, 'ആറ്': 6, 'ছয়': 6,
+  'saat': 7, 'सात': 7, 'ఏడు': 7, 'ஏழு': 7, 'ఏళు': 7, 'ഏഴ്': 7, 'সাত': 7,
+  'aath': 8, 'आठ': 8, 'ఎనిమిది': 8, 'எட்டு': 8, 'ఎంటు': 8, 'എട്ട്': 8, 'আট': 8,
+  'nau': 9, 'नौ': 9, 'తొమ్మిది': 9, 'ஒன்பது': 9, 'ఒంబత్తు': 9, 'ഒൻപത്': 9, 'নয়': 9,
+  'das': 10, 'दस': 10, 'పది': 10, 'பத்து': 10, 'హత్తు': 10, 'പത്ത്': 10, 'দশ': 10
+};
+
 /**
  * Extract numerical value for money (handling lakhs, thousands, numerals in English & Indian languages)
  */
 export function extractIncomeOrAmount(text) {
-  const lower = text.toLowerCase();
+  if (!text) return null;
+  const lower = text.toLowerCase().trim();
   
-  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lakhs|lac|lacs|l|लाख|లక్ష|లక్షల|ലക്ഷം|লাখ)/i);
+  // 1. Direct numerals with Lakh multiplier
+  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lakhs|lac|lacs|l|लाख|లక్ష|లక్షల|லட்சம்|ലക്ഷം|লাখ)/i);
   if (lakhMatch) {
     return Math.round(parseFloat(lakhMatch[1]) * 100000);
   }
 
-  const kMatch = lower.match(/(\d+(\.\d+)?)\s*(k|thousand|हजार|వేలు|వేల|ആയിരം|হাজার)/i);
+  // 2. Direct numerals with Thousand multiplier
+  const kMatch = lower.match(/(\d+(\.\d+)?)\s*(k|thousand|हजार|వేలు|వేల|ஆயிரம்|ആയിരം|হাজার)/i);
   if (kMatch) {
     return Math.round(parseFloat(kMatch[1]) * 1000);
   }
 
+  // 3. Spoken Indic numbers with Lakh or Thousand
+  for (const [word, num] of Object.entries(WORD_TO_NUMBER)) {
+    if (lower.includes(`${word} lakh`) || lower.includes(`${word} लाख`) || lower.includes(`${word} లక్ష`) || lower.includes(`${word} లక్షల`)) {
+      return num * 100000;
+    }
+    if (lower.includes(`${word} thousand`) || lower.includes(`${word} हजार`) || lower.includes(`${word} వేలు`)) {
+      return num * 1000;
+    }
+  }
+
+  // 4. Standalone numerals
   const numMatches = text.match(/\b\d{4,8}\b/g);
   if (numMatches && numMatches.length > 0) {
     return parseInt(numMatches[0], 10);
@@ -311,6 +338,16 @@ export function getMissingFields(criteria) {
 export function generateAssistantResponse(criteria, lang = 'EN') {
   const missing = getMissingFields(criteria);
 
+  let incomeWarning = '';
+  if (criteria.income && Number(criteria.income) > 500000) {
+    const warningMap = {
+      EN: "Note: Reported annual income exceeds the ₹5.00 Lakh NSFDC concessional ceiling. Commercial central schemes will be matched instead. ",
+      HI: "नोट: आपकी बताई गई वार्षिक आय NSFDC ₹5.00 लाख सीमा से अधिक है। अन्य केंद्रीय योजनाएं खोजी जाएंगी। ",
+      TE: "గమనిక: మీ ఆదాయం ₹5.00 లక్షల పరిమితిని మించిపోయింది. ఇతర కేంద్ర పథకాలు సమీక్షించబడతాయి. "
+    };
+    incomeWarning = warningMap[lang] || warningMap.EN;
+  }
+
   if (missing.length === 0) {
     const successMessages = {
       EN: "Thank you! I have gathered all necessary information. SchemeSetu is now finding your matched government schemes...",
@@ -324,7 +361,7 @@ export function generateAssistantResponse(criteria, lang = 'EN') {
     };
     return {
       isComplete: true,
-      text: successMessages[lang] || successMessages.EN,
+      text: incomeWarning + (successMessages[lang] || successMessages.EN),
       nextField: null,
       missingFields: []
     };
@@ -337,7 +374,7 @@ export function generateAssistantResponse(criteria, lang = 'EN') {
 
   return {
     isComplete: false,
-    text: questionText,
+    text: incomeWarning + questionText,
     nextField,
     missingFields: missing
   };

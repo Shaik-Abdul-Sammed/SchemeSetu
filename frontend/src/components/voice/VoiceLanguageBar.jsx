@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Globe, MapPin, ChevronDown, Check, Info } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../../data/stateLanguageMap';
+import { useLanguage } from '../../context/LanguageContext';
 
 const LANG_OPTIONS = [
   { code: 'AUTO', label: '🌐 Auto Detect' },
@@ -34,6 +35,7 @@ export default function VoiceLanguageBar({
   locationDistrict,    // e.g. 'Tirupati'
   onLanguageChange,    // (langCode) => void
 }) {
+  const { lang, changeLanguage } = useLanguage();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const confidence = detectionResult?.confidence || 0;
@@ -114,7 +116,11 @@ export default function VoiceLanguageBar({
                   role="option"
                   aria-selected={isSelected}
                   type="button"
-                  onClick={() => { onLanguageChange(code); setDropdownOpen(false); }}
+                  onClick={() => { 
+                    onLanguageChange(code); 
+                    if (code !== 'AUTO') changeLanguage(code);
+                    setDropdownOpen(false); 
+                  }}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     width: '100%', padding: '0.6rem 0.9rem',

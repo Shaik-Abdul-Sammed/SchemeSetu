@@ -5,7 +5,19 @@ import { translateText } from '../services/translateService';
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
-    return localStorage.getItem('schemesetu_lang') || 'EN';
+    const saved = localStorage.getItem('schemesetu_lang');
+    if (saved) return saved;
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      const browserLang = navigator.language.toLowerCase();
+      if (browserLang.includes('te')) return 'TE';
+      if (browserLang.includes('hi')) return 'HI';
+      if (browserLang.includes('ta')) return 'TA';
+      if (browserLang.includes('kn')) return 'KN';
+      if (browserLang.includes('mr')) return 'MR';
+      if (browserLang.includes('bn')) return 'BN';
+      if (browserLang.includes('ml')) return 'ML';
+    }
+    return 'EN';
   });
 
   useEffect(() => {

@@ -9,7 +9,7 @@ const schemesData = require('../data/schemesData');
 /**
  * Evaluate single scheme against applicant profile
  */
-function evaluateSchemeForApplicant(scheme, profile) {
+function evaluateSchemeForApplicant(scheme, profile = {}) {
   const breakdown = [];
   const matchedCriteria = [];
   const failedCriteria = [];
@@ -66,7 +66,8 @@ function evaluateSchemeForApplicant(scheme, profile) {
   
   if (isCasteMatch) {
     score += 20;
-    if (category.toLowerCase() === 'sc' && (scheme.scSubsidyPercentage > 0 || scheme.category.toLowerCase().includes('sc') || scheme.id === 'dalit-bandhu' || scheme.id === 'cegssc' || scheme.id === 'vcf-sc' || scheme.id === 'nssh')) {
+    const schemeCat = (scheme.category || '').toLowerCase();
+    if (category.toLowerCase() === 'sc' && (scheme.scSubsidyPercentage > 0 || schemeCat.includes('sc') || scheme.id === 'dalit-bandhu' || scheme.id === 'cegssc' || scheme.id === 'vcf-sc' || scheme.id === 'nssh')) {
       matchedCriteria.push(`Special Category SC matched with maximum subsidy/grant preference.`);
     } else {
       matchedCriteria.push(`Category '${category}' is eligible under scheme guidelines.`);
@@ -113,7 +114,8 @@ function evaluateSchemeForApplicant(scheme, profile) {
 
   // 4. Geographic Scope / State Evaluation (Weight: 15)
   totalWeights += 15;
-  if (scheme.level === 'Central' || scheme.state === 'Pan-India' || scheme.state.toLowerCase() === state.toLowerCase()) {
+  const schemeState = (scheme.state || 'Pan-India').toLowerCase();
+  if (scheme.level === 'Central' || schemeState === 'pan-india' || schemeState === state.toLowerCase()) {
     score += 15;
     matchedCriteria.push(`State/UT '${state}' is covered under ${scheme.level || 'Central'} scheme jurisdiction.`);
     breakdown.push({
@@ -124,23 +126,27 @@ function evaluateSchemeForApplicant(scheme, profile) {
     });
   } else {
     isDisqualified = true;
-    failedCriteria.push(`State '${state}' is outside the scheme's active jurisdiction (${scheme.state}).`);
+    failedCriteria.push(`State '${state}' is outside the scheme's active jurisdiction (${scheme.state || 'Pan-India'}).`);
     breakdown.push({
       factor: 'Geographic Jurisdiction',
       userValue: state,
-      schemeRequirement: scheme.state,
+      schemeRequirement: scheme.state || 'Pan-India',
       result: 'FAIL'
     });
   }
 
   // 5. Project Cost & Financial Range Evaluation (Weight: 15)
   totalWeights += 15;
-  const maxProject = scheme.maxProjectCost || scheme.maxLoan || 10000000;
+  let maxLoan = scheme.maxLoan || 10000000;
+  if (scheme.id === 'nsfdc-educational-loan' || (scheme.category || '').toLowerCase().includes('education')) {
+    const isAbroad = String(profile.studyLocation || profile.locationType || '').toLowerCase().includes('abroad') || Boolean(profile.studyAbroad);
+    maxLoan = isAbroad ? (scheme.maxLoanAbroad || 3000000) : (scheme.maxLoanIndia || 2000000);
+  }
+  const maxProject = scheme.maxProjectCost || maxLoan || 10000000;
   const minLoan = scheme.minLoan || 0;
-  const maxLoan = scheme.maxLoan || 10000000;
 
   if (projectCost > 0 && maxProject > 0 && projectCost > maxProject) {
-    score += 2;
+    isDisqualified = true;
     failedCriteria.push(`Project cost (₹${projectCost.toLocaleString('en-IN')}) exceeds maximum scheme ceiling of ₹${maxProject.toLocaleString('en-IN')}.`);
     breakdown.push({
       factor: 'Project Cost Fit',
@@ -148,8 +154,17 @@ function evaluateSchemeForApplicant(scheme, profile) {
       schemeRequirement: `Up to ₹${maxProject.toLocaleString('en-IN')}`,
       result: 'FAIL'
     });
-  } else if (loanRequired > 0 && loanRequired > maxLoan) {
-    score += 4;
+  } else if (loanRequired > 0 && projectCost > 0 && loanRequired > projectCost) {
+    isDisqualified = true;
+    failedCriteria.push(`Requested loan amount (₹${loanRequired.toLocaleString('en-IN')}) cannot exceed the total project cost (₹${projectCost.toLocaleString('en-IN')}).`);
+    breakdown.push({
+      factor: 'Loan vs Project Cost Consistency',
+      userValue: `Loan: ₹${loanRequired.toLocaleString('en-IN')} | Project: ₹${projectCost.toLocaleString('en-IN')}`,
+      schemeRequirement: `Requested loan <= Project cost`,
+      result: 'FAIL'
+    });
+  } else if (loanRequired > 0 && maxLoan > 0 && loanRequired > maxLoan) {
+    isDisqualified = true;
     failedCriteria.push(`Requested loan (₹${loanRequired.toLocaleString('en-IN')}) exceeds scheme limit of ₹${maxLoan.toLocaleString('en-IN')}.`);
     breakdown.push({
       factor: 'Loan Requirement Fit',
@@ -197,12 +212,15 @@ function evaluateSchemeForApplicant(scheme, profile) {
   const finalPercentage = Math.min(100, Math.max(10, Math.round((score / totalWeights) * 100)));
   
   let eligibilityStatus = 'Potentially Eligible';
-  if (isDisqualified || failedCriteria.length >= 2) {
+  const hasExceeds = failedCriteria.some(f => f.toLowerCase().includes('exceeds'));
+  const hasHardCategoryOrAgeFail = failedCriteria.some(f => f.toLowerCase().includes('outside') || f.toLowerCase().includes('exclusively') || f.toLowerCase().includes('jurisdiction'));
+
+  if (hasExceeds && !hasHardCategoryOrAgeFail) {
+    eligibilityStatus = 'Exceeds Scheme Limit';
+  } else if (isDisqualified || failedCriteria.length >= 2) {
     eligibilityStatus = 'Ineligible';
   } else if (finalPercentage >= 75 && failedCriteria.length === 0) {
     eligibilityStatus = 'Eligible';
-  } else if (failedCriteria.some(f => f.includes('exceeds'))) {
-    eligibilityStatus = 'Exceeds Scheme Limit';
   }
 
   // Actionable plain-language explanations
@@ -215,6 +233,10 @@ function evaluateSchemeForApplicant(scheme, profile) {
     ? `Submit project proposal and KYC documents via ${scheme.officialApplicationPortal} or nearest nodal branch.`
     : 'Contact nearest District Welfare Office / Lead Bank branch for physical verification.';
 
+  const crypto = require('crypto');
+  const evaluatedAt = new Date().toISOString();
+  const auditHash = crypto.createHash('sha256').update(JSON.stringify(breakdown) + evaluatedAt + (isDisqualified ? 'DISQUALIFIED' : 'ELIGIBLE')).digest('hex');
+
   return {
     schemeId: scheme.id,
     schemeName: scheme.name,
@@ -224,7 +246,7 @@ function evaluateSchemeForApplicant(scheme, profile) {
     category: scheme.category,
     level: scheme.level,
     state: scheme.state,
-    matchScore: isDisqualified ? Math.min(finalPercentage, 40) : finalPercentage,
+    matchScore: isDisqualified ? 0 : finalPercentage,
     eligibilityStatus,
     matchedCriteria,
     failedCriteria,
@@ -232,12 +254,24 @@ function evaluateSchemeForApplicant(scheme, profile) {
     whyRecommended,
     nextAction,
     maxLoan: scheme.maxLoan,
+    fundingCoveragePct: scheme.fundingCoveragePct || 90,
+    maxFinancedAmount: projectCost > 0 ? Math.min(scheme.maxLoan || 5000000, Math.round(projectCost * ((scheme.fundingCoveragePct || 90) / 100))) : scheme.maxLoan,
+    promoterContribution: projectCost > 0 ? Math.round(projectCost * (1 - ((scheme.fundingCoveragePct || 90) / 100))) : 0,
+    interestRate: scheme.interestRate || 6.5,
+    moratoriumMonths: scheme.moratoriumMonths || 0,
+    repaymentTenureMonths: scheme.repaymentTenureMonths || 60,
     subsidyPercentage: scheme.scSubsidyPercentage || scheme.subsidyPercentage || 0,
     grantAmount: scheme.grantAmount || 0,
     requiredDocuments: scheme.documentsRequired || [],
     officialSourceUrl: scheme.officialSourceUrl,
     officialApplicationPortal: scheme.officialApplicationPortal,
     dataStatus: scheme.dataStatus || 'VERIFIED',
+    dataSource: scheme.dataStatus === 'VERIFIED' ? 'OFFICIAL_VERIFIED_SNAPSHOT' : 'DEMO_DATA',
+    sourceOrg: scheme.officialMinistry || 'Government of India',
+    ruleVersion: '2026.1.0',
+    effectiveDate: '2026-01-01',
+    evaluatedAt,
+    auditHash,
     breakdown
   };
 }
@@ -245,7 +279,7 @@ function evaluateSchemeForApplicant(scheme, profile) {
 /**
  * Match all schemes against applicant profile and return ranked recommendations
  */
-function matchAllSchemes(profile) {
+function matchAllSchemes(profile = {}) {
   const evaluations = schemesData.map(scheme => evaluateSchemeForApplicant(scheme, profile));
   
   // Sort descending by match score

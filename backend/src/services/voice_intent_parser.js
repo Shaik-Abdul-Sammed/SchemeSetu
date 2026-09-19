@@ -148,25 +148,43 @@ function parseSpokenCurrency(text) {
   return result;
 }
 
-/**
- * Extract a numeric value from normalized text.
- * Handles: "300000", "3 lakh", "₹3L", "5.5 lakhs"
- */
 function extractNumber(text) {
-  // Already converted spoken → numeric by normalizeTranscript
-  // Also handle ₹, L, K shorthand
+  if (!text) return null;
   const cleaned = text.replace(/₹/g, '').replace(/,/g, '');
 
-  // Match "3L" or "3.5L" (lakh shorthand)
-  const lakhShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[lL](?:akh)?/);
-  if (lakhShort) return Math.round(parseFloat(lakhShort[1]) * 100000);
+  let normalizedDigits = cleaned;
+  for (const [word, val] of Object.entries(TELUGU_NUMBERS)) {
+    if (word.length > 1 && !/^[a-z]+$/i.test(word) && normalizedDigits.includes(word)) {
+      normalizedDigits = normalizedDigits.replace(new RegExp(word, 'g'), String(val));
+    }
+  }
+  for (const [word, val] of Object.entries(HINDI_NUMBERS)) {
+    if (word.length > 1 && !/^[a-z]+$/i.test(word) && normalizedDigits.includes(word)) {
+      normalizedDigits = normalizedDigits.replace(new RegExp(word, 'g'), String(val));
+    }
+  }
 
-  // Match "3K" (thousand shorthand)
-  const kShort = cleaned.match(/(\d+(?:\.\d+)?)\s*[kK]/);
-  if (kShort) return Math.round(parseFloat(kShort[1]) * 1000);
+  // 1. Lakhs multiplier (English & 9 Indic scripts)
+  const lakhMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l|लाख|लक्ष|లక్ష|లక్షలు|లక్షల|లాఖ్|லட்சம்|லட்சங்கள்|ലക്ഷം|ലാഖ്|ലാഖ്|লাখ|লক্ষ|ಲಕ್ಷ|ಲಕ್ಷಗಳು)/i)
+                 || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l|लाख|लक्ष|లక్ష|లక్షలు|లక్షల|లాఖ్|லட்சம்|லட்சங்கள்|ലക്ഷം|ലാഖ്|ലാഖ്|লাখ|লক্ষ|ಲಕ್ಷ|ಲಕ್ಷಗಳು)/i);
+  if (lakhMatch) return Math.round(parseFloat(lakhMatch[1]) * 100000);
 
-  // Match plain number
-  const plain = cleaned.match(/\d+(?:\.\d+)?/);
+  // 2. Thousands multiplier
+  const kMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand|हजार|हज़ार|వేలు|వేల|ஆயிரம்|ஆயிரங்கள்|ஆയിരം|হাজার|হাজ়ার|ಸಾಫಿರ|ಸಾವಿರ)/i)
+              || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand|हजार|हज़ार|వేలు|వేల|ஆயிரம்|ஆயிரங்கள்|ஆയിരം|হাজার|হাজ়ার|ಸಾಫಿರ|ಸಾವಿರ)/i);
+  if (kMatch) return Math.round(parseFloat(kMatch[1]) * 1000);
+
+  // 3. Crores multiplier
+  const croreMatch = normalizedDigits.match(/(\d+(?:\.\d+)?)\s*(?:cr|crore|crores|करोड़|करोड|కోటి|కోట్లు|గోడి|கோடிகள்|കോടി|കോട്ടി|ಕೋಟಿ)/i)
+                  || cleaned.match(/(\d+(?:\.\d+)?)\s*(?:cr|crore|crores|करोड़|करोड|కోటి|కోట్లు|గోడి|கோடிகள்|కోടി|కోട്ടി|ಕೋಟಿ)/i);
+  if (croreMatch) return Math.round(parseFloat(croreMatch[1]) * 10000000);
+
+  // 4. Large plain numbers
+  const plainNum = normalizedDigits.match(/\b\d{4,9}\b/) || cleaned.match(/\b\d{4,9}\b/);
+  if (plainNum) return Math.round(parseFloat(plainNum[0]));
+
+  // 5. Fallback plain numbers
+  const plain = normalizedDigits.match(/\d+(?:\.\d+)?/) || cleaned.match(/\d+(?:\.\d+)?/);
   if (plain) return Math.round(parseFloat(plain[0]));
 
   return null;

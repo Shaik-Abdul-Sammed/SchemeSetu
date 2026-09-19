@@ -3,16 +3,17 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
-import { usePWA } from '../../context/PWAContext';
 import LanguageSelectorIcon from './LanguageSelectorIcon';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
-import { 
-  Building2, 
-  Sparkles, 
-  LogIn, 
-  LogOut, 
-  Menu, 
-  X, 
+import VoiceAssistantModal from '../voice/VoiceAssistantModal';
+import Logo from './Logo';
+import {
+  Building2,
+  Sparkles,
+  LogIn,
+  LogOut,
+  Menu,
+  X,
   LayoutDashboard,
   FileCheck,
   Bot,
@@ -24,7 +25,9 @@ import {
   MessageSquare,
   Users,
   Settings,
-  AlertCircle
+  AlertCircle,
+  Mic,
+  UserCheck
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -33,10 +36,12 @@ export default function Navbar() {
   const { location, locationStatus } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
   const navigate = useNavigate();
 
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (moreRef.current && !moreRef.current.contains(event.target)) {
@@ -47,307 +52,267 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close menus on Escape key
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        setMoreOpen(false);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    function onResize() {
+      if (window.innerWidth > 1200) setMobileOpen(false);
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  const closeMobile = () => setMobileOpen(false);
+
   const getLocationDisplayText = () => {
-    if (locationStatus === 'detecting') {
-      return t('detectingLocation', 'Detecting GPS...');
-    }
-    if (location.district) {
-      return location.district;
-    }
-    if (location.state) {
-      return location.state;
-    }
-    if (locationStatus === 'denied' || locationStatus === 'unavailable') {
+    if (locationStatus === 'detecting') return t('detectingLocation', 'Detecting…');
+    if (location.district) return location.district;
+    if (location.state) return location.state;
+    if (locationStatus === 'denied' || locationStatus === 'unavailable')
       return t('setLocation', 'Set Location');
-    }
-    return t('detectLocation', 'Detect Location');
+    return t('detectLocation', 'Location');
   };
 
   return (
     <>
+      {/* India Tricolor Top Accent */}
       <div className="gov-tricolor-bar" />
-      <header className="navbar">
+
+      {/* Sticky Glassmorphic Navbar */}
+      <header className="navbar" role="banner">
         <div className="navbar-inner">
-          
-          {/* 1. BRAND LOGO */}
-          <Link to="/" className="brand-logo" aria-label="SchemeSetu Home">
-            <div className="brand-emblem" aria-hidden="true">
-              <span>से</span>
-            </div>
-            <div>
-              <span className="brand-title">{t('brandTitle', 'SchemeSetu')}</span>
-              <span className="brand-subtitle">{t('brandSubtitle', 'AI Citizen Welfare Platform')}</span>
-            </div>
+
+          {/* ── 1. BRAND LOGO ── */}
+          <Link to="/" className="navbar-brand" aria-label="SchemeSetu Home">
+            <Logo variant="full" size={32} theme="dark" />
           </Link>
 
-          {/* 2. RIGHT-SIDE CONTROLS (LOCATION ICON + MOBILE LANG + HAMBURGER) */}
-          <div className="nav-controls-right" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            
-            {/* ONE CLEARLY VISIBLE LOCATION / GPS BADGE */}
-            <button
-              type="button"
-              onClick={() => setLocationModalOpen(true)}
-              className="navbar-location-btn"
-              title={location.address ? `Current Location: ${location.address}` : 'Current Location'}
-              aria-label={`Current Location: ${getLocationDisplayText()}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                backgroundColor: location.isGPS ? 'rgba(5, 150, 105, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                color: location.isGPS ? '#34D399' : (locationStatus === 'denied' || locationStatus === 'unavailable' ? '#FCA5A5' : '#CBD5E1'),
-                border: `1px solid ${location.isGPS ? '#059669' : (locationStatus === 'denied' ? '#EF4444' : 'rgba(255, 255, 255, 0.2)')}`,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '20px',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {locationStatus === 'detecting' ? (
-                <Navigation size={14} className="animate-spin" style={{ color: '#38BDF8' }} />
-              ) : locationStatus === 'denied' || locationStatus === 'unavailable' ? (
-                <AlertCircle size={14} style={{ color: '#EF4444' }} />
-              ) : (
-                <MapPin size={14} style={{ color: location.isGPS ? '#34D399' : '#F59E0B' }} />
-              )}
-              <span className="navbar-location-text">{getLocationDisplayText()}</span>
-              {location.isGPS && (
-                <span 
-                  style={{ 
-                    width: '6px', 
-                    height: '6px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#10B981',
-                    display: 'inline-block' 
-                  }} 
-                  title="GPS Active"
-                />
-              )}
-            </button>
-
-            {/* Mobile Language Selector */}
-            <div className="mobile-only-lang">
-              <LanguageSelectorIcon />
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button 
-              className="mobile-menu-btn" 
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-
-          {/* 3. PRIMARY & COMPACT NAVIGATION LINKS */}
-          <nav className={`nav-links ${mobileOpen ? 'open' : ''}`} aria-label="Main Navigation">
-            
-            {/* Primary Nav Item 1: Home */}
-            <NavLink 
-              to="/" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
+          {/* ── 2. PRIMARY NAV LINKS (desktop) ── */}
+          <nav
+            className={`nav-links${mobileOpen ? ' open' : ''}`}
+            aria-label="Main Navigation"
+            id="main-nav"
+          >
+            <NavLink to="/" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile} end>
               {t('home', 'Home')}
             </NavLink>
 
-            {/* Primary Nav Item 2: Schemes */}
-            <NavLink 
-              to="/schemes" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              <Building2 size={15} /> {t('exploreSchemes', 'Schemes')}
+            <NavLink to="/schemes" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+              <Building2 size={14} aria-hidden="true" />
+              {t('exploreSchemes', 'Schemes')}
             </NavLink>
 
-            {/* Primary Nav Item 3: Applications */}
-            <NavLink 
-              to="/applications" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              <FileCheck size={15} /> {t('applications', 'Applications')}
+            <NavLink to="/applications" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+              <FileCheck size={14} aria-hidden="true" />
+              {t('applications', 'Apply')}
             </NavLink>
 
-            {/* Primary Nav Item 4: Assistance Centers */}
-            <NavLink 
-              to="/locations" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              <MapPin size={15} /> {t('partners', 'Assistance')}
+            <NavLink to="/locations" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+              <MapPin size={14} aria-hidden="true" />
+              {t('partners', 'Centers')}
             </NavLink>
 
-            {/* Primary Nav Item 5: Agent / Intake Hub */}
-            <NavLink 
-              to="/input" 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-              onClick={() => setMobileOpen(false)}
-            >
-              <Bot size={15} style={{ color: '#F59E0B' }} /> {t('agentMode', 'Agent')}
+            <NavLink to="/input" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
+              <Bot size={14} aria-hidden="true" />
+              {t('agentMode', 'Agent')}
             </NavLink>
 
-            {/* SECONDARY FEATURES GROUPED UNDER "MORE ▼" */}
-            <div className="more-menu-container" style={{ position: 'relative' }} ref={moreRef}>
-              <button
-                type="button"
-                onClick={() => setMoreOpen(!moreOpen)}
-                className="nav-link"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                aria-expanded={moreOpen}
-                aria-haspopup="true"
-                aria-label="More Options"
-              >
-                <span>{t('moreMenu', 'More')}</span>
-                <ChevronDown size={13} style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-              </button>
-
-              {moreOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    left: 0,
-                    backgroundColor: '#0F172A',
-                    border: '1px solid #334155',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-                    zIndex: 9999,
-                    minWidth: '220px',
-                    padding: '0.4rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px'
-                  }}
-                  role="menu"
-                >
-                  <NavLink
-                    to="/eligibility"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <Sparkles size={15} style={{ color: '#F59E0B' }} /> {t('checkEligibility', 'Check Eligibility')}
-                  </NavLink>
-
-                  <NavLink
-                    to="/compare"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <Scale size={15} style={{ color: '#38BDF8' }} /> {t('compare', 'Compare Schemes')}
-                  </NavLink>
-
-                  <NavLink
-                    to="/results"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <Calculator size={15} style={{ color: '#A78BFA' }} /> {t('calculateEMI', 'EMI Calculator')}
-                  </NavLink>
-
-                  <NavLink
-                    to="/community"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <MessageSquare size={15} style={{ color: '#38BDF8' }} /> {t('community', 'Community Forum')}
-                  </NavLink>
-
-                  <NavLink
-                    to="/vle"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <Users size={15} style={{ color: '#4ADE80' }} /> {t('vle', 'VLE Agent Portal')}
-                  </NavLink>
-
-                  <NavLink
-                    to="/admin"
-                    className="nav-link"
-                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => { setMoreOpen(false); setMobileOpen(false); }}
-                    role="menuitem"
-                  >
-                    <Settings size={15} style={{ color: '#CBD5E1' }} /> {t('admin', 'Admin Portal')}
-                  </NavLink>
-                </div>
-              )}
-            </div>
-
-            {/* Desktop Language Selector */}
-            <div className="desktop-only-lang">
-              <LanguageSelectorIcon />
-            </div>
-
-            {/* Auth Profile / Login */}
+            {/* Auth-conditional links */}
             {isAuthenticated ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <NavLink 
-                  to="/dashboard" 
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <LayoutDashboard size={15} /> {t('dashboard', 'Dashboard')}
+              <>
+                <NavLink to="/compare" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                  <Scale size={14} aria-hidden="true" />
+                  {t('compareSchemes', 'Compare')}
                 </NavLink>
-                <button 
-                  type="button"
-                  onClick={handleLogout} 
-                  className="btn btn-secondary btn-sm" 
-                  style={{ padding: '0.35rem 0.65rem' }} 
-                  aria-label="Logout"
-                  title="Logout"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
+
+                <NavLink to="/results" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                  <Calculator size={14} aria-hidden="true" />
+                  {t('calculator', 'Calculator')}
+                </NavLink>
+
+                {user?.role === 'vle' && (
+                  <NavLink to="/vle" className={({ isActive }) => `nav-link nav-link-vle${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                    <Users size={14} aria-hidden="true" />
+                    {t('vle', 'VLE')}
+                  </NavLink>
+                )}
+
+                {user?.role === 'admin' && (
+                  <NavLink to="/admin" className={({ isActive }) => `nav-link nav-link-admin${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                    <Settings size={14} aria-hidden="true" />
+                    {t('admin', 'Admin')}
+                  </NavLink>
+                )}
+
+                {/* User profile dropdown */}
+                <div className="more-menu-container" ref={moreRef}>
+                  <button
+                    type="button"
+                    className="navbar-profile-btn"
+                    onClick={() => setMoreOpen(!moreOpen)}
+                    aria-expanded={moreOpen}
+                    aria-haspopup="true"
+                    aria-label="User Account Menu"
+                  >
+                    <span className="navbar-avatar">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'C'}
+                    </span>
+                    <span className="navbar-username">
+                      {user?.name ? user.name.split(' ')[0] : 'Citizen'}
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      className={`navbar-chevron${moreOpen ? ' rotated' : ''}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  {moreOpen && (
+                    <div className="navbar-dropdown" role="menu">
+                      {/* Profile header */}
+                      <div className="navbar-dropdown-header">
+                        <div className="navbar-dropdown-name">{user?.name || 'Beneficiary'}</div>
+                        <div className="navbar-dropdown-badge">
+                          <UserCheck size={12} aria-hidden="true" />
+                          {t('verifiedStatus', 'Verified Citizen')}
+                        </div>
+                      </div>
+
+                      <NavLink to="/dashboard" className="navbar-dropdown-item" onClick={() => { setMoreOpen(false); closeMobile(); }} role="menuitem">
+                        <LayoutDashboard size={14} aria-hidden="true" style={{ color: '#F59E0B' }} />
+                        {t('dashboard', 'Dashboard')}
+                      </NavLink>
+
+                      <NavLink to="/applications" className="navbar-dropdown-item" onClick={() => { setMoreOpen(false); closeMobile(); }} role="menuitem">
+                        <FileCheck size={14} aria-hidden="true" style={{ color: '#38BDF8' }} />
+                        {t('applications', 'Track Applications')}
+                      </NavLink>
+
+                      <NavLink to="/community" className="navbar-dropdown-item" onClick={() => { setMoreOpen(false); closeMobile(); }} role="menuitem">
+                        <MessageSquare size={14} aria-hidden="true" style={{ color: '#34D399' }} />
+                        {t('community', 'Community Forum')}
+                      </NavLink>
+
+                      <button
+                        type="button"
+                        className="navbar-dropdown-logout"
+                        onClick={() => { setMoreOpen(false); handleLogout(); }}
+                        role="menuitem"
+                      >
+                        <LogOut size={14} aria-hidden="true" />
+                        {t('logout', 'Logout')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Link 
-                  to="/login" 
-                  className="btn btn-secondary btn-sm" 
-                  style={{ padding: '0.35rem 0.75rem' }} 
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <LogIn size={14} /> {t('login', 'Login')}
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="btn btn-primary btn-sm" 
-                  style={{ padding: '0.35rem 0.75rem' }} 
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {t('register', 'Register')}
-                </Link>
-              </div>
+              /* Guest links */
+              <>
+                <NavLink to="/community" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                  <MessageSquare size={14} aria-hidden="true" />
+                  {t('community', 'Community')}
+                </NavLink>
+
+                <div className="navbar-auth-btns">
+                  <Link to="/login" className="navbar-btn-ghost" onClick={closeMobile}>
+                    <LogIn size={14} aria-hidden="true" />
+                    {t('login', 'Login')}
+                  </Link>
+                  <Link to="/register" className="navbar-btn-gold" onClick={closeMobile}>
+                    {t('register', 'Register')}
+                  </Link>
+                </div>
+              </>
             )}
           </nav>
+
+          {/* ── 3. RIGHT CONTROLS (location, voice, language, hamburger) ── */}
+          <div className="nav-controls">
+
+            {/* GPS Location pill */}
+            <button
+              type="button"
+              className={`navbar-location-btn${location.isGPS ? ' gps-active' : ''}${locationStatus === 'denied' || locationStatus === 'unavailable' ? ' gps-denied' : ''}`}
+              onClick={() => setLocationModalOpen(true)}
+              title={location.address ? `Location: ${location.address}` : 'Set Location'}
+              aria-label={`Current Location: ${getLocationDisplayText()}`}
+            >
+              {locationStatus === 'detecting' ? (
+                <Navigation size={13} className="animate-spin" aria-hidden="true" />
+              ) : locationStatus === 'denied' || locationStatus === 'unavailable' ? (
+                <AlertCircle size={13} aria-hidden="true" />
+              ) : (
+                <MapPin size={13} aria-hidden="true" />
+              )}
+              <span className="navbar-location-text">{getLocationDisplayText()}</span>
+              {location.isGPS && <span className="gps-dot" title="GPS Active" />}
+            </button>
+
+            {/* Voice assistant */}
+            <button
+              type="button"
+              className="navbar-voice-btn"
+              onClick={() => setVoiceModalOpen(true)}
+              title={t('voiceAssistant', 'AI Voice Assistant')}
+              aria-label={t('voiceAssistant', 'AI Voice Assistant')}
+            >
+              <Mic size={14} aria-hidden="true" />
+              <span className="navbar-voice-label">{t('voiceText', 'Voice')}</span>
+            </button>
+
+            {/* Language selector */}
+            <LanguageSelectorIcon />
+
+            {/* Mobile hamburger */}
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+              aria-controls="main-nav"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Location Modal */}
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="nav-overlay"
+          onClick={closeMobile}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* GPS Location Modal */}
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
+
+      {/* Voice Assistant Modal */}
+      <VoiceAssistantModal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+      />
     </>
   );
 }

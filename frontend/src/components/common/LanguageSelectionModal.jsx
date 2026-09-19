@@ -10,29 +10,34 @@ const LANGUAGES = [
   { code: 'KN', name: 'Kannada', native: 'ಕನ್ನಡ', flag: '🇮🇳', greeting: 'స్కీమ్‌సేతుಗೆ స్వాగత' },
   { code: 'MR', name: 'Marathi', native: 'मराठी', flag: '🇮🇳', greeting: 'स्कीमसेतूमध्ये आपले स्वागत आहे' },
   { code: 'BN', name: 'Bengali', native: 'বাংলা', flag: '🇮🇳', greeting: 'স্কিমসেতুতে আপনাকে স্বাগতম' },
-  { code: 'GU', name: 'Gujarati', native: 'ગુજરાતી', flag: '🇮🇳', greeting: 'સ્કીમસેતુમાં આપનું સ્વાગત છે' },
-  { code: 'GO', name: 'Gondi', native: 'గోంది / गोंडी', flag: '🏹', greeting: 'స్కీమ్‌సేతుకు స్వాగతం (గోంది)' },
-  { code: 'CH', name: 'Chenchu', native: 'చెంచు / चेन्चू', flag: '🌲', greeting: 'స్కీమ్‌సేతుకు స్వాగతం (చెంచు)' },
+  { code: 'ML', name: 'Malayalam', native: 'മലയാളം', flag: '🇮🇳', greeting: 'സ്കീംസേതുവിലേക്ക് സ്വാഗതം' },
+  { code: 'GON', name: 'Gondi', native: 'गोंडी (గోండి)', flag: '🏹', greeting: 'सेवा जोहार! SchemeSetu मय तुमाना स्वागत आय।' },
+  { code: 'BHI', name: 'Chenchu / Bhili', native: 'चेन्चू / भीली', flag: '🌲', greeting: 'राम राम! SchemeSetu मा तमारु स्वागत छे।' },
 ];
 
-export default function LanguageSelectionModal() {
-  const { currentLanguage, changeLanguage } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCode, setSelectedCode] = useState(currentLanguage || 'EN');
+export default function LanguageSelectionModal({ isOpen: controlledIsOpen, onClose }) {
+  const { lang, changeLanguage } = useLanguage();
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [selectedCode, setSelectedCode] = useState(lang || 'EN');
 
   useEffect(() => {
-    // Show gate on initial entrance if not passed yet
     const gatePassed = localStorage.getItem('schemesetu_gate_passed');
     if (!gatePassed) {
-      setIsOpen(true);
+      setInternalIsOpen(true);
     }
   }, []);
+
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+
+  const handleClose = () => {
+    setInternalIsOpen(false);
+    if (onClose) onClose();
+  };
 
   const handleSelectLanguage = (code) => {
     setSelectedCode(code);
     changeLanguage(code);
 
-    // TTS audio playback preview
     try {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -52,66 +57,164 @@ export default function LanguageSelectionModal() {
     changeLanguage(selectedCode);
     localStorage.setItem('schemesetu_gate_passed', 'true');
     localStorage.setItem('schemesetu_lang_pref', selectedCode);
-    setIsOpen(false);
+    handleClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 text-slate-200 shadow-2xl relative animate-scale-in">
+    <div
+      className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[9999] flex items-center justify-center p-4"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(2, 12, 27, 0.95)',
+        backdropFilter: 'blur(16px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+    >
+      <div
+        className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 text-slate-200 shadow-2xl relative animate-scale-in"
+        style={{
+          backgroundColor: '#0F192C',
+          border: '1px solid #1E2D45',
+          borderRadius: '1.5rem',
+          maxWidth: '640px',
+          width: '100%',
+          padding: '1.75rem',
+          color: '#E2E8F0',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
+        }}
+      >
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono mb-3">
-            <Sparkles className="w-3.5 h-3.5" /> Welcome to SchemeSetu AI
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(16, 185, 129, 0.12)',
+              color: '#34D399',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              fontSize: '0.75rem',
+              fontFamily: 'monospace',
+              marginBottom: '0.75rem'
+            }}
+          >
+            <Sparkles style={{ width: '14px', height: '14px' }} /> Welcome to SchemeSetu AI Platform
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-100 flex items-center justify-center gap-2">
-            <Globe className="w-6 h-6 text-emerald-400 animate-spin-slow" /> Select Your Preferred Language
+          <h2
+            style={{
+              fontSize: '1.65rem',
+              fontWeight: 900,
+              color: '#F8FAFC',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              margin: '0.25rem 0'
+            }}
+          >
+            <Globe style={{ width: '24px', height: '24px', color: '#34D399' }} /> Select Your Preferred Language
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Choose your language to personalize scheme recommendations and voice responses
+          <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>
+            Choose your language to personalize scheme recommendations, voice assistant NLU, & financial tools
           </p>
         </div>
 
         {/* Languages Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
+          }}
+        >
           {LANGUAGES.map((lang) => {
             const isSelected = selectedCode === lang.code;
             return (
               <button
                 key={lang.code}
+                type="button"
                 onClick={() => handleSelectLanguage(lang.code)}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-between gap-1.5 ${
-                  isSelected
-                    ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10 scale-105 font-bold'
-                    : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 text-slate-300'
-                }`}
+                style={{
+                  padding: '0.85rem 0.5rem',
+                  borderRadius: '1rem',
+                  border: isSelected ? '2px solid #10B981' : '1px solid #1E2D45',
+                  backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(30, 45, 69, 0.5)',
+                  color: isSelected ? '#6EE7B7' : '#CBD5E1',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.35rem',
+                  transition: 'all 0.2s ease-out'
+                }}
               >
-                <span className="text-lg">{lang.flag}</span>
-                <span className="text-xs font-semibold">{lang.native}</span>
-                <span className="text-[10px] text-slate-400 font-mono">{lang.name}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-1" />}
+                <span style={{ fontSize: '1.25rem' }}>{lang.flag}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{lang.native}</span>
+                <span style={{ fontSize: '0.65rem', color: '#94A3B8', fontFamily: 'monospace' }}>{lang.name}</span>
+                {isSelected && <CheckCircle2 style={{ width: '16px', height: '16px', color: '#10B981', marginTop: '0.25rem' }} />}
               </button>
             );
           })}
         </div>
 
         {/* Audio Preview Greeting */}
-        <div className="bg-slate-800/50 border border-slate-800 p-3 rounded-xl flex items-center justify-between mb-6 text-xs text-slate-300">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
+        <div
+          style={{
+            backgroundColor: 'rgba(30, 45, 69, 0.4)',
+            border: '1px solid #1E2D45',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+            fontSize: '0.8rem',
+            color: '#CBD5E1'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Volume2 style={{ width: '16px', height: '16px', color: '#34D399' }} />
             <span>{LANGUAGES.find(l => l.code === selectedCode)?.greeting}</span>
           </div>
-          <span className="text-[10px] font-mono text-slate-500">Audio Active</span>
+          <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', color: '#64748B' }}>Audio Active</span>
         </div>
 
         {/* Confirm Action */}
         <button
+          type="button"
           onClick={handleConfirm}
-          className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2"
+          style={{
+            width: '100%',
+            padding: '0.9rem',
+            borderRadius: '1rem',
+            backgroundColor: '#10B981',
+            color: '#020C1B',
+            fontWeight: 900,
+            fontSize: '0.95rem',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
+            transition: 'all 0.2s ease-out'
+          }}
         >
           <span>Enter SchemeSetu Platform</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight style={{ width: '18px', height: '18px' }} />
         </button>
       </div>
     </div>

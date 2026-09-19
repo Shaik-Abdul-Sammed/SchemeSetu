@@ -1,11 +1,18 @@
 import { createContext, useContext } from 'react';
 
-export const LocationContext = createContext(null);
+const fallbackLocationContext = {
+  location: { state: '', district: '', address: '', isGPS: false, isDemo: true },
+  locationStatus: 'idle',
+  nearbyPartners: [],
+  detectGPSLocation: () => {},
+  setManualLocation: () => {}
+};
+
+export const LocationContext = createContext(fallbackLocationContext);
 
 export function useLocation() {
   const context = useContext(LocationContext);
-  if (!context) {
-    throw new Error('useLocation must be used within a LocationProvider');
-  }
-  return context;
+  return context || fallbackLocationContext;
 }
+
+export default useLocation;

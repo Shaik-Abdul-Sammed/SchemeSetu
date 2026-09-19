@@ -24,6 +24,8 @@ export const LANG_LOCALE_MAP = {
   ML: 'ml-IN',
   BN: 'bn-IN',
   MR: 'mr-IN',
+  GON: 'hi-IN',
+  BHI: 'hi-IN',
 };
 
 /**

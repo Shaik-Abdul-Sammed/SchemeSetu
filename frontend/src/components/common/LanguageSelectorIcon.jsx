@@ -73,7 +73,7 @@ export default function LanguageSelectorIcon() {
         aria-label="Select Language"
       >
         <Globe size={16} style={{ color: '#F59E0B' }} />
-        <span style={{ fontSize: '0.82rem', letterSpacing: '0.04em' }}>{lang}</span>
+        <span style={{ fontSize: '0.82rem', letterSpacing: '0.04em' }}>{typeof lang === 'string' ? lang : (lang?.code || 'EN')}</span>
         <ChevronDown size={13} style={{ opacity: 0.8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
 
@@ -98,9 +98,13 @@ export default function LanguageSelectorIcon() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {availableLanguages.map((code) => {
-              const isSelected = code === lang;
-              const meta = languageLabels[code] || { label: code, native: code };
+            {(availableLanguages || []).map((item) => {
+              const code = typeof item === 'string' ? item : (item && item.code ? item.code : 'EN');
+              const isSelected = code === (typeof lang === 'string' ? lang : lang?.code);
+              const meta = languageLabels[code] || {
+                label: typeof item === 'object' && item?.name ? item.name : code,
+                native: typeof item === 'object' && item?.nativeName ? item.nativeName : code
+              };
 
               return (
                 <button

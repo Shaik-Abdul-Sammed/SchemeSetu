@@ -6,15 +6,22 @@
  *   • Edit details (Name, State, District, Occupation, Income, etc.)
  *   • Clear / Delete profile data from localStorage
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, MapPin, Briefcase, DollarSign, Trash2, Save, X, ShieldCheck } from 'lucide-react';
 import { useUserProfile } from '../../context/UserProfileContext';
-import { INDIAN_LOCATIONS } from '../../context/LocationContext';
+import { useLocation, INDIAN_LOCATIONS } from '../../context/LocationContext';
 
 export default function ProfileModal({ isOpen, onClose }) {
   const { profile, updateProfile, clearProfile } = useUserProfile();
+  const { setManualLocation } = useLocation();
   const [formData, setFormData] = useState({ ...profile });
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ ...profile });
+    }
+  }, [profile, isOpen]);
 
   if (!isOpen) return null;
 
@@ -25,6 +32,9 @@ export default function ProfileModal({ isOpen, onClose }) {
   const handleSave = (e) => {
     e.preventDefault();
     updateProfile(formData);
+    if (formData.state) {
+      setManualLocation(formData.state, formData.district || null);
+    }
     setSaveSuccess(true);
     setTimeout(() => {
       setSaveSuccess(false);
@@ -123,11 +133,15 @@ export default function ProfileModal({ isOpen, onClose }) {
                 id="prof-state"
                 className="form-select"
                 value={formData.state || ''}
-                onChange={(e) => handleChange('state', e.target.value)}
+                onChange={(e) => {
+                  handleChange('state', e.target.value);
+                  // Reset district when state changes
+                  handleChange('district', '');
+                }}
               >
                 <option value="">Select State</option>
-                {INDIAN_LOCATIONS.map((loc) => (
-                  <option key={loc.state} value={loc.state}>{loc.state}</option>
+                {[...new Set(INDIAN_LOCATIONS.map((loc) => loc.state))].sort().map((st) => (
+                  <option key={st} value={st}>{st}</option>
                 ))}
               </select>
             </div>
@@ -135,14 +149,28 @@ export default function ProfileModal({ isOpen, onClose }) {
             {/* District */}
             <div className="form-group">
               <label className="form-label" htmlFor="prof-district">District / City</label>
-              <input
-                id="prof-district"
-                type="text"
-                className="form-control"
-                value={formData.district || ''}
-                onChange={(e) => handleChange('district', e.target.value)}
-                placeholder="e.g. Tirupati"
-              />
+              {formData.state && INDIAN_LOCATIONS.some((loc) => loc.state === formData.state) ? (
+                <select
+                  id="prof-district"
+                  className="form-select"
+                  value={formData.district || ''}
+                  onChange={(e) => handleChange('district', e.target.value)}
+                >
+                  <option value="">Select District</option>
+                  {[...new Set(INDIAN_LOCATIONS.filter((loc) => loc.state === formData.state).map((loc) => loc.district))].sort().map((dist) => (
+                    <option key={dist} value={dist}>{dist}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id="prof-district"
+                  type="text"
+                  className="form-control"
+                  value={formData.district || ''}
+                  onChange={(e) => handleChange('district', e.target.value)}
+                  placeholder="e.g. Tirupati"
+                />
+              )}
             </div>
 
             {/* Occupation */}

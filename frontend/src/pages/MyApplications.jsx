@@ -308,10 +308,10 @@ export default function MyApplications() {
             <span>{t('app_title', 'Scheme Application Tracker')}</span>
           </div>
           <h1 style={{ fontSize: '2.2rem', color: '#0B192C', fontWeight: 800, margin: 0 }}>
-            Citizen Applications & Welfare Slips
+            {t('myApplicationsTitle', 'Citizen Applications & Welfare Slips')}
           </h1>
           <p style={{ color: '#64748B', fontSize: '0.95rem', margin: '0.25rem 0 0' }}>
-            Track, review, and manage your welfare and subsidized business loan submissions.
+            {t('trackApplicationsSub', 'Track, review, and manage your welfare and subsidized business loan submissions.')}
           </p>
         </div>
 
@@ -330,22 +330,22 @@ export default function MyApplications() {
       {/* Metrics Summary Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div className="card" style={{ padding: '1rem', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: '0.8rem', color: '#64748B' }}>Total Applications</div>
+          <div style={{ fontSize: '0.8rem', color: '#64748B' }}>{t('totalAppsLabel', 'Total Applications Filed')}</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0B192C' }}>{applications.length}</div>
         </div>
 
         <div className="card" style={{ padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '12px', border: '1px solid #FDE68A' }}>
-          <div style={{ fontSize: '0.8rem', color: '#92400E' }}>Under Verification</div>
+          <div style={{ fontSize: '0.8rem', color: '#92400E' }}>{t('underVerification', 'Under Verification')}</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#B45309' }}>{statusCounts['Under Review']}</div>
         </div>
 
         <div className="card" style={{ padding: '1rem', backgroundColor: '#ECFDF5', borderRadius: '12px', border: '1px solid #A7F3D0' }}>
-          <div style={{ fontSize: '0.8rem', color: '#047857' }}>Eligible / Sanctioned</div>
+          <div style={{ fontSize: '0.8rem', color: '#047857' }}>{t('eligibleSanctioned', 'Eligible / Sanctioned')}</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669' }}>{statusCounts['Eligible']}</div>
         </div>
 
         <div className="card" style={{ padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: '0.8rem', color: '#475569' }}>Saved Drafts</div>
+          <div style={{ fontSize: '0.8rem', color: '#475569' }}>{t('savedDrafts', 'Saved Drafts')}</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#334155' }}>{statusCounts['Draft']}</div>
         </div>
       </div>
@@ -384,7 +384,7 @@ export default function MyApplications() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by ID or Scheme..."
+              placeholder={t('searchPlaceholderApp', 'Search by ID or Scheme...')}
               style={{
                 width: '100%',
                 padding: '0.5rem 0.75rem 0.5rem 2rem',
@@ -403,17 +403,17 @@ export default function MyApplications() {
         <div className="card" style={{ padding: '3rem 1.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
           <FileCheck size={40} style={{ color: '#94A3B8', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.2rem', color: '#1E293B', marginBottom: '0.5rem' }}>
-            No applications found in this category
+            {t('noAppsFoundCategory', 'No applications found in this category')}
           </h3>
           <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>
-            You haven't submitted any applications under this filter yet.
+            {t('noAppsFilterMsg', "You haven't submitted any applications under this filter yet.")}
           </p>
           <button 
             type="button" 
             onClick={() => { setNewForm({ ...newForm }); setNewAppModalOpen(true); }}
             className="btn btn-primary btn-sm"
           >
-            Apply for a Scheme Now
+            {t('applySchemeNow', 'Apply for a Scheme Now')}
           </button>
         </div>
       ) : (

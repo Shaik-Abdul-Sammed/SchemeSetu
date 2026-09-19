@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation } from '../../context/LocationContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { 
@@ -32,13 +32,43 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
   } = useLocation();
 
   const { t } = useLanguage();
-  const [selectedState, setSelectedState] = useState(location.state || 'Telangana');
+  const [selectedState, setSelectedState] = useState(location.state || '');
+  const [selectedDistrict, setSelectedDistrict] = useState(location.district || '');
   const [activePartner, setActivePartner] = useState(null);
+
+  // Derive unique sorted state list
+  const uniqueStates = useMemo(() => {
+    const states = [...new Set(INDIAN_LOCATIONS.map(l => l.state))].sort();
+    return states;
+  }, [INDIAN_LOCATIONS]);
+
+  // Derive districts for the selected state
+  const districtsForState = useMemo(() => {
+    if (!selectedState) return [];
+    return INDIAN_LOCATIONS
+      .filter(l => l.state === selectedState)
+      .map(l => l.district)
+      .sort();
+  }, [selectedState, INDIAN_LOCATIONS]);
 
   const handleStateChange = (e) => {
     const newState = e.target.value;
     setSelectedState(newState);
-    setManualLocation(newState);
+    setSelectedDistrict(''); // reset district when state changes
+
+    // Auto-set to first district of the state so something is always selected
+    const firstDistrict = INDIAN_LOCATIONS.find(l => l.state === newState);
+    if (firstDistrict) {
+      setManualLocation(newState, firstDistrict.district);
+    }
+  };
+
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setSelectedDistrict(newDistrict);
+    if (selectedState && newDistrict) {
+      setManualLocation(selectedState, newDistrict);
+    }
   };
 
   if (!isOpen) return null;
@@ -131,8 +161,8 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
 
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', flexGrow: 1 }}>
-          
-          {/* Geolocation Detection Actions */}
+
+          {/* GPS + Demo buttons */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -161,21 +191,85 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
               <Sparkles size={16} style={{ color: '#F59E0B' }} />
               <span>Load Demo Location (Chennai)</span>
             </button>
+          </div>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <select
-                value={selectedState}
-                onChange={handleStateChange}
-                className="form-select"
-                style={{ backgroundColor: '#1E293B', color: '#FFFFFF', borderColor: '#334155', height: '42px' }}
-                aria-label="Select State"
-              >
-                <option value="" disabled>Select State / District Manually</option>
-                {INDIAN_LOCATIONS.map(s => (
-                  <option key={s.state} value={s.state}>{s.state} ({s.district})</option>
-                ))}
-              </select>
+          {/* ── Two-step Manual Location Selector ── */}
+          <div style={{
+            backgroundColor: '#1E293B',
+            borderRadius: '12px',
+            border: '1px solid #334155',
+            padding: '1rem 1.25rem',
+            marginBottom: '1.25rem'
+          }}>
+            <div style={{ fontSize: '0.82rem', color: '#94A3B8', fontWeight: 600, marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <MapPin size={14} style={{ color: '#F59E0B' }} />
+              Select Location Manually
             </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {/* State selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', marginBottom: '0.35rem', fontWeight: 600 }}>
+                  State / UT
+                </label>
+                <select
+                  value={selectedState}
+                  onChange={handleStateChange}
+                  className="form-select"
+                  style={{ backgroundColor: '#0F172A', color: '#FFFFFF', borderColor: '#475569', height: '42px', width: '100%' }}
+                  aria-label="Select State"
+                >
+                  <option value="" disabled>-- Select State --</option>
+                  {uniqueStates.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* District selector — only active once a state is chosen */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', marginBottom: '0.35rem', fontWeight: 600 }}>
+                  District
+                </label>
+                <select
+                  value={selectedDistrict}
+                  onChange={handleDistrictChange}
+                  disabled={!selectedState || districtsForState.length === 0}
+                  className="form-select"
+                  style={{
+                    backgroundColor: '#0F172A',
+                    color: selectedState ? '#FFFFFF' : '#475569',
+                    borderColor: selectedState ? '#F59E0B' : '#334155',
+                    height: '42px',
+                    width: '100%',
+                    opacity: selectedState ? 1 : 0.5
+                  }}
+                  aria-label="Select District"
+                >
+                  <option value="" disabled>
+                    {selectedState ? '-- Select District --' : '-- Select State first --'}
+                  </option>
+                  {districtsForState.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Confirmation chip after selection */}
+            {selectedState && selectedDistrict && (
+              <div style={{
+                marginTop: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.78rem',
+                color: '#34D399',
+                fontWeight: 600
+              }}>
+                <ShieldCheck size={14} />
+                Location set to: <strong>{selectedDistrict}, {selectedState}</strong>
+              </div>
+            )}
           </div>
 
           {/* Status Message / Error / Permission Warning */}

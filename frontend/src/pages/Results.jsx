@@ -195,6 +195,60 @@ export default function Results() {
         </button>
       </div>
 
+      {/* INCOME GOAL CEILING CHECK CARD */}
+      <div className="card" style={{ 
+        marginBottom: '1.5rem', 
+        padding: '1.25rem', 
+        borderRadius: '16px', 
+        backgroundColor: (passedCriteria.income || 240000) <= 500000 ? '#ECFDF5' : '#FEF2F2',
+        border: `1px solid ${(passedCriteria.income || 240000) <= 500000 ? '#A7F3D0' : '#FCA5A5'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ 
+            width: '44px', 
+            height: '44px', 
+            borderRadius: '12px', 
+            backgroundColor: (passedCriteria.income || 240000) <= 500000 ? '#059669' : '#DC2626',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <ShieldCheck size={22} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: (passedCriteria.income || 240000) <= 500000 ? '#047857' : '#991B1B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              MoSJE SC Income Goal Verification
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0.15rem 0 0' }}>
+              {(passedCriteria.income || 240000) <= 500000 
+                ? '✅ Income Goal Satisfied — Within MoSJE SC Ceiling (₹5,00,000)'
+                : '⚠️ Exceeds SC Income Ceiling Goal (₹5,00,000)'}
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0.15rem 0 0' }}>
+              Declared Household Income: <strong>₹{(passedCriteria.income || 240000).toLocaleString('en-IN')}</strong> | MoSJE Subsidy Entitlement Threshold: <strong>₹5,00,000</strong>
+            </p>
+          </div>
+        </div>
+
+        <span className="badge" style={{
+          padding: '0.4rem 0.85rem',
+          borderRadius: '20px',
+          backgroundColor: (passedCriteria.income || 240000) <= 500000 ? '#059669' : '#DC2626',
+          color: '#FFFFFF',
+          fontWeight: 800,
+          fontSize: '0.8rem'
+        }}>
+          {(passedCriteria.income || 240000) <= 500000 ? '100% Subsidy Unlocked' : 'Standard Terms'}
+        </span>
+      </div>
+
       {/* Prominent Gradient Scheme Card */}
       <div
         style={{

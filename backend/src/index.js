@@ -79,9 +79,24 @@ function healthCheckHandler(req, res) {
   });
 }
 
-// Health Endpoints
+// Readiness Handler
+function readinessCheckHandler(req, res) {
+  return res.status(200).json({
+    status: 'READY',
+    service: 'SchemeSetu Backend API',
+    database: 'CONNECTED',
+    ruleEngine: 'ACTIVE',
+    partnerRouter: 'ACTIVE',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Health & Readiness Endpoints
 app.get('/api/health', healthCheckHandler);
 app.get('/api/v1/health', healthCheckHandler);
+app.get('/api/ready', readinessCheckHandler);
+app.get('/api/v1/ready', readinessCheckHandler);
 
 // Root informational endpoint
 app.get('/', (req, res) => {

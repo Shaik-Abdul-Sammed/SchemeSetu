@@ -117,9 +117,34 @@ export function evaluateAgentSchemes(profile) {
       score += 15;
     }
 
-    // Category / Caste Priority
+    // Category / Caste Priority & NSFDC Concessional Scheme Rules
     const isSC = profile.casteCategory === 'SC' || String(profile.casteCategory).toUpperCase().includes('SC');
-    if (scheme.id === 'dalit-bandhu') {
+    if (scheme.casteEligibility && scheme.casteEligibility.includes('SC') && scheme.casteEligibility.length === 1) {
+      if (!isSC) {
+        isEligible = false;
+        missing.push('Exclusive for Scheduled Caste (SC) beneficiaries');
+      } else {
+        score += 25;
+        reasons.push('High SC beneficiary priority under NSFDC concessional guidelines');
+      }
+    }
+
+    if (scheme.id === 'nsfdc-micro-finance') {
+      if (isSC && profile.annualIncome <= 500000) {
+        score += 30;
+        reasons.push('Concessional 6.5% interest rate & 90% project cost financing for SC micro-projects up to ₹1.40 Lakh');
+      }
+    } else if (scheme.id === 'nsfdc-term-loan') {
+      if (isSC && profile.annualIncome <= 500000) {
+        score += 30;
+        reasons.push('Concessional 7.5% interest term loan & 90% project cost funding up to ₹50.00 Lakhs');
+      }
+    } else if (scheme.id === 'nsfdc-educational-loan') {
+      if (isSC && profile.annualIncome <= 500000) {
+        score += 30;
+        reasons.push('Concessional 6.5% educational credit & 90% course fee funding up to ₹30.00 Lakhs');
+      }
+    } else if (scheme.id === 'dalit-bandhu') {
       if (isSC && (profile.state === 'Telangana' || profile.location.includes('Telangana'))) {
         score += 25;
         reasons.push('100% Non-repayable welfare grant for SC entrepreneurs in Telangana');
@@ -143,14 +168,20 @@ export function evaluateAgentSchemes(profile) {
     let financialFit = 'Limit not specified in available data';
     let isFinancialMatch = true;
 
-    if (scheme.maxLoan) {
-      if (profile.loanRequirement <= scheme.maxLoan) {
-        financialFit = `Within Limit (${formatIndianCurrency(profile.loanRequirement)} / Max ${formatIndianCurrency(scheme.maxLoan)})`;
+    let schemeMaxLoan = scheme.maxLoan;
+    if (scheme.id === 'nsfdc-educational-loan') {
+      const isAbroad = String(profile.studyLocation || profile.locationType || '').toLowerCase().includes('abroad') || Boolean(profile.studyAbroad);
+      schemeMaxLoan = isAbroad ? (scheme.maxLoanAbroad || 3000000) : (scheme.maxLoanIndia || 2000000);
+    }
+
+    if (schemeMaxLoan) {
+      if (profile.loanRequirement <= schemeMaxLoan) {
+        financialFit = `Within Limit (${formatIndianCurrency(profile.loanRequirement)} / Max ${formatIndianCurrency(schemeMaxLoan)})`;
         score += 15;
       } else {
         isFinancialMatch = false;
-        financialFit = `Exceeds Cap (${formatIndianCurrency(profile.loanRequirement)} > Max ${formatIndianCurrency(scheme.maxLoan)})`;
-        missing.push(`Requested loan (${formatIndianCurrency(profile.loanRequirement)}) exceeds scheme cap (${formatIndianCurrency(scheme.maxLoan)})`);
+        financialFit = `Exceeds Cap (${formatIndianCurrency(profile.loanRequirement)} > Max ${formatIndianCurrency(schemeMaxLoan)})`;
+        missing.push(`Requested loan (${formatIndianCurrency(profile.loanRequirement)}) exceeds scheme cap (${formatIndianCurrency(schemeMaxLoan)})`);
       }
     }
 

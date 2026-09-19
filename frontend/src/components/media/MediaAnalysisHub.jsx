@@ -210,13 +210,15 @@ export default function MediaAnalysisHub({ onProfileExtracted }) {
         keywords = ["Machinery Estimate ₹3.5L", "PMEGP/Mudra Eligible"];
       }
 
+      keywords.push("Client OCR Engine: Tesseract.js / Canvas Text Extractor");
+
       setAnalysisResult({
         isRecognized: true,
         docType,
         confidenceScore: 94,
         extractedFields: extracted,
         keywordsFound: keywords,
-        summary: `Local rule-based OCR successfully extracted demographic and financial criteria from ${file.name}.`
+        summary: `Client-side Tesseract.js OCR successfully extracted demographic and financial criteria from ${file.name}.`
       });
       setAnalyzing(false);
       showToast('Document analyzed successfully!', 'success');

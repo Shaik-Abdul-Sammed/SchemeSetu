@@ -20,6 +20,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
 import { MOCK_PARTNERS } from '../data/mock/partners';
+import VoiceSearchButton from '../components/common/VoiceSearchButton';
 
 export default function Locations() {
   const { t } = useLanguage();
@@ -30,19 +31,49 @@ export default function Locations() {
     errorMessage, 
     detectCurrentGPSLocation, 
     refreshLocation, 
+    setManualLocation,
     nearbyPartners,
     calculateDistance
   } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState('All');
+  const [selectedState, setSelectedState] = useState(location?.state || 'All');
+  const [selectedDistrict, setSelectedDistrict] = useState(location?.district || 'All');
+  const [selectedMandal, setSelectedMandal] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
+  const [onlyEligible, setOnlyEligible] = useState(true);
   const [selectedCenter, setSelectedCenter] = useState(null);
+
+  // Synchronize state and district when location changes from GPS or Radar
+  useEffect(() => {
+    if (location?.state) {
+      setSelectedState(location.state);
+    }
+    if (location?.district) {
+      setSelectedDistrict(location.district);
+    }
+  }, [location?.state, location?.district]);
 
   // Attempt GPS detect via centralized location service
   const handleDetectGps = () => {
     detectCurrentGPSLocation(true);
   };
+
+  // Dynamically compute state options from available partners
+  const stateOptions = React.useMemo(() => {
+    const states = new Set(nearbyPartners.map(p => p.state).filter(Boolean));
+    return ['All', ...Array.from(states).sort()];
+  }, [nearbyPartners]);
+
+  // Dynamically compute district options for selected state
+  const districtOptions = React.useMemo(() => {
+    let pool = nearbyPartners;
+    if (selectedState !== 'All') {
+      pool = pool.filter(p => p.state === selectedState || (p.address && p.address.includes(selectedState)));
+    }
+    const dists = new Set(pool.map(p => p.district).filter(Boolean));
+    return ['All', ...Array.from(dists).sort()];
+  }, [nearbyPartners, selectedState]);
 
   // Filter from dynamically sorted nearbyPartners from LocationContext
   const filteredPartners = nearbyPartners.filter(partner => {
@@ -52,14 +83,29 @@ export default function Locations() {
       (partner.district && partner.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (partner.supportedServices && partner.supportedServices.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
 
-    const matchesState = selectedState === 'All' || partner.address.includes(selectedState) || partner.state === selectedState;
+    const matchesState = selectedState === 'All' || partner.state === selectedState || (partner.address && partner.address.includes(selectedState));
+    const matchesDistrict = selectedDistrict === 'All' || 
+      (partner.district && partner.district.toLowerCase() === selectedDistrict.toLowerCase()) ||
+      (partner.address && partner.address.toLowerCase().includes(selectedDistrict.toLowerCase()));
+    const matchesMandal = selectedMandal === 'All' || 
+      (partner.mandal && partner.mandal === selectedMandal) || 
+      (partner.address && partner.address.toLowerCase().includes(selectedMandal.toLowerCase()));
     const matchesType = selectedType === 'All' || partner.type === selectedType;
+    const matchesNpa = !onlyEligible || (partner.fundAvailable && partner.npaStatus !== 'high');
 
-    return matchesSearch && matchesState && matchesType;
+    return matchesSearch && matchesState && matchesDistrict && matchesMandal && matchesType && matchesNpa;
   });
 
-  const stateOptions = ['All', 'Telangana', 'Tamil Nadu', 'Andhra Pradesh', 'Maharashtra', 'Karnataka', 'Delhi'];
-  const typeOptions = ['All', 'Public Sector Bank', 'Common Services Centre (CSC)', 'District Welfare Center', 'KVIC Facilitation Center'];
+  const typeOptions = [
+    'All',
+    'State Channelizing Agency (SCA)',
+    'Public Sector Bank',
+    'Regional Rural Bank (RRB)',
+    'NBFC-MFI',
+    'Common Services Centre (CSC)',
+    'District Welfare Center',
+    'KVIC Facilitation Center'
+  ];
 
   return (
     <div className="container" style={{ padding: '2.5rem 1.25rem', maxWidth: '1200px' }}>
@@ -106,23 +152,28 @@ export default function Locations() {
       {/* Search & Filter Bar */}
       <div className="card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '2rem', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
-          {/* Search Box */}
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('loc_searchDistrict', 'Search by District, PIN, or Center name...')}
-              style={{
-                width: '100%',
-                padding: '0.65rem 1rem 0.65rem 2.5rem',
-                borderRadius: '8px',
-                border: '1px solid #CBD5E1',
-                fontSize: '0.9rem',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+          {/* Search Box with Voice Input */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ position: 'relative', flexGrow: 1 }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('loc_searchDistrict', 'Search by District, PIN, or Center name...')}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1rem 0.65rem 2.5rem',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <VoiceSearchButton 
+              onResult={(transcript) => setSearchQuery(transcript)} 
             />
           </div>
 
@@ -130,7 +181,10 @@ export default function Locations() {
           <div>
             <select
               value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
+              onChange={(e) => {
+                setSelectedState(e.target.value);
+                setSelectedDistrict('All');
+              }}
               style={{
                 width: '100%',
                 padding: '0.65rem 1rem',
@@ -140,9 +194,32 @@ export default function Locations() {
                 backgroundColor: '#FFFFFF',
                 outline: 'none'
               }}
+              aria-label="Filter by State"
             >
               {stateOptions.map(st => (
                 <option key={st} value={st}>{st === 'All' ? 'All States & UTs' : `State: ${st}`}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* District Filter */}
+          <div>
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.65rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1',
+                fontSize: '0.9rem',
+                backgroundColor: '#FFFFFF',
+                outline: 'none'
+              }}
+              aria-label="Filter by District"
+            >
+              {districtOptions.map(dist => (
+                <option key={dist} value={dist}>{dist === 'All' ? 'All Districts' : `District: ${dist}`}</option>
               ))}
             </select>
           </div>
@@ -163,10 +240,29 @@ export default function Locations() {
               }}
             >
               {typeOptions.map(tp => (
-                <option key={tp} value={tp}>{tp === 'All' ? 'All Facility Types' : tp}</option>
+                <option key={tp} value={tp}>{tp === 'All' ? 'All Channel Partner Types' : tp}</option>
               ))}
             </select>
           </div>
+        </div>
+
+        {/* NPA Risk & Fund Utilization Intelligent Router Filter */}
+        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#0F172A' }}>
+            <input 
+              type="checkbox" 
+              checked={onlyEligible} 
+              onChange={(e) => setOnlyEligible(e.target.checked)} 
+              style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+            />
+            <ShieldCheck size={16} style={{ color: '#059669' }} />
+            <span>Smart Routing: Route only to Channel Partners with Low NPA & Active Funds</span>
+          </label>
+          {onlyEligible && (
+            <span style={{ fontSize: '0.78rem', color: '#047857', backgroundColor: '#ECFDF5', padding: '0.2rem 0.6rem', borderRadius: '12px', border: '1px solid #A7F3D0' }}>
+              ✓ Excluding partners with high NPAs or depleted funds
+            </span>
+          )}
         </div>
       </div>
 
@@ -176,7 +272,7 @@ export default function Locations() {
           Assistance Centers ({filteredPartners.length})
         </h2>
         <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
-          {userCoords ? 'Sorted by proximity to your current location' : 'Showing verified partner locations'}
+          {(location && location.lat && location.lng) ? 'Sorted by proximity to your current location' : 'Showing verified partner locations'}
         </span>
       </div>
 
@@ -222,14 +318,31 @@ export default function Locations() {
                     {partner.type}
                   </span>
                   
-                  {partner.calculatedDistance !== undefined && partner.calculatedDistance !== null ? (
-                    <span className="badge" style={{ backgroundColor: '#FEF3C7', color: '#92400E', fontSize: '0.75rem', fontWeight: 700 }}>
-                      <Compass size={12} style={{ display: 'inline', marginRight: '3px' }} />
-                      {partner.calculatedDistance} km away
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Distance unavailable</span>
-                  )}
+                  {(() => {
+                    const distVal = partner.calculatedDistance !== undefined && partner.calculatedDistance !== null
+                      ? partner.calculatedDistance
+                      : partner.distanceKm;
+                    const isVal = distVal !== undefined && distVal !== null;
+                    const numDist = isVal ? Number(distVal) : null;
+                    return isVal && !isNaN(numDist) ? (
+                      <span 
+                        className="badge" 
+                        style={{ 
+                          backgroundColor: numDist <= 5 ? '#DCFCE7' : (numDist <= 15 ? '#FEF3C7' : '#FFEDD5'), 
+                          color: numDist <= 5 ? '#15803D' : (numDist <= 15 ? '#B45309' : '#C2410C'), 
+                          border: numDist <= 5 ? '1px solid #86EFAC' : (numDist <= 15 ? '1px solid #FDE68A' : '1px solid #FDBA74'),
+                          fontSize: '0.75rem', 
+                          fontWeight: 800,
+                          padding: '0.2rem 0.55rem'
+                        }}
+                      >
+                        <Compass size={12} style={{ display: 'inline', marginRight: '3px' }} />
+                        {numDist <= 1 ? 'Within 1 km' : `${numDist.toFixed(1)} km away`}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Distance unavailable</span>
+                    );
+                  })()}
                 </div>
 
                 {/* Center Title */}
@@ -351,14 +464,26 @@ export default function Locations() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedCenter.state) {
+                    setManualLocation(selectedCenter.state, selectedCenter.district);
+                  }
+                }}
+                className="btn btn-outline btn-sm"
+                title="Anchor your radar to this center's location"
+              >
+                <MapPin size={14} /> Set as My Location
+              </button>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedCenter.name} ${selectedCenter.address}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary btn-sm"
               >
-                <Navigation size={15} /> Open Maps Navigation
+                <Navigation size={14} /> Open Maps
               </a>
               <button
                 type="button"
@@ -368,7 +493,7 @@ export default function Locations() {
                 }}
                 className="btn btn-primary btn-sm"
               >
-                <FileText size={15} /> Apply Assistance Here
+                <FileText size={14} /> Apply Assistance Here
               </button>
             </div>
           </div>

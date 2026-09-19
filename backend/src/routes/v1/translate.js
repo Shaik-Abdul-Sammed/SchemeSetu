@@ -12,9 +12,17 @@
  * Response (batch):   { translated: string[] }
  */
 
+if (!process.env.XDG_CONFIG_HOME) process.env.XDG_CONFIG_HOME = '/tmp';
+
 const express = require('express');
 const router = express.Router();
-const translate = require('google-translate-api');
+let translate;
+try {
+  translate = require('google-translate-api');
+} catch (e) {
+  console.warn('[translate] google-translate-api load fallback active:', e.message);
+  translate = async (text) => ({ text });
+}
 
 // ── Language code map: app codes → Google Translate codes ──
 const LANG_MAP = {

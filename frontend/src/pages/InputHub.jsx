@@ -22,17 +22,8 @@ import { api } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
-import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
-import { validateAgentProfile, evaluateAgentSchemes } from '../utils/agentValidationEngine';
-import { formatIndianCurrency } from '../utils/numberValidator';
-
-export default function InputHub() {
-  const navigate = useNavigate();
-  const { lang, t } = useLanguage();
-  const { location, locationStatus, errorMessage: locationError, detectCurrentGPSLocation } = useLocation();
 import { useUserProfile } from '../context/UserProfileContext';
 import ProfileModal from '../components/profile/ProfileModal';
-import AgentReportModal from '../components/agent/AgentReportModal';
 import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoiceRecognition';
 import useTextToSpeech from '../hooks/useTextToSpeech';
 import useLanguageDetection from '../hooks/useLanguageDetection';
@@ -45,6 +36,9 @@ import {
   detectNumberContext,
   isTranscriptMeaningful,
 } from '../utils/voiceUtils';
+import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
+import { validateAgentProfile, evaluateAgentSchemes } from '../utils/agentValidationEngine';
+import { formatIndianCurrency } from '../utils/numberValidator';
 
 // ── Conversation Steps ────────────────────────────────────────────────────────
 const STEPS = {
@@ -130,9 +124,7 @@ export default function InputHub() {
     age: '',
     state: '',
     occupation: '',
-    education: ''
     education: '',
-    occupation: '',
   });
   const stepRef = useRef(STEPS.GREETING);     // Avoid stale closure in callbacks
   const criteriaRef = useRef(criteria);
@@ -155,11 +147,7 @@ export default function InputHub() {
     education: '10th pass',
     occupation: 'Small Business',
     location: 'Hyderabad, Telangana',
-    state: 'Telangana'
-    name: 'Ramesh Kumar', age: 32, income: 240000,
-    projectType: 'manufacturing', cost: 350000,
-    education: '10th pass', occupation: 'Farmer',
-    location: 'Hyderabad, Telangana',
+    state: 'Telangana',
   });
 
   // ── TTS (with per-utterance effectiveLang override) ──────────────────────
@@ -342,6 +330,7 @@ export default function InputHub() {
     }
 
     // ── STEP-BY-STEP RECOMMENDATION FLOW ────────────────────────────────
+    const activeLang = (effectiveLang || lang || 'EN').toUpperCase();
 
     // ── STEP: PROJECT TYPE ───────────────────────────────────────────────
     if (currentStep === STEPS.PROJECT_TYPE || !currentCriteria.projectType) {
@@ -350,62 +339,55 @@ export default function InputHub() {
       setCriteria(updated);
       setStep(STEPS.COST);
 
-      const reply = t('gotProjectType',
-        `Got it — you're looking for ${detected} assistance. What is your estimated project cost or required loan amount? (e.g. "3 lakh" or "300000")`
-      ).replace('${detected}', detected);
+      const projectTypeReplies = {
+        TE: `అర్థమైంది — మీరు ${detected} సహాయం కోరుతున్నారు. మీ ప్రాజెక్ట్ అంచనా వ్యయం లేదా అవసరమైన రుణ మొత్తం ఎంత? (ఉదా. "3 లక్షలు" లేదా "300000")`,
+        HI: `समझ गया — आप ${detected} सहायता की तलाश कर रहे हैं। आपकी अनुमानित परियोजना लागत या आवश्यक ऋण राशि कितनी है? (उदा. "3 लाख" या "300000")`,
+        KN: `ಅರ್ಥವಾಯಿತು — ನೀವು ${detected} ನೆರವು ಹುಡುಕುತ್ತಿದ್ದೀರಿ. ನಿಮ್ಮ ಅಂದಾಜು ಯೋಜನೆ ವೆಚ್ಚ ಅಥವಾ ಅಗತ್ಯವಿರುವ ಸಾಲದ ಮೊತ್ತ ಎಷ್ಟು? (ಉದಾ. "3 ಲಕ್ಷ")`,
+        TA: `புரிந்தது — நீங்கள் ${detected} உதவி தேடுகிறீர்கள். உங்கள் மதிப்பிடப்பட்ட திட்டச் செலவு அல்லது தேவைப்படும் கடன் தொகை என்ன?`,
+        BN: `বুঝতে পেরেছি — আপনি ${detected} সহায়তার খোঁজ করছেন। আপনার আনুমানিক প্রকল্প ব্যয় বা প্রয়োজনীয় ঋণের পরিমাণ কত?`,
+        MR: `समजले — तुम्ही ${detected} मदतीच्या शोधात आहात. तुमची अंदाजित प्रकल्प किंमत किंवा आवश्यक कर्ज रक्कम किती आहे?`,
+        ML: `മനസ്സിലായി — നിങ്ങൾ ${detected} സഹായം തിരയുകയാണ്. നിങ്ങളുടെ കണക്കാക്കിയ പ്രോജക്റ്റ് ചെലവ് അല്ലെങ്കിൽ ആവശ്യമായ വായ്പ തുക എത്രയാണ്?`,
+        EN: `Got it — you're looking for ${detected} assistance. What is your estimated project cost or required loan amount? (e.g. "3 lakh" or "300000")`,
+      };
 
-  // Conversational Flow Logic with Intelligent Entity & Missing-Information Extraction
-  const handleUserMessage = async (text) => {
-    if (!text || !text.trim()) {
-      setVoiceState('ready');
-      return;
-    }
-
-    const trimmed = text.trim();
-    const updatedMessages = [...messages, { sender: 'user', text: trimmed }];
-    setMessages(updatedMessages);
-    setTextInput('');
-    setCurrentTranscript('');
-    setVoiceState('processing');
-
-    // 1. Extract entities and merge with existing criteria
-    const updatedCriteria = parseUserInput(trimmed, criteria);
-    setCriteria(updatedCriteria);
-
-    // 2. Generate contextual missing-information response in user's selected language
-    const botResult = generateAssistantResponse(updatedCriteria, lang);
-
-    setTimeout(() => {
-      setMessages([...updatedMessages, { sender: 'bot', text: botResult.text }]);
-      speakResponse(botResult.text);
-
-      // If all required information is gathered, transition to scheme recommendations
-      if (botResult.isComplete) {
-        setTimeout(() => {
-          submitRecommendation(updatedCriteria);
-        }, 1200);
-      }
-    }, 450);
-  };
+      const reply = projectTypeReplies[activeLang] || projectTypeReplies.EN;
       setTimeout(() => addBotMessage(reply), 300);
       return;
     }
 
     // ── STEP: COST ───────────────────────────────────────────────────────
     if (currentStep === STEPS.COST || !currentCriteria.cost) {
-      const amount = parseRes?.slots?.amount || extractAmount(normalized);
+      const amount = parseRes?.slots?.amount || extractAmount(normalized) || extractAmount(rawText);
 
       if (amount === null || amount <= 0) {
-        addBotMessage(t('costClarify',
-          'I could not understand the amount. Please say the amount clearly, like "2 lakh" or "200000".'
-        ));
+        const costClarifyReplies = {
+          TE: 'మొత్తం నాకు అర్థం కాలేదు. దయచేసి "10 లక్షలు" లేదా "1000000" వంటి మొత్తాన్ని స్పష్టంగా చెప్పండి.',
+          HI: 'मुझे राशि समझ नहीं आई। कृपया "10 लाख" या "1000000" की तरह स्पष्ट रूप से कहें।',
+          KN: 'ನನಗೆ ಮೊತ್ತ ಅರ್ಥವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು "10 ಲಕ್ಷ" ಅಥವಾ "1000000" ನಂತಹ ಮೊತ್ತವನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿ.',
+          TA: 'தொகை எனக்கு புரியவில்லை. "10 லட்சம்" அல்லது "1000000" என தெளிவாக சொல்லவும்.',
+          BN: 'আমি পরিমাণটি বুঝতে পারিনি। অনুগ্রহ করে "10 লাখ" বা "1000000"-এর মতো স্পষ্টভাবে বলুন।',
+          MR: 'मला रक्कम समजली नाही. कृपया "10 लाख" किंवा "1000000" प्रमाणे स्पष्ट सांगा.',
+          ML: 'എനിക്ക് തുക മനസ്സിലായില്ല. "10 ലക്ഷം" അല്ലെങ്കിൽ "1000000" പോലെ ദയവായി വ്യക്തമായി പറയുക.',
+          EN: 'I could not understand the amount. Please say the amount clearly, like "10 lakh" or "1000000".',
+        };
+        addBotMessage(costClarifyReplies[activeLang] || costClarifyReplies.EN);
         return;
       }
 
       if (amount < 1000 || amount > 100000000) {
-        addBotMessage(t('costOutOfRange',
-          `₹${amount.toLocaleString('en-IN')} seems unusual. Please enter an amount between ₹1,000 and ₹10 crore.`
-        ));
+        const formatted = Number(amount).toLocaleString('en-IN');
+        const outOfRangeReplies = {
+          TE: `₹${formatted} సాధారణంగా లేదు. దయచేసి ₹1,000 నుండి ₹10 కోట్ల వరకు ఉన్న మొత్తాన్ని నమోదు చేయండి.`,
+          HI: `₹${formatted} असामान्य लग रहा है। कृपया ₹1,000 और ₹10 करोड़ के बीच की राशि दर्ज करें।`,
+          KN: `₹${formatted} ಅಸಾಮಾನ್ಯವಾಗಿದೆ. ದಯವಿಟ್ಟು ₹1,000 ರಿಂದ ₹10 ಕೋಟಿ ನಡುವಿನ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ.`,
+          TA: `₹${formatted} வழக்கத்திற்கு மாறானது. ₹1,000 முதல் ₹10 கோடி வரையிலான தொகையை உள்ளிடவும்.`,
+          BN: `₹${formatted} অস্বাভাবিক বলে মনে হচ্ছে। অনুগ্রহ করে ₹১,০০০ এবং ₹১০ কোটির মধ্যে একটি পরিমাণ লিখুন।`,
+          MR: `₹${formatted} असामान्य वाटते. कृपया ₹१,००० ते ₹१० कोटी दरम्यानची रक्कम प्रविष्ट करा.`,
+          ML: `₹${formatted} അസാധാരണമായി തോന്നുന്നു. ₹1,000 നും ₹10 കോടിക്കും ഇടയിലുള്ള തുക നൽകുക.`,
+          EN: `₹${formatted} seems unusual. Please enter an amount between ₹1,000 and ₹10 crore.`,
+        };
+
+        addBotMessage(outOfRangeReplies[activeLang] || outOfRangeReplies.EN);
         return;
       }
 
@@ -413,19 +395,38 @@ export default function InputHub() {
       setCriteria(updated);
       setStep(STEPS.INCOME);
 
-      const reply = `Understood — project cost of ₹${amount.toLocaleString('en-IN')}. What is your annual household income? (e.g. "1.5 lakh" or "150000")`;
-      setTimeout(() => addBotMessage(reply), 300);
+      const formattedCost = Number(amount).toLocaleString('en-IN');
+      const askIncomeReplies = {
+        TE: `అర్థమైంది — ప్రాజెక్ట్ ఖర్చు ₹${formattedCost}. మీ వార్షిక కుటుంబ ఆదాయం ఎంత? (ఉదా. "1.5 లక్షలు" లేదా "150000")`,
+        HI: `समझ गया — प्रोजेक्ट लागत ₹${formattedCost}। आपकी वार्षिक पारिवारिक आय कितनी है? (उदा. "1.5 लाख" या "150000")`,
+        KN: `ಅರ್ಥವಾಯಿತು — ಯೋಜನೆಯ ವೆಚ್ಚ ₹${formattedCost}. ನಿಮ್ಮ ವಾರ್ಷಿಕ ಕುಟುಂಬ ಆದಾಯ ಎಷ್ಟು? (ಉದಾ. "1.5 ಲಕ್ಷ")`,
+        TA: `புரிந்தது — திட்ட செலவு ₹${formattedCost}. உங்கள் ஆண்டு குடும்ப வருமானம் எவ்வளவு?`,
+        BN: `বুঝতে পেরেছি — প্রকল্পের খরচ ₹${formattedCost}। আপনার বার্ষিক পারিবারিক আয় কত?`,
+        MR: `समजले — प्रकल्प खर्च ₹${formattedCost}. तुमचे वार्षिक कौटुंबिक उत्पन्न किती आहे?`,
+        ML: `മനസ്സിലായി — പ്രോജക്റ്റ് ചെലവ് ₹${formattedCost}. നിങ്ങളുടെ വാർഷിക കുടുംബ വരുമാനം എത്രയാണ്?`,
+        EN: `Understood — project cost of ₹${formattedCost}. What is your annual household income? (e.g. "1.5 lakh" or "150000")`,
+      };
+
+      setTimeout(() => addBotMessage(askIncomeReplies[activeLang] || askIncomeReplies.EN), 300);
       return;
     }
 
     // ── STEP: INCOME ─────────────────────────────────────────────────────
     if (currentStep === STEPS.INCOME || !currentCriteria.income) {
-      const amount = parseRes?.slots?.amount || extractAmount(normalized);
+      const amount = parseRes?.slots?.amount || extractAmount(normalized) || extractAmount(rawText);
 
       if (amount === null || amount <= 0) {
-        addBotMessage(t('incomeClarify',
-          'I could not understand the income. Please say it clearly, like "1 lakh 80 thousand" or "180000".'
-        ));
+        const incomeClarifyReplies = {
+          TE: 'ఆదాయం నాకు అర్థం కాలేదు. దయచేసి "1 లక్ష 80 వేలు" లేదా "180000" అని స్పష్టంగా చెప్పండి.',
+          HI: 'मुझे आय समझ नहीं आई। कृपया "1 लाख 80 हजार" या "180000" की तरह स्पष्ट कहें।',
+          KN: 'ಆದಾಯ ಅರ್ಥವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು "1 ಲಕ್ಷ 80 ಸಾವಿರ" ಎಂದು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿ.',
+          TA: 'வருமானம் புரியவில்லை. "1 லட்சம் 80 ஆயிரம்" என தெளிவாக சொல்லவும்.',
+          BN: 'আয় বুঝতে পারিনি। অনুগ্রহ করে "১ লাখ ৮০ হাজার" বা "১৮০০০০" স্পষ্ট করে বলুন।',
+          MR: 'उत्पन्न समजले नाही. कृपया "१ लाख ८० हजार" स्पष्ट सांगा.',
+          ML: 'വരുമാനം മനസ്സിലായില്ല. "1 ലക്ഷം 80 ആയിരം" എന്ന് വ്യക്തമായി പറയുക.',
+          EN: 'I could not understand the income. Please say it clearly, like "1 lakh 80 thousand" or "180000".',
+        };
+        addBotMessage(incomeClarifyReplies[activeLang] || incomeClarifyReplies.EN);
         return;
       }
 
@@ -433,8 +434,18 @@ export default function InputHub() {
       setCriteria(updated);
       setStep(STEPS.EDUCATION);
 
-      const reply = `Great! What is your highest education level? (e.g. "10th pass", "12th pass", "graduate", or "diploma")`;
-      setTimeout(() => addBotMessage(reply), 300);
+      const askEducationReplies = {
+        TE: 'చాలా మంచిది! మీ అత్యధిక విద్యార్హత ఏమిటి? (ఉదా. "10వ తరగతి", "ఇంటర్మీడియట్", "డిగ్రీ", లేదా "డిప్లొమా")',
+        HI: 'उत्कृष्ट! आपकी उच्चतम शैक्षणिक योग्यता क्या है? (उदा. "10वीं पास", "12वीं पास", "स्नातक", या "डिप्लोमा")',
+        KN: 'ಉತ್ತಮ! ನಿಮ್ಮ ಅತ್ಯುನ್ನತ ಶಿಕ್ಷಣ ಮಟ್ಟ ಏನು? (ಉದಾ. "10ನೇ ತರಗತಿ", "ಪದವಿ")',
+        TA: 'மிக நன்று! உங்கள் உயர்ந்த கல்வி தகுதி என்ன? (எ.கா. "10ஆம் வகுப்பு", "பட்டதாரி")',
+        BN: 'দারুণ! আপনার সর্বোচ্চ শিক্ষাগত যোগ্যতা কী? (যেমন "১০ম শ্রেণী পাস", "ডিগ্রী")',
+        MR: 'छान! तुमची सर्वोच्च शैक्षणिक पात्रता काय आहे? (उदा. "१० वी पास", "पदवी")',
+        ML: 'വളരെ നല്ലത്! നിങ്ങളുടെ ഏറ്റവും ഉയർന്ന വിദ്യാഭ്യാസ യോഗ്യത എന്താണ്? (ഉദാ. "10-ാം ക്ലാസ്")',
+        EN: 'Great! What is your highest education level? (e.g. "10th pass", "12th pass", "graduate", or "diploma")',
+      };
+
+      setTimeout(() => addBotMessage(askEducationReplies[activeLang] || askEducationReplies.EN), 300);
       return;
     }
 
@@ -445,11 +456,18 @@ export default function InputHub() {
       setStep(STEPS.SUBMITTING);
       submittingRef.current = true;
 
-      const calculating = t('calculating',
-        'Thank you! SchemeSetu is evaluating verified government schemes for you now...'
-      );
-      addBotMessage(calculating);
+      const calculatingReplies = {
+        TE: 'ధన్యవాదాలు! SchemeSetu మీ కోసం ధృవీకరించబడిన ప్రభుత్వ పథకాలను పరిశీలిస్తోంది...',
+        HI: 'धन्यवाद! SchemeSetu आपके लिए सत्यापित सरकारी योजनाओं का मूल्यांकन कर रहा है...',
+        KN: 'ಧನ್ಯವಾದಗಳು! SchemeSetu ನಿಮಗಾಗಿ ಪರಿಶೀಲಿಸಿದ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡುತ್ತಿದೆ...',
+        TA: 'நன்றி! SchemeSetu உங்களுக்கான சரிபார்க்கப்பட்ட அரசு திட்டங்களை மதிப்பிடுகிறது...',
+        BN: 'ধন্যবাদ! SchemeSetu আপনার জন্য যাচাইকৃত সরকারি প্রকল্পগুলি মূল্যায়ন করছে...',
+        MR: 'धन्यवाद! SchemeSetu तुमच्यासाठी पडताळलेल्या सरकारी योजनांचे मूल्यमापन करत आहे...',
+        ML: 'നന്ദി! SchemeSetu നിങ്ങൾക്കായി പരിശോധിച്ച സർക്കാർ പദ്ധതികൾ വിലയിരുത്തുന്നു...',
+        EN: 'Thank you! SchemeSetu is evaluating verified government schemes for you now...',
+      };
 
+      addBotMessage(calculatingReplies[activeLang] || calculatingReplies.EN);
       setTimeout(() => submitRecommendation(updated), 600);
     }
   }, [t, addBotMessage, analyzeTranscript, effectiveGoogleCode, location, navigate, profile, updateProfile]);
@@ -694,8 +712,13 @@ export default function InputHub() {
 
       {/* ── USER MODE: Conversational Voice & Chat ──────────────────────── */}
       {mode === 'user' && (
-        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 14px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          
+        <div style={{
+          flexGrow: 1, display: 'flex', flexDirection: 'column',
+          background: '#fff', borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.06)', overflow: 'hidden',
+          position: 'relative',
+        }}>
           {/* Live Extracted Entities Bar */}
           {(criteria.projectType || criteria.income || criteria.age || criteria.state || criteria.occupation || criteria.education) && (
             <div style={{ padding: '0.65rem 1rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.78rem' }}>
@@ -709,16 +732,6 @@ export default function InputHub() {
             </div>
           )}
 
-          {/* Chat Message Scrollable Container */}
-          <div style={{ flexGrow: 1, padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '380px', maxHeight: '480px' }}>
-            {messages.map((msg, index) => (
-        <div style={{
-          flexGrow: 1, display: 'flex', flexDirection: 'column',
-          background: '#fff', borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 14px rgba(0,0,0,0.06)', overflow: 'hidden',
-          position: 'relative',
-        }}>
           {/* ── Voice Language Status Bar ────────────────────────────── */}
           <VoiceLanguageBar
             explicitLang={explicitLang}
@@ -753,42 +766,6 @@ export default function InputHub() {
               >
                 <div
                   style={{
-                    maxWidth: '80%',
-                    padding: '0.85rem 1.15rem',
-                    borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                    backgroundColor: msg.sender === 'user' ? '#1E3E62' : '#F1F5F9',
-                    color: msg.sender === 'user' ? '#FFFFFF' : '#0F172A',
-                    fontSize: '0.95rem',
-                    lineHeight: 1.5,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                    wordBreak: 'break-word',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.4rem'
-                  }}
-                >
-                  <div>{msg.text}</div>
-                  {msg.sender === 'bot' && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
-                      <button
-                        onClick={() => speakResponse(msg.text)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#0284C7',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          padding: '0.2rem 0.4rem',
-                          borderRadius: '4px'
-                        }}
-                        title="Listen to this message aloud"
-                      >
-                        <Volume2 size={13} /> Speak
-                      </button>
                     display: 'flex',
                     justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                     gap: '0.65rem', width: '100%', alignItems: 'flex-end',
@@ -815,9 +792,33 @@ export default function InputHub() {
                       color: msg.sender === 'user' ? '#fff' : '#0F172A',
                       fontSize: '0.95rem', lineHeight: 1.55,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.06)', wordBreak: 'break-word',
+                      display: 'flex', flexDirection: 'column', gap: '0.4rem'
                     }}
                   >
-                    {msg.text}
+                    <div>{msg.text}</div>
+                    {msg.sender === 'bot' && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                        <button
+                          onClick={() => speakResponse(msg.text)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#0284C7',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.2rem 0.4rem',
+                            borderRadius: '4px'
+                          }}
+                          title="Listen to this message aloud"
+                        >
+                          <Volume2 size={13} /> Speak
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {msg.sender === 'user' && (
                     <div style={{
@@ -1121,6 +1122,7 @@ export default function InputHub() {
                 >
                   <Sparkles size={12} /> ⚡ 1-Click SIH Voice Demo Flow
                 </button>
+              </div>
               <div
                 role="status"
                 aria-live="polite"
@@ -1196,9 +1198,12 @@ export default function InputHub() {
         <div className="card" style={{ flexGrow: 1 }}>
           <form onSubmit={handleAgentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.25rem', color: '#0B192C', margin: 0 }}>
-                CSC / VLE Agent Beneficiary Intake Form
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                <Wand2 size={22} style={{ color: '#D97706' }} />
+                <h2 style={{ fontSize: '1.2rem', color: '#0B192C', margin: 0, fontWeight: 700 }}>
+                  CSC / VLE Agent Beneficiary Intake Form
+                </h2>
+              </div>
               <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0.2rem 0 0' }}>
                 All inputs are strictly validated prior to running recommendation algorithms or generating reports.
               </p>
@@ -1301,50 +1306,17 @@ export default function InputHub() {
                   placeholder="e.g. 250000"
                   required
                 />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-              <Wand2 size={22} style={{ color: '#D97706' }} />
-              <h2 style={{ fontSize: '1.2rem', color: '#0B192C', margin: 0, fontWeight: 700 }}>
-                CSC / VLE Agent Beneficiary Intake Form
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="agent-name">{t('fullName', 'Beneficiary Full Name')}</label>
-                <input id="agent-name" type="text" value={agentForm.name}
-                  onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
-                  className="form-control" required maxLength={100} />
               </div>
-
               <div className="form-group">
-                <label className="form-label" htmlFor="agent-age">{t('ageInYears', 'Age')}</label>
-                <input id="agent-age" type="number" value={agentForm.age} min={18} max={80}
-                  onChange={(e) => setAgentForm({ ...agentForm, age: Number(e.target.value) })}
-                  className="form-control" required />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="agent-income">{t('annualIncomeLabel', 'Annual Household Income (₹)')}</label>
-                <input id="agent-income" type="number" value={agentForm.income} min={0}
-                  onChange={(e) => setAgentForm({ ...agentForm, income: Number(e.target.value) })}
-                  className="form-control" required />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="agent-cost">{t('projectCostLabel', 'Project / Loan Cost (₹)')}</label>
-                <input id="agent-cost" type="number" value={agentForm.cost} min={0}
-                  onChange={(e) => setAgentForm({ ...agentForm, cost: Number(e.target.value) })}
-                  className="form-control" required />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="agent-occupation">{t('primaryOccupation', 'Primary Occupation')}</label>
-                <select id="agent-occupation" value={agentForm.occupation}
+                <label className="form-label" htmlFor="agent-occupation">{t('primaryOccupation', 'Primary Occupation')} *</label>
+                <select
+                  id="agent-occupation"
+                  value={agentForm.occupation}
                   onChange={(e) => setAgentForm({ ...agentForm, occupation: e.target.value })}
                   className="form-select"
+                  required
                 >
                   <option value="Small Business">Small Business / Enterprise</option>
-                  className="form-select">
                   <option value="Farmer">Farmer / Agriculture</option>
                   <option value="Artisan">Traditional Artisan</option>
                   <option value="Vendor">Street Vendor</option>
@@ -1370,8 +1342,9 @@ export default function InputHub() {
                     </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
                   <input
+                    id="agent-location"
                     type="text"
                     value={agentForm.location}
                     onChange={(e) => setAgentForm({ ...agentForm, location: e.target.value })}
@@ -1388,12 +1361,6 @@ export default function InputHub() {
                   >
                     <MapPin size={15} style={{ color: location.isGPS ? '#059669' : '#D97706' }} />
                     <span style={{ fontSize: '0.8rem' }}>GPS</span>
-                <label className="form-label" htmlFor="agent-location">GPS Location</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input id="agent-location" type="text" value={agentForm.location} readOnly className="form-control" aria-describedby="detect-gps-btn" />
-                  <button id="detect-gps-btn" type="button" onClick={handleGpsDetect}
-                    className="btn btn-secondary btn-sm" title="Detect GPS location" aria-label="Detect GPS location">
-                    <MapPin size={16} />
                   </button>
                 </div>
               </div>
@@ -1409,13 +1376,6 @@ export default function InputHub() {
         </div>
       )}
 
-      {/* Agent Report Modal */}
-      <AgentReportModal
-        isOpen={agentReportOpen}
-        onClose={() => setAgentReportOpen(false)}
-        validatedProfile={validatedProfile}
-        topSchemes={topSchemes}
-        rejectedSchemes={rejectedSchemes}
       {/* ── Profile Modal ─────────────────────────────────────────────── */}
       <ProfileModal
         isOpen={profileModalOpen}

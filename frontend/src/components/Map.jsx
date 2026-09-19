@@ -87,7 +87,7 @@ export default function Map({ partners = [], selectedPartner, onSelectPartner })
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.82rem', color: '#0284C7', fontWeight: 600 }}>
-              {t('distance', 'Distance')}: {activeMarker.distanceKm || 1.5} {t('distanceKmText', 'km from your location')}
+              {t('distance', 'Distance')}: {activeMarker.calculatedDistance !== undefined && activeMarker.calculatedDistance !== null ? activeMarker.calculatedDistance.toFixed(1) : (activeMarker.distanceKm || '1.5')} {t('distanceKmText', 'km from your location')}
             </span>
 
             <button

@@ -9,7 +9,9 @@ export default function AmortizationTable({ defaultPrincipal = 500000, defaultRa
   const [moratorium, setMoratorium] = useState(0);
 
   const { emi, totalInterest, totalAmount, schedule } = calculateAmortizationSchedule({
+    projectCost: Math.round(principal / 0.9),
     principal,
+    fundingCoveragePct: 90,
     rate,
     tenureMonths: tenure,
     moratoriumMonths: moratorium,

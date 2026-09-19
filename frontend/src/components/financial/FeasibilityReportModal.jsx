@@ -37,6 +37,17 @@ export default function FeasibilityReportModal({ isOpen, onClose, projectParams 
           </span>
         </div>
 
+        {/* Self-Declared Data Provenance Trust Badge */}
+        <div className="mb-4 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between">
+          <span className="flex items-center gap-1.5 font-medium">
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+            Credit history & debt obligations are self-declared. Not independently verified via credit bureau APIs.
+          </span>
+          <span className="font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+            Self-Declared Data
+          </span>
+        </div>
+
         {/* Condition Checks List */}
         <div className="space-y-3 max-h-80 overflow-y-auto pr-1 mb-5">
           {checks.map((c, i) => (

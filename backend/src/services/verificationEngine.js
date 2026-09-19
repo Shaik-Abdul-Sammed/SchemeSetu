@@ -196,7 +196,11 @@ function verifyClaimText(claimText, targetScheme) {
   return { isVerified: true, sanitizedText: claimText };
 }
 
+const { isValidAadhaar, isValidPAN } = require('../utils/validators');
+
 module.exports = {
   verifySchemeFact,
   verifyClaimText,
+  validateAadhaarVerhoeff: isValidAadhaar,
+  validatePAN: isValidPAN
 };

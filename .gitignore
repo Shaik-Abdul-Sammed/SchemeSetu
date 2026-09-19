@@ -1,12 +1,25 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+frontend/node_modules/
+backend/node_modules/
 
 # Build and Distribution outputs
 dist/
 build/
 out/
 .next/
+frontend/dist/
+backend/dist/
+.vercel/
+
+# Vite, Turbo, and Caches
+.vite/
+frontend/.vite/
+.cache/
+.parcel-cache/
+*.tsbuildinfo
+*.eslintcache
 
 # Environment variables and secrets
 .env
@@ -15,6 +28,10 @@ out/
 .env.test.local
 .env.production.local
 !.env.example
+frontend/.env
+frontend/.env.local
+backend/.env
+backend/.env.local
 
 # Logs and debug output
 *.log

@@ -17,14 +17,38 @@ import {
   User,
   ArrowRight
 } from 'lucide-react';
+import AudioWaveform from './AudioWaveform';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { mockSchemes } from '../../data/mock/schemes';
 import { formatIndianCurrency } from '../../utils/numberValidator';
+import { parseUserInput } from '../../utils/voiceAssistantEngine';
+
+// Web Audio API Beep Synthesizer for mic activation feedback
+const playTone = (freq = 600, duration = 0.15) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {
+    // Audio context optional
+  }
+};
 
 export default function VoiceAssistantModal({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { lang, t } = useLanguage();
+  const { lang, changeLanguage, availableLanguages, t } = useLanguage();
   const { user } = useAuth();
 
   const [messages, setMessages] = useState([]);
@@ -37,9 +61,11 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Language mapping to speech locales
-  const getVoiceLocale = () => {
-    switch (lang) {
+  const activeLangCode = typeof lang === 'string' ? lang : (lang?.code || 'EN');
+
+  // Helper for voice locales by language code
+  const getVoiceLocaleForCode = (code) => {
+    switch (code) {
       case 'HI': return 'hi-IN';
       case 'TE': return 'te-IN';
       case 'TA': return 'ta-IN';
@@ -54,37 +80,97 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     }
   };
 
+  // Language mapping to speech locales
+  const getVoiceLocale = () => {
+    return getVoiceLocaleForCode(activeLangCode);
+  };
+
+  // Handle explicit language switch inside Voice Assistant
+  const handleLanguageChange = (newCode) => {
+    stopSpeaking();
+    stopListening();
+    if (changeLanguage) {
+      changeLanguage(newCode);
+    }
+
+    let greeting = `Language switched to ${newCode}. How can I help you today?`;
+    if (newCode === 'HI') greeting = "भाषा बदलकर हिंदी की गई है। मैं आपकी कैसे मदद कर सकता हूँ?";
+    else if (newCode === 'TE') greeting = "భాష తెలుగులోకి మార్చబడింది. నేను మీకు ఎలా సహాయపడగలను?";
+    else if (newCode === 'TA') greeting = "மொழி தமிழுக்கு மாற்றப்பட்டது. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?";
+    else if (newCode === 'KN') greeting = "ಭಾಷೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಬದಲಾಯಿಸಲಾಗಿದೆ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?";
+    else if (newCode === 'ML') greeting = "ഭാഷ മലയാളത്തിലേക്ക് മാറ്റി. ഞാൻ എങ്ങനെ സഹായിക്കണം?";
+    else if (newCode === 'BN') greeting = "ভাষা বাংলায় পরিবর্তিত হয়েছে। আপনাকে কীভাবে সাহায্য করতে পারি?";
+    else if (newCode === 'MR') greeting = "भाषा मराठीत बदलली आहे. मी तुम्हाला कशी मदत करू शकतो?";
+    else if (newCode === 'GON') greeting = "गोंडी भाषा चुन ली गई। मोसे सवाल पूछा।";
+    else if (newCode === 'BHI') greeting = "भीली भाषा चुन ली गई। मने पूछो।";
+
+    const msg = { sender: 'bot', text: greeting, timestamp: new Date(), isGreeting: true };
+    setMessages(prev => [...prev, msg]);
+
+    const targetLocale = getVoiceLocaleForCode(newCode);
+    setTimeout(() => {
+      speakText(greeting, targetLocale);
+    }, 150);
+  };
+
+  // Sample prompt suggestion pills per language
+  const getSamplePrompts = () => {
+    switch (activeLangCode) {
+      case 'HI':
+        return ['₹5 लाख मुद्रा लोन', 'दलित बंधु ₹10L सब्सिडी', 'जरूरी दस्तावेज', 'पास का बैंक सेंटर'];
+      case 'TE':
+        return ['₹5 లక్షల ముద్రా రుణం', 'దళిత బంధు ₹10L గ్రాంట్', 'అవసరమైన పత్రాలు', 'దగ్గరలోని బ్యాంక్'];
+      case 'TA':
+        return ['₹5 லட்சம் முத்ரா கடன்', 'தேவையான ஆவணங்கள்', 'அருகிலுள்ள வங்கி'];
+      case 'KN':
+        return ['₹5 ಲಕ್ಷ ಮುದ್ರಾ ಸಾಲ', 'ಅಗತ್ಯ ದಾಖಲೆಗಳು', 'ಹತ್ತಿರದ ಬ್ಯಾಂಕ್'];
+      case 'ML':
+        return ['₹5 ലക്ഷം മുദ്ര വായ്പ', 'ആവശ്യമായ രേഖകൾ', 'സമീപത്തെ ബാങ്ക്'];
+      case 'BN':
+        return ['₹৫ লাখ মুদ্রা ঋণ', 'প্রয়োজনীয় নথি', 'নিকটস্থ ব্যাংক'];
+      case 'MR':
+        return ['₹५ लाख मुद्रा कर्ज', 'आवश्यक कागदपत्रे', 'जवळील बँक'];
+      case 'GON':
+        return ['₹5 लाख लोन सवाल', 'सरकारी सहायता', 'पास के बैंक'];
+      case 'BHI':
+        return ['₹5 लाख लोन पूछो', 'सरकारी योजना', 'नजीक बैंक'];
+      case 'EN':
+      default:
+        return ['₹5L MUDRA Loan', 'SC Dalit Bandhu Grant', 'Required Documents', 'Find Nearest Bank'];
+    }
+  };
+
   // Initial welcome message in selected language
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       let welcome = "Hello! I am SchemeSetu AI Voice Assistant. Ask me about government welfare schemes, loans, eligibility, or application steps.";
-      if (lang === 'HI') welcome = "नमस्ते! मैं स्कीमसेतू एआई आवाज़ सहायक हूँ। मुझसे सरकारी योजनाओं, लोन, पात्रता या आवेदन नियमों के बारे में पूछें।";
-      else if (lang === 'TE') welcome = "నమస్కారం! నేను స్కీమ్‌సేతు AI వాయిస్ అసిస్టెంట్‌ని. ప్రభుత్వ సంక్షేమ పథకాలు, లోన్లు మరియు అర్హతల గురించి నన్ను అడగండి.";
-      else if (lang === 'TA') welcome = "வணக்கம்! நான் SchemeSetu AI குரல் உதவியாளர். அரசு நலத்திட்டங்கள் மற்றும் கடன்கள் குறித்து என்னிடம் கேளுங்கள்.";
-      else if (lang === 'KN') welcome = "ನಮಸ್ಕಾರ! ನಾನು SchemeSetu AI ಧ್ವನಿ ಸಹಾಯಕ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಮತ್ತು ಸಾಲಗಳ ಬಗ್ಗೆ ನನ್ನನ್ನು ಕೇಳಿ.";
-      else if (lang === 'ML') welcome = "നമസ്കാരം! ഞാൻ സ്കീംസേതു AI വോയ്‌സ് അസിസ്റ്റന്റാണ്. സർക്കാർ പദ്ധതികളെക്കുറിച്ച് എന്നോട് ചോദിക്കുക.";
-      else if (lang === 'BN') welcome = "নমস্কার! আমি স্কিমসেতু এআই ভয়েস সহকারী। সরকারী প্রকল্প এবং ঋণের বিষয়ে আমাকে জিজ্ঞাসা করুন।";
-      else if (lang === 'MR') welcome = "नमस्कार! मी स्कीमसेतू एआय व्हॉइस असिस्टंट आहे. मला सरकारी योजना, कर्ज आणि पात्रतेबद्दल विचारा.";
-      else if (lang === 'GON') welcome = "सेवा जोहार! मैं स्कीमसेतू आवाज सहायक आय। सरकारी योजना अउर लोन बर मोसे सवाल पूछा।";
-      else if (lang === 'BHI') welcome = "राम राम! हुं स्कीमसेतू आवाज सहायक छुं। सरकारी योजना अणे लोन बाबत मने पूछो।";
+      if (activeLangCode === 'HI') welcome = "नमस्ते! मैं स्कीमसेतू एआई आवाज़ सहायक हूँ। मुझसे सरकारी योजनाओं, लोन, पात्रता या आवेदन नियमों के बारे में पूछें।";
+      else if (activeLangCode === 'TE') welcome = "నమస్కారం! నేను స్కీమ్‌సేతు AI వాయిస్ అసిస్టెంట్‌ని. ప్రభుత్వ సంక్షేమ పథకాలు, లోన్లు మరియు అర్హతల గురించి నన్ను అడగండి.";
+      else if (activeLangCode === 'TA') welcome = "வணக்கம்! நான் SchemeSetu AI குரல் உதவியாளர். அரசு நலத்திட்டங்கள் மற்றும் கடன்கள் குறித்து என்னிடம் கேளுங்கள்.";
+      else if (activeLangCode === 'KN') welcome = "ನಮಸ್ಕಾರ! ನಾನು SchemeSetu AI ಧ್ವನಿ ಸಹಾಯಕ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಮತ್ತು ಸಾಲಗಳ ಬಗ್ಗೆ ನನ್ನನ್ನು ಕೇಳಿ.";
+      else if (activeLangCode === 'ML') welcome = "നമസ്കാരം! ഞാൻ സ്കീംസേതു AI വോയ്‌സ് അസിസ്റ്റന്റാണ്. സർക്കാർ പദ്ധതികളെക്കുറിച്ച് എന്നോട് ചോദിക്കുക.";
+      else if (activeLangCode === 'BN') welcome = "নমস্কার! আমি স্কিমসেতু এআই ভয়েস সহকারী। সরকারী প্রকল্প এবং ঋণের বিষয়ে আমাকে জিজ্ঞাসা করুন।";
+      else if (activeLangCode === 'MR') welcome = "नमस्कार! मी स्कीमसेतू एआय व्हॉइस असिस्टंट आहे. मला सरकारी योजना, कर्ज आणि पात्रतेबद्दल विचारा.";
+      else if (activeLangCode === 'GON') welcome = "सेवा जोहार! मैं स्कीमसेतू आवाज सहायक आय। सरकारी योजना अउर लोन बर मोसे सवाल पूछा।";
+      else if (activeLangCode === 'BHI') welcome = "राम राम! हुं स्कीमसेतू आवाज सहायक छुं। सरकारी योजना अणे लोन बाबत मने पूछो।";
 
       const initialMsg = { sender: 'bot', text: welcome, timestamp: new Date() };
       setMessages([initialMsg]);
       speakText(welcome);
     }
-  }, [isOpen, lang]);
+  }, [isOpen, activeLangCode]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   // Speech Synthesis
-  const speakText = (text) => {
+  const speakText = (text, customLocale = null) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = getVoiceLocale();
+      utterance.lang = customLocale || getVoiceLocale();
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.onstart = () => setIsSpeaking(true);
@@ -107,6 +193,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
   const startListening = () => {
     setVoiceError(null);
     stopSpeaking();
+    playTone(880, 0.12);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -124,6 +211,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setIsListening(false);
+        playTone(440, 0.15);
         if (transcript && transcript.trim()) {
           handleSendMessage(transcript.trim());
         }
@@ -148,6 +236,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
+      playTone(440, 0.15);
     }
   };
 
@@ -192,12 +281,12 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     if (q.includes('sc') || q.includes('dalit') || q.includes('scheduled caste') || q.includes('अनुसूचित जाति')) {
       const scSchemes = mockSchemes.filter(s => s.id === 'dalit-bandhu' || s.id === 'stand-up-india' || s.id === 'pmegp');
       setContextSchemes(scSchemes);
-      if (lang === 'HI') {
+      if (activeLangCode === 'HI') {
         return {
           text: `अनुसूचित जाति (SC) उद्यमियों के लिए मुख्य योजनाएं हैं: 1. स्टैंड-अप इंडिया (₹10 लाख से ₹1 करोड़ लोन), 2. दलित बंधु (₹10 लाख सीधी सरकारी सहायता), 3. PMEGP (35% विशेष सब्सिडी)। क्या आप इनमें से किसी का विवरण जानना चाहते हैं?`,
           schemes: scSchemes
         };
-      } else if (lang === 'TE') {
+      } else if (activeLangCode === 'TE') {
         return {
           text: `SC వర్గాల కోసం ప్రధాన పథకాలు: 1. స్టాండ్-అప్ ఇండియా (₹10L - ₹1Cr), 2. దళిత బంధు (₹10 లక్షల ఉచిత గ్రాంట్), 3. PMEGP (35% సబ్సిడీ). వీటి వివరాలు కావాలా?`,
           schemes: scSchemes
@@ -213,12 +302,12 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     if (q.includes('loan') || q.includes('limit') || q.includes('ऋण') || q.includes('लोन') || q.includes('సాల') || q.includes('5 lakh') || q.includes('10 lakh') || q.includes('crore')) {
       const loanSchemes = mockSchemes.filter(s => s.maxLoan && s.maxLoan >= 500000);
       setContextSchemes(loanSchemes.slice(0, 3));
-      if (lang === 'HI') {
+      if (activeLangCode === 'HI') {
         return {
           text: `स्कीमसेतू पर बिजनेस लोन योजनाएं: मुद्रा योजना (₹50,000 से ₹20 लाख तक बिना गारंटी), PMEGP (₹50 लाख तक 35% सब्सिडी के साथ), और स्टैंड-अप इंडिया (₹10 लाख से ₹1 करोड़)।`,
           schemes: loanSchemes.slice(0, 3)
         };
-      } else if (lang === 'TE') {
+      } else if (activeLangCode === 'TE') {
         return {
           text: `వ్యాపార రుణ పథకాలు: ముద్రా యోజన (₹20 లక్షల వరకు పూచీకత్తు లేకుండా), PMEGP (₹50 లక్షల వరకు 35% సబ్సిడీ), స్టాండ్-అప్ ఇండియా (₹1 కోటి వరకు).`,
           schemes: loanSchemes.slice(0, 3)
@@ -232,11 +321,11 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
 
     // Required Documents Query
     if (q.includes('document') || q.includes('कागज') || q.includes('दस्तावेज') || q.includes('పత్రాలు') || q.includes('proof')) {
-      if (lang === 'HI') {
+      if (activeLangCode === 'HI') {
         return {
           text: `सरकारी योजनाओं के लिए सामान्यतः आवश्यक दस्तावेज हैं: 1. आधार कार्ड, 2. बैंक पासबुक (आधार लिंक), 3. आय प्रमाण पत्र, 4. जाति प्रमाण पत्र (SC/ST/OBC के लिए), 5. व्यवसाय कोटेशन / प्रोजेक्ट रिपोर्ट।`
         };
-      } else if (lang === 'TE') {
+      } else if (activeLangCode === 'TE') {
         return {
           text: `సాధారణంగా అవసరమైన పత్రాలు: 1. ఆధార్ కార్డు, 2. బ్యాంక్ పాస్‌బుక్, 3. ఆదాయ ధృవీకరణ పత్రం, 4. కుల ధృవీకరణ పత్రం, 5. ప్రాజెక్ట్ రిపోర్ట్.`
         };
@@ -250,12 +339,12 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     const topSchemes = mockSchemes.slice(0, 3);
     setContextSchemes(topSchemes);
 
-    if (lang === 'HI') {
+    if (activeLangCode === 'HI') {
       return {
         text: `वर्तमान में उपलब्ध प्रमुख सरकारी योजनाएं हैं: 1. ${topSchemes[0].name}, 2. ${topSchemes[1].name}, 3. ${topSchemes[2].name}। आप पात्रता जांचने के लिए 'पात्रता' विकल्प पर जा सकते हैं।`,
         schemes: topSchemes
       };
-    } else if (lang === 'TE') {
+    } else if (activeLangCode === 'TE') {
       return {
         text: `అందుబాటులో ఉన్న ముఖ్య పథకాలు: 1. ${topSchemes[0].name}, 2. ${topSchemes[1].name}, 3. ${topSchemes[2].name}. మరిన్ని వివరాలకు నన్ను అడగండి.`,
         schemes: topSchemes
@@ -273,9 +362,9 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     
     let text = `${scheme.name}: ${scheme.summary} ${loanText} Required age: ${scheme.minAge}-${scheme.maxAge} years. Income ceiling: ₹${scheme.maxIncome.toLocaleString('en-IN')}.`;
     
-    if (lang === 'HI') {
+    if (activeLangCode === 'HI') {
       text = `${scheme.name}: ${scheme.summary} ${scheme.maxLoan ? `अधिकतम लोन सीमा ${formatIndianCurrency(scheme.maxLoan)} है।` : ''} आयु सीमा ${scheme.minAge} से ${scheme.maxAge} वर्ष है।`;
-    } else if (lang === 'TE') {
+    } else if (activeLangCode === 'TE') {
       text = `${scheme.name}: ${scheme.summary} ${scheme.maxLoan ? `గరిష్ట రుణం ${formatIndianCurrency(scheme.maxLoan)}.` : ''} వయోపరిమితి: ${scheme.minAge}-${scheme.maxAge} సంవత్సరాలు.`;
     }
 
@@ -352,26 +441,108 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
             <div>
               <div style={{ fontWeight: 800, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <span>{t('voiceAssistant', 'SchemeSetu AI Voice Assistant')}</span>
-                <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFFFFF', fontSize: '0.7rem' }}>
-                  {lang} Mode
+                <span className="badge" style={{ backgroundColor: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 800 }}>
+                  {activeLangCode}
                 </span>
               </div>
               <div style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-                Real-time scheme intelligence & voice responses in {lang}
+                Real-time scheme intelligence & voice responses in {activeLangCode}
               </div>
             </div>
           </div>
 
-          <button 
-            onClick={() => { stopSpeaking(); stopListening(); onClose(); }}
-            className="btn btn-sm btn-outline"
-            style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', padding: '0.3rem 0.5rem' }}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <select
+              value={activeLangCode}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                color: '#FCD34D',
+                border: '1px solid rgba(245, 158, 11, 0.5)',
+                borderRadius: '8px',
+                padding: '0.35rem 0.65rem',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              aria-label="Select Voice Assistant Language"
+            >
+              <option value="EN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇬🇧 English (EN)</option>
+              <option value="HI" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 हिंदी (HI)</option>
+              <option value="TE" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 తెలుగు (TE)</option>
+              <option value="TA" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 தமிழ் (TA)</option>
+              <option value="KN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 ಕನ್ನಡ (KN)</option>
+              <option value="ML" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 മലയാളം (ML)</option>
+              <option value="BN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 বাংলা (BN)</option>
+              <option value="MR" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 मराठी (MR)</option>
+              <option value="GON" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🔀 गोंडी (GON)</option>
+              <option value="BHI" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🔀 भीली (BHI)</option>
+            </select>
+
+            <button 
+              onClick={() => { stopSpeaking(); stopListening(); onClose(); }}
+              className="btn btn-sm btn-outline"
+              style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', padding: '0.3rem 0.5rem' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Voice Control Bar */}
+        {/* Quick Language Switcher Bar */}
+        <div style={{
+          padding: '0.4rem 1.25rem',
+          backgroundColor: '#0F172A',
+          borderBottom: '1px solid #1E293B',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap'
+        }}>
+          <span style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700, flexShrink: 0, marginRight: '0.2rem' }}>Voice Language:</span>
+          {[
+            { code: 'EN', flag: '🇬🇧', label: 'English' },
+            { code: 'HI', flag: '🇮🇳', label: 'हिंदी' },
+            { code: 'TE', flag: '🇮🇳', label: 'తెలుగు' },
+            { code: 'TA', flag: '🇮🇳', label: 'தமிழ்' },
+            { code: 'KN', flag: '🇮🇳', label: 'ಕನ್ನಡ' },
+            { code: 'ML', flag: '🇮🇳', label: 'മലയാളം' },
+            { code: 'BN', flag: '🇮🇳', label: 'বাংলা' },
+            { code: 'MR', flag: '🇮🇳', label: 'मराठी' },
+            { code: 'GON', flag: '🔀', label: 'गोंडी' },
+            { code: 'BHI', flag: '🔀', label: 'भीली' }
+          ].map((item) => {
+            const isSelected = item.code === activeLangCode;
+            return (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => handleLanguageChange(item.code)}
+                style={{
+                  backgroundColor: isSelected ? '#F59E0B' : 'rgba(255, 255, 255, 0.08)',
+                  color: isSelected ? '#0F172A' : '#CBD5E1',
+                  border: isSelected ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '12px',
+                  padding: '0.2rem 0.55rem',
+                  fontSize: '0.73rem',
+                  fontWeight: isSelected ? 800 : 500,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{item.flag}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Voice Control Bar & Audio Waveform Visualizer */}
         <div style={{
           padding: '0.75rem 1.5rem',
           backgroundColor: '#F8FAFC',
@@ -405,10 +576,39 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
             )}
           </div>
 
-          <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            {isListening && <span className="animate-pulse" style={{ color: '#DC2626', fontWeight: 700 }}>● Listening in {lang}...</span>}
-            {isSpeaking && <span style={{ color: '#059669', fontWeight: 600 }}>🔊 Speaking response...</span>}
+          {/* Audio Waveform Equalizer */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AudioWaveform isActive={isListening || isSpeaking} />
+            <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              {isListening && <span className="animate-pulse" style={{ color: '#DC2626', fontWeight: 700 }}>● Listening in {lang}...</span>}
+              {isSpeaking && <span style={{ color: '#059669', fontWeight: 600 }}>🔊 Speaking response...</span>}
+            </div>
           </div>
+        </div>
+
+        {/* Quick Voice Prompt Pills */}
+        <div style={{ padding: '0.5rem 1.5rem', backgroundColor: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Quick Voice Prompts:</span>
+          {getSamplePrompts().map((promptText, pIdx) => (
+            <button
+              key={pIdx}
+              type="button"
+              onClick={() => handleSendMessage(promptText)}
+              style={{
+                fontSize: '0.75rem',
+                backgroundColor: '#FFFFFF',
+                color: '#0369A1',
+                border: '1px solid #BAE6FD',
+                borderRadius: '12px',
+                padding: '0.2rem 0.6rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: 'all 0.15s ease'
+              }}
+            >
+              🎤 "{promptText}"
+            </button>
+          ))}
         </div>
 
         {/* Voice Notice if any */}

@@ -1,11 +1,20 @@
 import { createContext, useContext } from 'react';
 
-export const AuthContext = createContext(null);
+const fallbackAuthContext = {
+  user: null,
+  loading: false,
+  isAuthenticated: false,
+  login: async () => {},
+  demoLogin: async () => {},
+  register: async () => {},
+  logout: () => {}
+};
+
+export const AuthContext = createContext(fallbackAuthContext);
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return context || fallbackAuthContext;
 }
+
+export default useAuth;

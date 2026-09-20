@@ -172,6 +172,7 @@ export default function AgentReportModal({
               <FileText size={20} className="agent-print-hide" style={{ color: '#F59E0B' }} />
               Beneficiary Recommendation Dossier
             </h2>
+          </div>
           <button 
             type="button"
             onClick={onClose} 
@@ -397,5 +398,6 @@ export default function AgentReportModal({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -70,7 +70,8 @@ const STATE_COLORS = {
 
 export default function InputHub() {
   const navigate = useNavigate();
-  const { lang: globalAppLang, t } = useLanguage();
+  const { lang, changeLanguage, t } = useLanguage();
+  const globalAppLang = lang;
   const { location } = useLocation();
   const { profile, updateProfile, getNextMissingSlot } = useUserProfile();
   const chatEndRef = useRef(null);

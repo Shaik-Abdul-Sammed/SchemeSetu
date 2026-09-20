@@ -348,7 +348,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
                   {location.isDemo 
                     ? `Demo Location: ${location.district}, ${location.state}`
                     : location.isGPS 
-                      ? `Current Location: ${location.district || ''}, ${location.state || ''}`
+                      ? `Current Location: ${location.city ? `${location.city.split('(')[0].trim()}, ` : ''}${location.district || ''}, ${location.state || ''}`
                       : location.state 
                         ? `Selected State: ${location.district || ''}, ${location.state}`
                         : 'Location not set (Select State or Click GPS)'}

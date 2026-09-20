@@ -81,15 +81,20 @@ export default function Navbar({ onOpenVoiceAssistant }) {
   const getLocationSourceBadge = () => {
     if (!location.locationSource) return '';
     if (location.locationSource === 'gps') return ' 📡';
-    if (location.locationSource === 'network') return ' 📶';
+    if (location.locationSource === 'network' || location.locationSource === 'cell_tower') return ' 📶';
     if (location.locationSource === 'ip') return ' 🌐';
     return '';
   };
 
   const getLocationDisplayText = () => {
     if (locationStatus === 'detecting') return t('detectingLocation', 'Detecting…');
-    if (location.district && location.state) return `${location.district}${getLocationSourceBadge()}`;
-    if (location.district) return location.district;
+    const town = location.city ? location.city.split('(')[0].trim() : '';
+    const exactName = town && !location.district.toLowerCase().includes(town.toLowerCase())
+      ? `${town}, ${location.district}`
+      : location.district;
+
+    if (exactName && location.state) return `${exactName}${getLocationSourceBadge()}`;
+    if (exactName) return `${exactName}${getLocationSourceBadge()}`;
     if (location.state) return location.state;
     if (locationStatus === 'denied' || locationStatus === 'unavailable')
       return t('setLocation', 'Set Location');

@@ -1,234 +1,187 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
-import { getTranslation } from '../../context/languageStore';
 
-const originalTextNodes = new WeakMap();
-const translatedTextNodes = new WeakMap();
-const originalPlaceholders = new WeakMap();
-const originalTitles = new WeakMap();
-const originalAriaLabels = new WeakMap();
-const originalValues = new WeakMap();
+/**
+ * PageTranslator — Google Translate Widget Integration
+ *
+ * Integrates the official Google Translate website widget which translates
+ * the ENTIRE page content automatically — not just hardcoded dictionary keys.
+ *
+ * Language code mapping between SchemeSetu (2-letter) and Google Translate (IETF BCP 47):
+ *   EN → en  |  HI → hi  |  TE → te  |  TA → ta  |  KN → kn
+ *   ML → ml  |  MR → mr  |  BN → bn  |  PA → pa  |  GU → gu
+ *   UR → ur  |  OR → or  |  AS → as
+ *
+ * When lang === 'EN', the widget is hidden and shows the original English content.
+ * When lang changes to a non-English language, the widget automatically applies
+ * the translation across the full page DOM — including dynamically loaded content.
+ */
 
-// Skip tags that should not have their text translated
-const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT', 'SVG', 'PATH']);
+const LANG_MAP = {
+  EN: 'en',
+  HI: 'hi',
+  TE: 'te',
+  TA: 'ta',
+  KN: 'kn',
+  ML: 'ml',
+  MR: 'mr',
+  BN: 'bn',
+  PA: 'pa',
+  GU: 'gu',
+  UR: 'ur',
+  OR: 'or',
+  AS: 'as'
+};
+
+let widgetInitialized = false;
+
+function loadGoogleTranslateScript() {
+  if (document.getElementById('google-translate-script')) return;
+  const script = document.createElement('script');
+  script.id = 'google-translate-script';
+  script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+function initWidget() {
+  if (!window.google || !window.google.translate) return false;
+  if (!document.getElementById('google_translate_element')) return false;
+  if (widgetInitialized) return true;
+
+  try {
+    new window.google.translate.TranslateElement(
+      {
+        pageLanguage: 'en',
+        includedLanguages: 'hi,te,ta,kn,ml,mr,bn,pa,gu,ur,or,as,en',
+        layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false,
+        multilanguagePage: false
+      },
+      'google_translate_element'
+    );
+    widgetInitialized = true;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Programmatically set the Google Translate language using the hidden
+ * cookie-based approach that the widget itself uses internally.
+ */
+function applyGoogleTranslateLanguage(googleLangCode) {
+  if (googleLangCode === 'en') {
+    // Restore original English — click the "Show original" control if present
+    const restore = document.querySelector('.goog-te-banner-frame') ||
+      document.getElementById('google_translate_element');
+    
+    // Remove the translation cookie and reload concept — use the select element
+    const sel = document.querySelector('.goog-te-combo');
+    if (sel) {
+      sel.value = 'en';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    return;
+  }
+
+  // Use the combo select to trigger translation
+  const sel = document.querySelector('.goog-te-combo');
+  if (sel) {
+    sel.value = googleLangCode;
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+
+  // Fallback: use cookie-based approach
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `googtrans=/en/${googleLangCode}; expires=${expires}; path=/`;
+  document.cookie = `googtrans=/en/${googleLangCode}; expires=${expires}; domain=${window.location.hostname}; path=/`;
+}
 
 export default function PageTranslator() {
   const { lang } = useLanguage();
-  const isTranslatingRef = useRef(false);
+  const lastLang = useRef(lang);
+  const [widgetReady, setWidgetReady] = useState(false);
 
+  // Step 1: Mount the hidden Google Translate container and load the script once
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    const root = document.getElementById('root') || document.body;
-    let scheduledFrame = null;
-
-    function shouldSkip(node) {
-      if (!node || !node.parentElement) return true;
-      const el = node.parentElement;
-      if (SKIP_TAGS.has(el.tagName)) return true;
-      if (el.closest('[data-no-translate]')) return true;
-      if (el.isContentEditable) return true;
-      return false;
+    // Inject the hidden container where the widget attaches
+    if (!document.getElementById('google_translate_element')) {
+      const container = document.createElement('div');
+      container.id = 'google_translate_element';
+      container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+      document.body.appendChild(container);
     }
 
-    function translateTextNode(textNode) {
-      if (shouldSkip(textNode)) return;
-
-      const currentVal = textNode.nodeValue;
-      if (!currentVal) return;
-
-      if (!originalTextNodes.has(textNode)) {
-        originalTextNodes.set(textNode, currentVal);
-      } else {
-        const oldOrig = originalTextNodes.get(textNode);
-        const lastTrans = translatedTextNodes.get(textNode);
-        // If React or fetch set new content different from both old original and translation
-        if (currentVal !== oldOrig && currentVal !== lastTrans) {
-          originalTextNodes.set(textNode, currentVal);
-        }
-      }
-
-      const original = originalTextNodes.get(textNode);
-      const trimmed = original.trim();
-
-      // Skip numbers, symbols, pure punctuation, or empty strings
-      if (!trimmed || /^[0-9\s.,!?:;/()#₹$%&@*+\-_=\[\]{}<>|\\^~`'"]+$/.test(trimmed)) {
-        return;
-      }
-
-      if (lang === 'EN') {
-        if (textNode.nodeValue !== original) {
-          textNode.nodeValue = original;
-        }
-        return;
-      }
-
-      // 1. Direct translation
-      let translated = getTranslation(lang, trimmed);
-      let prefix = '';
-      let suffix = '';
-
-      // 2. If no direct match, check for list prefixes (e.g., "1. ", "• ", "📄 ", "⚡ ", "✅ ")
-      if (!translated || translated === trimmed) {
-        const prefixMatch = trimmed.match(/^(\d+\.|\u2022|[•📄⚡✅✓\-*]+)\s+(.+)$/);
-        if (prefixMatch) {
-          const core = prefixMatch[2].trim();
-          const coreTrans = getTranslation(lang, core);
-          if (coreTrans && coreTrans !== core) {
-            translated = coreTrans;
-            prefix = prefixMatch[1] + ' ';
-          }
-        }
-      }
-
-      if (translated && (translated !== trimmed || prefix)) {
-        const leadingSpace = original.match(/^\s*/)?.[0] || '';
-        const trailingSpace = original.match(/\s*$/)?.[0] || '';
-        const newVal = leadingSpace + prefix + translated + suffix + trailingSpace;
-        if (textNode.nodeValue !== newVal) {
-          textNode.nodeValue = newVal;
-          translatedTextNodes.set(textNode, newVal);
-        }
-      }
+    // Add CSS to hide the Google Translate toolbar banner which appears at the top of the page
+    if (!document.getElementById('google-translate-hide-css')) {
+      const style = document.createElement('style');
+      style.id = 'google-translate-hide-css';
+      style.textContent = `
+        /* Hide the Google Translate top banner bar */
+        .goog-te-banner-frame.skiptranslate { display: none !important; }
+        body { top: 0 !important; }
+        /* Hide the "Translated" tooltip */
+        .goog-te-balloon-frame { display: none !important; }
+        /* Hide the Google Translate attribution bar */
+        #goog-gt-tt { display: none !important; }
+        .goog-tooltip { display: none !important; }
+        .goog-tooltip:hover { display: none !important; }
+        .goog-text-highlight { background: none !important; box-shadow: none !important; }
+      `;
+      document.head.appendChild(style);
     }
 
-    function translateAttributes(el) {
-      if (!el || el.closest?.('[data-no-translate]')) return;
+    // Install the global callback that the Google Translate script calls when ready
+    window.googleTranslateElementInit = () => {
+      const ok = initWidget();
+      if (ok) setWidgetReady(true);
+    };
 
-      // 1. Placeholder
-      if (el.placeholder) {
-        if (!originalPlaceholders.has(el)) {
-          originalPlaceholders.set(el, el.placeholder);
-        }
-        const orig = originalPlaceholders.get(el);
-        if (lang === 'EN') {
-          el.placeholder = orig;
-        } else {
-          const trans = getTranslation(lang, orig);
-          if (trans && trans !== orig) el.placeholder = trans;
-        }
+    // Load the script
+    loadGoogleTranslateScript();
+
+    // Polling fallback in case the callback fires before React picks it up
+    const poll = setInterval(() => {
+      if (initWidget()) {
+        setWidgetReady(true);
+        clearInterval(poll);
       }
-
-      // 2. Title
-      if (el.title) {
-        if (!originalTitles.has(el)) {
-          originalTitles.set(el, el.title);
-        }
-        const orig = originalTitles.get(el);
-        if (lang === 'EN') {
-          el.title = orig;
-        } else {
-          const trans = getTranslation(lang, orig);
-          if (trans && trans !== orig) el.title = trans;
-        }
-      }
-
-      // 3. aria-label
-      const ariaLabel = el.getAttribute?.('aria-label');
-      if (ariaLabel) {
-        if (!originalAriaLabels.has(el)) {
-          originalAriaLabels.set(el, ariaLabel);
-        }
-        const orig = originalAriaLabels.get(el);
-        if (lang === 'EN') {
-          el.setAttribute('aria-label', orig);
-        } else {
-          const trans = getTranslation(lang, orig);
-          if (trans && trans !== orig) el.setAttribute('aria-label', trans);
-        }
-      }
-
-      // 4. Button / Submit Value
-      if ((el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) && el.value) {
-        if (!originalValues.has(el)) {
-          originalValues.set(el, el.value);
-        }
-        const orig = originalValues.get(el);
-        if (lang === 'EN') {
-          el.value = orig;
-        } else {
-          const trans = getTranslation(lang, orig);
-          if (trans && trans !== orig) el.value = trans;
-        }
-      }
-    }
-
-    function translateSubtree(target) {
-      if (!target) return;
-      isTranslatingRef.current = true;
-
-      try {
-        if (target.nodeType === Node.TEXT_NODE) {
-          translateTextNode(target);
-          return;
-        }
-
-        if (target.nodeType === Node.ELEMENT_NODE) {
-          translateAttributes(target);
-          const walker = document.createTreeWalker(
-            target,
-            NodeFilter.SHOW_TEXT,
-            {
-              acceptNode: (n) => shouldSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
-            }
-          );
-
-          let node;
-          while ((node = walker.nextNode())) {
-            translateTextNode(node);
-          }
-
-          // Check child elements for attributes (placeholder, title, aria-label, input values)
-          const attrEls = target.querySelectorAll('input[placeholder], textarea[placeholder], [title], [aria-label], input[type="button"], input[type="submit"]');
-          attrEls.forEach(translateAttributes);
-        }
-      } finally {
-        isTranslatingRef.current = false;
-      }
-    }
-
-    function scheduleTranslation() {
-      if (scheduledFrame) cancelAnimationFrame(scheduledFrame);
-      scheduledFrame = requestAnimationFrame(() => {
-        translateSubtree(root);
-      });
-    }
-
-    // Initial translation pass
-    scheduleTranslation();
-
-    // Observer for dynamic additions & text content mutations
-    const observer = new MutationObserver((mutations) => {
-      if (isTranslatingRef.current) return;
-
-      let shouldUpdate = false;
-      for (const m of mutations) {
-        if (m.type === 'childList' && m.addedNodes.length > 0) {
-          shouldUpdate = true;
-          break;
-        }
-        if (m.type === 'characterData') {
-          shouldUpdate = true;
-          break;
-        }
-      }
-
-      if (shouldUpdate) {
-        scheduleTranslation();
-      }
-    });
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
+    }, 500);
 
     return () => {
-      if (scheduledFrame) cancelAnimationFrame(scheduledFrame);
-      observer.disconnect();
+      clearInterval(poll);
     };
-  }, [lang]);
+  }, []);
+
+  // Step 2: Whenever lang changes (and widget is ready), apply the translation
+  useEffect(() => {
+    if (!widgetReady && lang !== 'EN') return;
+    if (lang === lastLang.current) return;
+    lastLang.current = lang;
+
+    const googleLang = LANG_MAP[lang] || 'en';
+
+    if (widgetReady) {
+      applyGoogleTranslateLanguage(googleLang);
+    } else if (lang !== 'EN') {
+      // Widget not ready yet — set cookie for next page load / retry
+      const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = `googtrans=/en/${googleLang}; expires=${expires}; path=/`;
+      // Retry after the widget becomes ready
+      const retryInterval = setInterval(() => {
+        if (initWidget()) {
+          setWidgetReady(true);
+          clearInterval(retryInterval);
+          applyGoogleTranslateLanguage(googleLang);
+        }
+      }, 300);
+      setTimeout(() => clearInterval(retryInterval), 10000);
+    }
+  }, [lang, widgetReady]);
 
   return null;
 }

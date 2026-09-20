@@ -3,6 +3,34 @@ import { LanguageContext } from './useLanguage';
 import { translations, AVAILABLE_LANGUAGES, getTranslation } from './languageStore';
 import { translateText } from '../services/translateService';
 
+/**
+ * Map SchemeSetu 2-letter lang codes to Google Translate BCP-47 language codes.
+ * Used to sync the Google Translate widget with the app's language selector.
+ */
+const GOOGLE_LANG_MAP = {
+  EN: 'en', HI: 'hi', TE: 'te', TA: 'ta', KN: 'kn',
+  ML: 'ml', MR: 'mr', BN: 'bn', PA: 'pa', GU: 'gu',
+  UR: 'ur', OR: 'or', AS: 'as'
+};
+
+/**
+ * Set the googtrans cookie so Google Translate picks up the language choice
+ * on the current page (and on page navigation within the SPA).
+ */
+function setGoogleTranslateCookie(langCode) {
+  if (typeof document === 'undefined') return;
+  const googleLang = GOOGLE_LANG_MAP[langCode] || 'en';
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+  if (googleLang === 'en') {
+    // Clear the translation cookie to restore English
+    document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+    document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${window.location.hostname}; path=/`;
+  } else {
+    document.cookie = `googtrans=/en/${googleLang}; expires=${expires}; path=/`;
+    document.cookie = `googtrans=/en/${googleLang}; expires=${expires}; domain=${window.location.hostname}; path=/`;
+  }
+}
+
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
     const saved = localStorage.getItem('schemesetu_lang');
@@ -23,6 +51,8 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.lang = lang.toLowerCase();
+      // Sync Google Translate cookie with current language
+      setGoogleTranslateCookie(lang);
     }
   }, [lang]);
 
@@ -32,7 +62,18 @@ export function LanguageProvider({ children }) {
       localStorage.setItem('schemesetu_lang', newLang);
       if (typeof document !== 'undefined') {
         document.documentElement.lang = newLang.toLowerCase();
+        setGoogleTranslateCookie(newLang);
       }
+
+      // Trigger the Google Translate widget programmatically via combo select
+      setTimeout(() => {
+        const googleLang = GOOGLE_LANG_MAP[newLang] || 'en';
+        const sel = document.querySelector('.goog-te-combo');
+        if (sel) {
+          sel.value = googleLang;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }, 200);
     }
   };
 

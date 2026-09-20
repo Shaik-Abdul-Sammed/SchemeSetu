@@ -162,11 +162,11 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', flexGrow: 1 }}>
 
-          {/* GPS + Demo buttons */}
+          {/* GPS + Quick Location + Demo buttons */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.75rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '0.65rem',
             marginBottom: '1.25rem'
           }}>
             <button
@@ -174,22 +174,36 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
               onClick={() => detectCurrentGPSLocation(true)}
               disabled={locationStatus === 'detecting'}
               className="btn btn-primary"
-              style={{ justifyContent: 'center', fontWeight: 600 }}
+              style={{ justifyContent: 'center', fontWeight: 600, fontSize: '0.85rem' }}
             >
-              <Navigation size={18} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
+              <Navigation size={16} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
               {locationStatus === 'detecting' 
                 ? t('detectingLocation', '📍 Detecting GPS...') 
-                : t('useMyLocation', 'Use Current GPS Geolocation')}
+                : t('useMyLocation', 'Use GPS Geolocation')}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setManualLocation('Andhra Pradesh', 'YSR Kadapa');
+                setSelectedState('Andhra Pradesh');
+                setSelectedDistrict('YSR Kadapa');
+              }}
+              className="btn btn-secondary"
+              style={{ justifyContent: 'center', borderColor: '#10B981', color: '#34D399', fontWeight: 700, fontSize: '0.85rem', backgroundColor: 'rgba(16, 185, 129, 0.12)' }}
+            >
+              <MapPin size={16} style={{ color: '#10B981' }} />
+              <span>📍 YSR Kadapa (RK Valley)</span>
             </button>
 
             <button
               type="button"
               onClick={() => setDemoLocation('Tamil Nadu', 'Chennai')}
               className="btn btn-secondary"
-              style={{ justifyContent: 'center', borderColor: '#F59E0B', color: '#FCD34D' }}
+              style={{ justifyContent: 'center', borderColor: '#F59E0B', color: '#FCD34D', fontSize: '0.85rem' }}
             >
               <Sparkles size={16} style={{ color: '#F59E0B' }} />
-              <span>Load Demo Location (Chennai)</span>
+              <span>Demo Location (Chennai)</span>
             </button>
           </div>
 

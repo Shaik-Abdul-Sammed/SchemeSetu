@@ -72,7 +72,7 @@ export default function InputHub() {
   const navigate = useNavigate();
   const { lang, changeLanguage, t } = useLanguage();
   const globalAppLang = lang;
-  const { location } = useLocation();
+  const { location, locationStatus, detectCurrentGPSLocation } = useLocation();
   const { profile, updateProfile, getNextMissingSlot } = useUserProfile();
   const chatEndRef = useRef(null);
 
@@ -153,6 +153,7 @@ export default function InputHub() {
 
   // ── TTS (with per-utterance effectiveLang override) ──────────────────────
   const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech({ lang: effectiveLang });
+  const speakResponse = speak;
 
   const speakIfNotMuted = useCallback((text, overrideLang) => {
     if (!isMuted) speak(text, undefined, overrideLang || effectiveLang);
@@ -1088,7 +1089,7 @@ export default function InputHub() {
                       type="button"
                       onClick={() => {
                         if (window.speechSynthesis) window.speechSynthesis.cancel();
-                      setVoiceState('ready');
+                        stopSpeaking();
                       }}
                       className="btn btn-secondary btn-xs"
                       style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderColor: '#DC2626', color: '#DC2626' }}

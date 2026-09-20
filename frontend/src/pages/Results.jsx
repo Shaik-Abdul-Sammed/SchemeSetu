@@ -20,6 +20,7 @@ export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const { location: gpsLocation } = useGPSLocation();
 
   const passedCriteria = location.state?.criteria || {

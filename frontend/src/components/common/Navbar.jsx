@@ -65,7 +65,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
   // Close mobile menu on resize to desktop
   useEffect(() => {
     function onResize() {
-      if (window.innerWidth > 1260) setMobileOpen(false);
+      if (window.innerWidth > 1300) setMobileOpen(false);
     }
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);

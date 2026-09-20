@@ -923,6 +923,30 @@ export function LocationProvider({ children }) {
     const { latitude, longitude, accuracy } = pos.coords;
     const timestamp = pos.timestamp || Date.now();
 
+    // ── Where Is My Train Style Filter: When accuracy > 20km, the device is returning
+    // an ISP/cell tower estimate — NOT a real GPS fix. In this case, we must NOT save
+    // it as an accurate GPS location, and NEVER overwrite manual selection.
+    const savedLoc = localStorage.getItem('schemesetu_location');
+    if (savedLoc) {
+      try {
+        const parsed = JSON.parse(savedLoc);
+        if (parsed.isManual && parsed.district) {
+          console.log('[GPS] Preserving user manual location selection:', parsed.district, parsed.state);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    if (accuracy && accuracy > 20000) {
+      console.warn(`[GPS] Accuracy too poor (±${Math.round(accuracy / 1000)} km) — skipping GPS save, falling back to IP/manual.`);
+      const ipSuccess = await detectIPLocation();
+      if (!ipSuccess) {
+        setLocationStatus('unavailable');
+        setErrorMessage(`GPS accuracy too low (±${Math.round(accuracy / 1000)} km). Please select your State & District manually.`);
+      }
+      return;
+    }
+
     const debugData = {
       rawLat: latitude,
       rawLng: longitude,
@@ -968,7 +992,7 @@ export function LocationProvider({ children }) {
     localStorage.setItem('schemesetu_location', JSON.stringify(gpsLoc));
     localStorage.setItem('schemesetu_location_status', 'detected');
     refreshPartnerDistances(latitude, longitude);
-  }, [reverseGeocode, refreshPartnerDistances]);
+  }, [reverseGeocode, refreshPartnerDistances, detectIPLocation]);
 
   // Layer 2 — Cell tower / WiFi network triangulation
   const detectNetworkLocation = useCallback(() => {
@@ -983,6 +1007,19 @@ export function LocationProvider({ children }) {
 
   // Main entry — 3-layer detection: GPS → Cell Tower Network → IP
   const detectCurrentGPSLocation = useCallback((forceFresh = false) => {
+    if (!forceFresh) {
+      const savedLoc = localStorage.getItem('schemesetu_location');
+      if (savedLoc) {
+        try {
+          const parsed = JSON.parse(savedLoc);
+          if (parsed.isManual && parsed.district) {
+            console.log('[Location] Keeping saved manual location, skipping background GPS:', parsed.district, parsed.state);
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       detectIPLocation().then(success => {
         if (!success) { setLocationStatus('unsupported'); setErrorMessage('GPS location is not supported by this browser.'); }
@@ -1161,21 +1198,28 @@ export function LocationProvider({ children }) {
     }
   }, [location.lat, location.lng, refreshPartnerDistances]);
 
-  // Auto-detect exact location on mount if not already GPS-verified
+  // Auto-detect exact location on mount — always trigger fresh detection.
+  // Also clear stale bad-accuracy cached location that was saved as "GPS" but
+  // was actually a network/IP estimate (the browser passed it through the GPS API).
   useEffect(() => {
     const saved = localStorage.getItem('schemesetu_location');
-    let hasLiveGPS = false;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.isGPS && parsed.lat && parsed.lng && parsed.district) {
-          hasLiveGPS = true;
+        // If this "GPS" location had no real accuracy constraint (i.e. it was saved
+        // from a network/IP estimate with terrible accuracy), purge it so we try fresh.
+        const isStaleInaccurateGPS = parsed.isGPS && parsed.isIP !== true &&
+          parsed.isManual !== true && parsed.isDemo !== true &&
+          (!parsed.accuracy || parsed.accuracy > 80000);
+        if (isStaleInaccurateGPS) {
+          console.log('[Location] Clearing stale low-accuracy GPS cache, forcing fresh detection.');
+          localStorage.removeItem('schemesetu_location');
+          localStorage.removeItem('schemesetu_location_status');
         }
       } catch (e) {}
     }
-    if (!hasLiveGPS) {
-      detectCurrentGPSLocation();
-    }
+    // Always attempt fresh location detection on every mount
+    detectCurrentGPSLocation();
   }, [detectCurrentGPSLocation]);
 
   return (

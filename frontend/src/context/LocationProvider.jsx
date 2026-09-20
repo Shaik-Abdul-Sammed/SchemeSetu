@@ -1007,6 +1007,8 @@ export function LocationProvider({ children }) {
 
   // Main entry — 3-layer detection: GPS → Cell Tower Network → IP
   const detectCurrentGPSLocation = useCallback((forceFresh = false) => {
+    let silentlyRefresh = false;
+    
     if (!forceFresh) {
       const savedLoc = localStorage.getItem('schemesetu_location');
       if (savedLoc) {
@@ -1016,8 +1018,20 @@ export function LocationProvider({ children }) {
             console.log('[Location] Keeping saved manual location, skipping background GPS:', parsed.district, parsed.state);
             return;
           }
+          if (parsed.isGPS && parsed.timestamp) {
+            const ageMs = Date.now() - parsed.timestamp;
+            if (ageMs < 30 * 60 * 1000) { // 30 mins
+              console.log('[Location] Using 30-min cached GPS location, refreshing in background');
+              silentlyRefresh = true;
+            }
+          }
         } catch (e) {}
       }
+    }
+
+    if (!silentlyRefresh) {
+      setLocationStatus('detecting');
+      setErrorMessage('');
     }
 
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
@@ -1026,9 +1040,6 @@ export function LocationProvider({ children }) {
       });
       return;
     }
-
-    setLocationStatus('detecting');
-    setErrorMessage('');
 
     // Layer 1 — GPS chip (high accuracy, ≤100m preferred)
     const geoOptionsGPS = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };

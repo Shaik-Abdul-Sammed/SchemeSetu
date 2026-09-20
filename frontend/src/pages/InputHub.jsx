@@ -16,12 +16,13 @@ import {
   ArrowLeft, Mic, MicOff, Type, FileText, Send, Sparkles, User,
   ToggleLeft, ToggleRight, MapPin, CheckCircle, Loader2, Volume2,
   VolumeX, AlertCircle, RefreshCw, XCircle, Wand2, Radio, Building2,
-  ExternalLink, ShieldCheck, Check, Info, Settings
+  ExternalLink, ShieldCheck, Check, Info, Settings, Undo2
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
 import AgentReportModal from '../components/agent/AgentReportModal';
+import AgentIncentiveTracker from '../components/agent/AgentIncentiveTracker';
 import { useUserProfile } from '../context/UserProfileContext';
 import ProfileModal from '../components/profile/ProfileModal';
 import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoiceRecognition';
@@ -141,6 +142,7 @@ export default function InputHub() {
   // Agent Mode Fast-Fill
   const [agentForm, setAgentForm] = useState({
     name: 'Ramesh Kumar',
+    gender: 'Male',
     age: 32,
     casteCategory: 'SC',
     income: 240000,
@@ -620,7 +622,12 @@ export default function InputHub() {
       const schemes = res.schemes || res.data || [];
       setStep(STEPS.DONE);
       setIsLoading(false);
-      navigate('/results', { state: { schemes, criteria: finalCriteria } });
+      
+      if (mode === 'agent') {
+        addBotMessage('Details processed. I have updated the Agent Intake Form below with this data.', false);
+      } else {
+        navigate('/results', { state: { schemes, criteria: finalCriteria } });
+      }
     } catch (err) {
       setIsLoading(false);
       submittingRef.current = false;
@@ -690,6 +697,18 @@ export default function InputHub() {
       }));
     }
   }, [location]);
+
+  // Sync citizen chat criteria to agent form
+  useEffect(() => {
+    setAgentForm(prev => ({
+      ...prev,
+      income: criteria.income || prev.income,
+      cost: criteria.cost || prev.cost,
+      projectType: criteria.projectType || prev.projectType,
+      education: criteria.education || prev.education,
+      occupation: criteria.occupation || prev.occupation
+    }));
+  }, [criteria]);
 
   const handleGpsDetect = () => {
     detectCurrentGPSLocation();
@@ -788,6 +807,37 @@ export default function InputHub() {
             {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </button>
 
+          {/* Undo Step */}
+          {mode === 'user' && step !== STEPS.GREETING && step !== STEPS.PROJECT_TYPE && (
+            <button
+              onClick={() => {
+                if (step === STEPS.COST) {
+                  setStep(STEPS.PROJECT_TYPE);
+                  setCriteria(c => ({...c, projectType: ''}));
+                  addBotMessage("Let's try again. What kind of project or business do you want to start?", false);
+                } else if (step === STEPS.INCOME) {
+                  setStep(STEPS.COST);
+                  setCriteria(c => ({...c, cost: ''}));
+                  addBotMessage("Okay, let's re-enter the cost. What is the total cost of your project?", false);
+                } else if (step === STEPS.EDUCATION) {
+                  setStep(STEPS.INCOME);
+                  setCriteria(c => ({...c, income: ''}));
+                  addBotMessage("Understood. Let's re-enter your income. What is your annual household income?", false);
+                } else if (step === STEPS.SUBMITTING || step === STEPS.DONE) {
+                  setStep(STEPS.EDUCATION);
+                  setCriteria(c => ({...c, education: ''}));
+                  addBotMessage("Let's re-enter your education. What is your highest education level?", false);
+                }
+              }}
+              className="btn btn-secondary btn-sm"
+              style={{ padding: '0.4rem 0.65rem', minHeight: '40px' }}
+              title="Undo last step"
+              aria-label="Undo last step"
+            >
+              <Undo2 size={16} />
+            </button>
+          )}
+
           {/* Reset conversation */}
           {mode === 'user' && (
             <button
@@ -842,8 +892,8 @@ export default function InputHub() {
         </div>
       )}
 
-      {/* ── USER MODE: Conversational Voice & Chat ──────────────────────── */}
-      {mode === 'user' && (
+      {/* ── Conversational Voice & Chat ──────────────────────── */}
+      {true && (
         <div style={{
           flexGrow: 1, display: 'flex', flexDirection: 'column',
           background: '#fff', borderRadius: '16px',
@@ -1428,7 +1478,10 @@ export default function InputHub() {
 
       {/* ── AGENT MODE: Fast-Fill Form ───────────────────────────────────── */}
       {mode === 'agent' && (
-        <div className="card" style={{ flexGrow: 1 }}>
+        <div className="card" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          
+          <AgentIncentiveTracker />
+
           <form onSubmit={handleAgentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
@@ -1481,6 +1534,21 @@ export default function InputHub() {
                   className="form-control"
                   required
                 />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Gender *</label>
+                <select
+                  value={agentForm.gender}
+                  onChange={(e) => setAgentForm({ ...agentForm, gender: e.target.value })}
+                  className="form-select"
+                  required
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Transgender">Transgender</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               <div className="form-group">
@@ -1565,9 +1633,26 @@ export default function InputHub() {
                     </span>
                   )}
                   {locationStatus === 'detected' && location.isGPS && (
-                    <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 600 }}>
-                      ✓ GPS Detected
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ 
+                        fontSize: '0.74rem', 
+                        color: location.accuracy && location.accuracy > 1000 ? '#D97706' : '#059669', 
+                        fontWeight: 600 
+                      }}>
+                        ✓ GPS Detected {location.accuracy ? `(±${location.accuracy}m)` : ''}
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const url = `https://maps.google.com/?q=${location.lat},${location.lng}`;
+                          navigator.clipboard?.writeText(url);
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: 0 }}
+                        title="Copy GPS Maps Link"
+                      >
+                        <ExternalLink size={12} />
+                      </button>
+                    </div>
                   )}
                   {locationStatus === 'denied' && (
                     <span style={{ fontSize: '0.74rem', color: '#DC2626' }}>

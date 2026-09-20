@@ -84,20 +84,50 @@ export default function AgentReportModal({
     window.print();
   };
 
+  const handleWhatsAppShare = () => {
+    const text = `*SchemeSetu Agent Report*\nBeneficiary: ${validatedProfile.name}\nTop Scheme: ${primaryScheme?.name || 'N/A'}\nLocation: ${validatedProfile.location || 'N/A'}\nStatus: Verified\n\nVisit your local CSC center to proceed.`;
+    const encoded = encodeURIComponent(text);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  };
+
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
+    <>
+      <style>
+        {`
+          @media print {
+            body > *:not(.agent-print-wrapper) {
+              display: none !important;
+            }
+            .agent-print-wrapper {
+              position: static !important;
+              background: white !important;
+            }
+            .agent-print-card {
+              box-shadow: none !important;
+              border: none !important;
+              width: 100% !important;
+              max-width: none !important;
+            }
+            .agent-print-hide {
+              display: none !important;
+            }
+          }
+        `}
+      </style>
+      <div 
+        className="agent-print-wrapper"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.8)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
         padding: '1rem'
       }}
       role="dialog"
@@ -105,7 +135,7 @@ export default function AgentReportModal({
       aria-labelledby="agent-report-title"
     >
       <div 
-        className="card" 
+        className="card agent-print-card" 
         style={{
           maxWidth: '680px',
           width: '100%',
@@ -131,21 +161,21 @@ export default function AgentReportModal({
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-              <span className="badge" style={{ backgroundColor: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 700 }}>
+              <span className="badge agent-print-hide" style={{ backgroundColor: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 700 }}>
                 ✓ Intake Result Verified
               </span>
               <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
                 Ref: SS-AG-{Date.now().toString().slice(-6)}
               </span>
             </div>
-            <h2 id="agent-report-title" style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+            <h2 id="agent-report-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FFFFFF' }}>
+              <FileText size={20} className="agent-print-hide" style={{ color: '#F59E0B' }} />
               Beneficiary Recommendation Dossier
             </h2>
-          </div>
           <button 
             type="button"
             onClick={onClose} 
-            className="btn btn-sm btn-outline"
+            className="btn btn-sm btn-outline agent-print-hide"
             style={{ color: '#FFF', borderColor: 'rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem' }}
             aria-label="Close modal"
           >
@@ -331,12 +361,21 @@ export default function AgentReportModal({
           <button 
             type="button"
             onClick={onClose} 
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm agent-print-hide"
           >
             Close
           </button>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="agent-print-hide" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button 
+              type="button"
+              onClick={handleWhatsAppShare} 
+              className="btn btn-secondary btn-sm"
+              style={{ color: '#059669', borderColor: '#34D399' }}
+              title="Share via WhatsApp"
+            >
+              <Phone size={15} /> WhatsApp
+            </button>
             <button 
               type="button"
               onClick={handlePrint} 
@@ -352,7 +391,7 @@ export default function AgentReportModal({
               className="btn btn-primary btn-sm"
               style={{ fontWeight: 700 }}
             >
-              <Download size={15} /> Download PDF Dossier
+              <Download size={15} /> Download PDF
             </button>
           </div>
         </div>

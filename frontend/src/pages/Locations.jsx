@@ -171,9 +171,35 @@ export default function Locations() {
           </button>
 
           {location.isGPS && location.lat !== null && location.lng !== null && (
-            <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CheckCircle2 size={14} /> GPS Active (Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}{location.accuracy ? `, ±${location.accuracy}m` : ''})
-            </span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <CheckCircle2 size={14} /> GPS Active (Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}{location.accuracy ? `, ±${location.accuracy}m` : ''})
+              </span>
+              <button 
+                onClick={() => {
+                  const url = `https://maps.google.com/?q=${location.lat},${location.lng}`;
+                  navigator.clipboard?.writeText(url);
+                  alert('GPS Link copied!');
+                }}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                title="Copy GPS Maps Link"
+              >
+                <Copy size={14} /> Copy Link
+              </button>
+              <button 
+                onClick={() => {
+                  const url = `https://maps.google.com/?q=${location.lat},${location.lng}`;
+                  const text = encodeURIComponent(`Here is my current location for SchemeSetu assistance: ${url}`);
+                  window.open(`https://wa.me/?text=${text}`, '_blank');
+                }}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', color: '#059669', borderColor: '#34D399' }}
+                title="Share via WhatsApp"
+              >
+                <Share2 size={14} /> Share
+              </button>
+            </div>
           )}
         </div>
 

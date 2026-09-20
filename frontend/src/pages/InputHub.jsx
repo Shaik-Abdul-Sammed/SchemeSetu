@@ -39,6 +39,8 @@ import {
 import { parseUserInput, generateAssistantResponse, getMissingFields, FIELD_LABELS } from '../utils/voiceAssistantEngine';
 import { validateAgentProfile, evaluateAgentSchemes } from '../utils/agentValidationEngine';
 import { formatIndianCurrency } from '../utils/numberValidator';
+import { askChatGptVoiceAssistant } from '../utils/voiceChatGptEngine';
+
 
 // ── Conversation Steps ────────────────────────────────────────────────────────
 const STEPS = {
@@ -331,12 +333,65 @@ export default function InputHub() {
       return;
     }
 
-    // ── STEP-BY-STEP RECOMMENDATION FLOW ────────────────────────────────
+    // ── CHATGPT MODE: Handle general questions conversationally ──────────
+    // When the user asks a question (not entering wizard data), answer intelligently
+    // like the Voice Assistant Modal does, instead of forcing the wizard flow.
+    const isWizardInput = (
+      currentStep === STEPS.COST ||
+      currentStep === STEPS.INCOME ||
+      currentStep === STEPS.EDUCATION ||
+      currentStep === STEPS.SUBMITTING
+    );
+
+    // Detect if the message is a question or general query (not wizard data entry)
+    const isGeneralQuestion = (
+      intent === 'GENERAL_QUERY' ||
+      intent === 'SCHEME_INFO' ||
+      intent === 'ELIGIBILITY_CHECK' ||
+      intent === 'DISCOVER_SCHEMES' ||
+      (
+        !isWizardInput &&
+        (
+          /^(what|how|who|when|where|why|tell|explain|show|give|list|kya|kaise|batao|cheppandi|naaku|ela|enthi|evaru)/i.test(text) ||
+          /\b(subsidy|loan|scheme|yojana|pathakam|laabu|mudra|pmegp|msme|help|assist|eligible|eligibility|document|apply|kya hai|ante enti|guria|samjhao)\b/i.test(text) ||
+          text.endsWith('?') ||
+          text.split(' ').length < 4  // Short queries like "MUDRA loan" or "PMEGP" 
+        )
+      )
+    );
+
+    if (isGeneralQuestion) {
+      // Use ChatGPT engine for intelligent conversational response
+      const chatRes = askChatGptVoiceAssistant(text, effectiveLang || lang, location, profile);
+      const responseText = chatRes?.text || parseRes?.responseText || 'I can help you find government schemes. Tell me your project type, budget, and income to get personalized recommendations!';
+      
+      // Merge backend schemes if both returned results
+      const schemes = [
+        ...(parseRes?.matchedSchemes || []),
+        ...(chatRes?.schemes || []),
+      ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i).slice(0, 4);
+
+      const msg = {
+        sender: 'bot',
+        text: responseText,
+        id: `bot_${Date.now()}`,
+        bankCards: parseRes?.bankResults?.length > 0 ? parseRes.bankResults : null,
+        verifiedFact: parseRes?.verifiedFact || null,
+        schemes: schemes.length > 0 ? schemes : undefined,
+        quickFollowUps: chatRes?.quickFollowUps || parseRes?.quickFollowUps || [],
+      };
+      setMessages(prev => [...prev, msg]);
+      speakIfNotMuted(responseText, parseRes?.responseLang);
+      return;
+    }
+
+    // ── STEP-BY-STEP RECOMMENDATION FLOW ─────────────────────────────────
     const activeLang = (effectiveLang || lang || 'EN').toUpperCase();
 
     // ── STEP: PROJECT TYPE ───────────────────────────────────────────────
     if (currentStep === STEPS.PROJECT_TYPE || !currentCriteria.projectType) {
       const detected = parseRes?.slots?.projectType || detectProjectType(normalized);
+
       const updated = { ...currentCriteria, projectType: detected };
       setCriteria(updated);
       setStep(STEPS.COST);
@@ -922,6 +977,72 @@ export default function InputHub() {
                           </span>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Scheme cards from ChatGPT mode responses */}
+                {msg.schemes && msg.schemes.length > 0 && (
+                  <div style={{
+                    marginTop: '0.65rem', marginLeft: '2.5rem', maxWidth: '90%',
+                    display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                  }}>
+                    {msg.schemes.slice(0, 3).map((scheme, sIdx) => (
+                      <div
+                        key={scheme.id || sIdx}
+                        style={{
+                          background: '#F0FDF4', border: '1px solid #86EFAC',
+                          borderRadius: '12px', padding: '0.75rem 1rem',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#14532D' }}>
+                            🏛️ {scheme.name || scheme.title}
+                          </div>
+                          {scheme.loanLimit && (
+                            <span style={{
+                              background: '#DCFCE7', color: '#15803D',
+                              padding: '0.15rem 0.5rem', borderRadius: '12px',
+                              fontWeight: 800, fontSize: '0.72rem', flexShrink: 0,
+                            }}>
+                              Up to ₹{Number(scheme.loanLimit).toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        </div>
+                        {scheme.description && (
+                          <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '0.25rem' }}>
+                            {String(scheme.description).substring(0, 100)}{scheme.description?.length > 100 ? '…' : ''}
+                          </div>
+                        )}
+                        {scheme.ministry && (
+                          <div style={{ fontSize: '0.72rem', color: '#4ADE80', marginTop: '0.2rem' }}>by {scheme.ministry}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick follow-up chips from ChatGPT mode */}
+                {msg.quickFollowUps && msg.quickFollowUps.length > 0 && (
+                  <div style={{
+                    marginTop: '0.5rem', marginLeft: '2.5rem',
+                    display: 'flex', flexWrap: 'wrap', gap: '0.4rem',
+                  }}>
+                    {msg.quickFollowUps.slice(0, 4).map((chip, ci) => (
+                      <button
+                        key={ci}
+                        type="button"
+                        onClick={() => { setTextInput(chip); setTimeout(() => handleUserMessage(chip), 100); }}
+                        style={{
+                          background: '#EFF6FF', color: '#1D4ED8',
+                          border: '1px solid #BFDBFE', borderRadius: '20px',
+                          padding: '0.3rem 0.75rem', fontSize: '0.75rem',
+                          fontWeight: 600, cursor: 'pointer',
+                        }}
+                      >
+                        {chip}
+                      </button>
                     ))}
                   </div>
                 )}

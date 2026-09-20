@@ -258,6 +258,81 @@ export default function InputHub() {
     if (speak) speakIfNotMuted(text, overrideLang);
   }, [speakIfNotMuted]);
 
+  // ── ChatGPT-style rich text renderer ─────────────────────────────────────
+  // Renders **bold**, bullet points (•/-), numbered lists, line breaks, inline `code`
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const lines = String(text).split('\n');
+    return (
+      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>
+        {lines.map((line, li) => {
+          const trimmed = line.trim();
+
+          // Blank line → small spacer
+          if (!trimmed) return <div key={li} style={{ height: '0.4rem' }} />;
+
+          // Numbered list: "1. item" or "1) item"
+          const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
+          if (numberedMatch) {
+            return (
+              <div key={li} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem', alignItems: 'flex-start' }}>
+                <span style={{ fontWeight: 700, color: '#D97706', minWidth: '1.2rem', flexShrink: 0 }}>{numberedMatch[1]}.</span>
+                <span>{renderInline(numberedMatch[2])}</span>
+              </div>
+            );
+          }
+
+          // Bullet point: "• item" or "- item" or "* item"
+          if (/^[•\-\*]\s/.test(trimmed)) {
+            const content = trimmed.replace(/^[•\-\*]\s/, '');
+            return (
+              <div key={li} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.2rem', alignItems: 'flex-start' }}>
+                <span style={{ color: '#D97706', fontWeight: 800, flexShrink: 0, marginTop: '0.1rem' }}>▸</span>
+                <span>{renderInline(content)}</span>
+              </div>
+            );
+          }
+
+          // Section heading: all-caps line or line ending with ':'
+          if (/^#{1,3}\s/.test(trimmed)) {
+            const heading = trimmed.replace(/^#{1,3}\s/, '');
+            return (
+              <div key={li} style={{ fontWeight: 800, color: '#1E3E62', fontSize: '0.97rem', marginTop: '0.6rem', marginBottom: '0.1rem' }}>
+                {renderInline(heading)}
+              </div>
+            );
+          }
+
+          // Normal line with inline formatting
+          return <div key={li}>{renderInline(trimmed)}</div>;
+        })}
+      </div>
+    );
+  };
+
+  // Inline formatting: **bold**, `code`, currency ₹
+  const renderInline = (text) => {
+    if (!text) return null;
+    // Split on **bold** and `code` markers
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} style={{ fontWeight: 700, color: '#0F172A' }}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('`') && part.endsWith('`')) {
+        return (
+          <code key={i} style={{
+            background: '#E2E8F0', color: '#D97706', padding: '0.05rem 0.3rem',
+            borderRadius: '4px', fontSize: '0.88em', fontFamily: 'monospace'
+          }}>{part.slice(1, -1)}</code>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+
+
   // ── Core Conversation Logic ───────────────────────────────────────────────
   const handleUserMessage = useCallback(async (rawText) => {
     const text = (rawText || '').substring(0, 400).trim();
@@ -845,14 +920,18 @@ export default function InputHub() {
                       borderRadius: msg.sender === 'user'
                         ? '18px 18px 4px 18px'
                         : '18px 18px 18px 4px',
-                      backgroundColor: msg.sender === 'user' ? '#1E3E62' : '#F1F5F9',
+                      backgroundColor: msg.sender === 'user' ? '#1E3E62' : '#F8FAFC',
                       color: msg.sender === 'user' ? '#fff' : '#0F172A',
-                      fontSize: '0.95rem', lineHeight: 1.55,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)', wordBreak: 'break-word',
-                      display: 'flex', flexDirection: 'column', gap: '0.4rem'
+                      fontSize: '0.93rem', lineHeight: 1.6,
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.07)', wordBreak: 'break-word',
+                      display: 'flex', flexDirection: 'column', gap: '0.4rem',
+                      border: msg.sender === 'bot' ? '1px solid #E2E8F0' : 'none',
                     }}
                   >
-                    <div>{msg.text}</div>
+                    {msg.sender === 'bot'
+                      ? renderFormattedText(msg.text)
+                      : <div>{msg.text}</div>
+                    }
                     {msg.sender === 'bot' && (
                       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
                         <button
@@ -873,6 +952,7 @@ export default function InputHub() {
                           title="Listen to this message aloud"
                         >
                           <Volume2 size={13} /> Speak
+
                         </button>
                       </div>
                     )}

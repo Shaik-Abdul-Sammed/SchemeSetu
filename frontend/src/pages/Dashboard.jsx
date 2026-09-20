@@ -176,22 +176,7 @@ Official Government Digital Service Dossier - 2026
                   <ShieldCheck size={15} /> {t('verifiedCitizen', 'Verified SC Beneficiary')}
                 </span>
 
-                {user?.isDemo && (
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '0.35rem', 
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)', 
-                    color: '#FCD34D', 
-                    padding: '0.3rem 0.8rem', 
-                    borderRadius: '20px', 
-                    fontSize: '0.8rem', 
-                    fontWeight: 700,
-                    border: '1px solid rgba(245, 158, 11, 0.4)'
-                  }}>
-                    <Zap size={14} /> SIH 2026 Demo Mode
-                  </span>
-                )}
+
 
                 <button 
                   onClick={() => setLocationModalOpen(true)}

@@ -61,15 +61,6 @@ export default function Onboarding() {
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('mosjeInitiative', 'MoSJE Initiative')}</span>
           </div>
         </div>
-
-        <button
-          onClick={handleQuickDemo}
-          className="btn btn-secondary btn-sm"
-          style={{ borderColor: '#F59E0B', color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-        >
-          <Zap size={15} style={{ color: '#F59E0B' }} />
-          <span>{t('quickDemo', 'Quick Demo Showcase (SIH 2026)')}</span>
-        </button>
       </div>
 
       {/* Main Onboarding Card */}
@@ -88,17 +79,6 @@ export default function Onboarding() {
           </p>
         </div>
 
-        {/* One-Click Quick Demo Button (SIH 2026 Showcase) */}
-        <div style={{ marginBottom: '1rem' }}>
-          <button
-            onClick={handleQuickDemo}
-            className="btn btn-green btn-lg"
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem', padding: '0.95rem' }}
-          >
-            <Zap size={22} style={{ color: '#F59E0B' }} />
-            <span>{t('quickDemo', '⚡ Quick Demo Showcase (SIH 2026)')}</span>
-          </button>
-        </div>
 
         {/* Action 1: Continue as Guest (Primary) */}
         <div style={{ marginBottom: '2rem' }}>

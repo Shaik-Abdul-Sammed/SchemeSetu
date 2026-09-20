@@ -60,43 +60,7 @@ export default function Login() {
             <p style={{ color: '#64748B', fontSize: '0.9rem' }}>{t('loginSubtitle', 'Sign in to access your saved schemes and applications')}</p>
           </div>
 
-          {/* ⚡ 1-CLICK DEMO LOGIN BUTTON (SIH 2026) */}
-          <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '12px', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', marginBottom: '0.4rem', letterSpacing: '0.04em' }}>
-              ⚡ SIH 2026 Demonstration
-            </div>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={demoLoading}
-              className="btn btn-primary"
-              style={{
-                width: '100%',
-                padding: '0.7rem 1rem',
-                fontWeight: 800,
-                fontSize: '0.95rem',
-                backgroundColor: '#D97706',
-                borderColor: '#B45309',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              <Zap size={18} />
-              <span>{demoLoading ? 'Launching Demo...' : t('demoLoginBtn', '⚡ 1-Click Demo Login')}</span>
-            </button>
-            <div style={{ fontSize: '0.78rem', color: '#78350F', marginTop: '0.4rem', fontWeight: 500 }}>
-              {t('demoLoginSubtitle', 'Instant access with preloaded sample citizen profile & applications')}
-            </div>
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
-            <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>or sign in manually</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
-          </div>
 
           {error && (
             <div style={{ padding: '0.75rem 1rem', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

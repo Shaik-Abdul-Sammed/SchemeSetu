@@ -29,7 +29,7 @@ import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoi
 import useTextToSpeech from '../hooks/useTextToSpeech';
 import useLanguageDetection from '../hooks/useLanguageDetection';
 import VoiceLanguageBar from '../components/voice/VoiceLanguageBar';
-import DemoModePanel from '../components/voice/DemoModePanel';
+
 import {
   normalizeTranscript,
   extractAmount,
@@ -1351,30 +1351,6 @@ export default function InputHub() {
                 ) : (
                   <span>Tap Microphone to Speak</span>
                 )}
-
-                {/* ⚡ 1-CLICK SIH DEMO VOICE FLOW BUTTON */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleUserMessage('I want a loan for my small business in Andhra Pradesh with annual income three lakh rupees.');
-                  }}
-                  className="btn btn-secondary btn-xs"
-                  style={{
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                    borderColor: '#F59E0B',
-                    color: '#D97706',
-                    marginTop: '0.4rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    fontSize: '0.76rem',
-                    fontWeight: 700,
-                    borderRadius: '20px',
-                    padding: '0.25rem 0.75rem'
-                  }}
-                >
-                  <Sparkles size={12} /> ⚡ 1-Click SIH Voice Demo Flow
-                </button>
               </div>
               <div
                 role="status"
@@ -1700,19 +1676,6 @@ export default function InputHub() {
         onClose={() => setProfileModalOpen(false)}
       />
 
-      {/* ── Demo Mode Panel Overlay ─────────────────────────────────────── */}
-      {mode === 'user' && (
-        <DemoModePanel
-          transcript={pipelineInfo.transcript}
-          detectionResult={detectionResult}
-          intent={pipelineInfo.intent}
-          intentConfidence={pipelineInfo.confidence}
-          actionTaken={pipelineInfo.actionTaken}
-          locationState={location?.state}
-          effectiveLang={effectiveLang}
-          onSendCommand={handleUserMessage}
-        />
-      )}
 
       {/* Agent Report Modal */}
       {agentReportOpen && (

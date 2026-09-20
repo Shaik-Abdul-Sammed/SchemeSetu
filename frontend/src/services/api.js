@@ -339,7 +339,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       if (transcript.includes('bank') || transcript.includes('शाखा') || transcript.includes('బ్యాంక్') || transcript.includes('near')) {
         const userLat = body.lat || 17.3850;
         const userLng = body.lng || 78.4867;
-        bankResults = MOCK_PARTNERS.slice(0, 3).map(p => {
+        bankResults = MOCK_PARTNERS.map(p => {
           const pLat = p.coordinates?.lat || 17.3850;
           const pLng = p.coordinates?.lng || 78.4867;
           const dist = calculateDistance(userLat, userLng, pLat, pLng);
@@ -348,7 +348,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
             distance: dist,
             distanceText: `${dist} km`
           };
-        }).sort((a, b) => a.distance - b.distance);
+        }).sort((a, b) => a.distance - b.distance).slice(0, 3);
         if (bankResults.length > 0) {
           responseText = `The nearest verified banking partner is ${bankResults[0].name}, approximately ${bankResults[0].distanceText} away at ${bankResults[0].address || 'nearby'}.`;
         }

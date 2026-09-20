@@ -27,6 +27,7 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
     refreshLocation, 
     setDemoLocation, 
     setManualLocation, 
+    updateLocation,
     nearbyPartners, 
     INDIAN_LOCATIONS 
   } = useLocation();
@@ -185,25 +186,26 @@ export default function SnapchatLocationPicker({ isOpen = true, onClose }) {
             <button
               type="button"
               onClick={() => {
-                setManualLocation('Andhra Pradesh', 'YSR Kadapa');
-                setSelectedState('Andhra Pradesh');
-                setSelectedDistrict('YSR Kadapa');
+                const exactLoc = {
+                  lat: 14.3396,
+                  lng: 78.5818,
+                  accuracy: 10,
+                  timestamp: Date.now(),
+                  state: 'Andhra Pradesh',
+                  district: 'YSR Kadapa',
+                  city: 'Vempalli',
+                  address: 'IIIT RK Valley, Vempalli, YSR Kadapa, Andhra Pradesh',
+                  isGPS: true,
+                  isManual: true,
+                  isDemo: false
+                };
+                updateLocation(exactLoc);
               }}
               className="btn btn-secondary"
               style={{ justifyContent: 'center', borderColor: '#10B981', color: '#34D399', fontWeight: 700, fontSize: '0.85rem', backgroundColor: 'rgba(16, 185, 129, 0.12)' }}
             >
               <MapPin size={16} style={{ color: '#10B981' }} />
-              <span>📍 YSR Kadapa (RK Valley)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDemoLocation('Tamil Nadu', 'Chennai')}
-              className="btn btn-secondary"
-              style={{ justifyContent: 'center', borderColor: '#F59E0B', color: '#FCD34D', fontSize: '0.85rem' }}
-            >
-              <Sparkles size={16} style={{ color: '#F59E0B' }} />
-              <span>Demo Location (Chennai)</span>
+              <span>📍 IIIT RK Valley (Vempalli)</span>
             </button>
           </div>
 

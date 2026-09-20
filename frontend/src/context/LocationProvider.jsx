@@ -223,6 +223,7 @@ export const INDIAN_LOCATIONS = [
   // ── 1. Andhra Pradesh ──
   { state: 'Andhra Pradesh', district: 'Vijayawada (NTR)', lat: 16.5062, lng: 80.6480 },
   { state: 'Andhra Pradesh', district: 'YSR Kadapa', lat: 14.4673, lng: 78.8242 },
+  { state: 'Andhra Pradesh', district: 'IIIT RK Valley (Vempalli)', lat: 14.3396, lng: 78.5818 },
   { state: 'Andhra Pradesh', district: 'Visakhapatnam', lat: 17.6868, lng: 83.2185 },
   { state: 'Andhra Pradesh', district: 'Guntur', lat: 16.3067, lng: 80.4365 },
   { state: 'Andhra Pradesh', district: 'Tirupati', lat: 13.6288, lng: 79.4192 },

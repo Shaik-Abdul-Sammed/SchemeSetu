@@ -30,7 +30,12 @@ const LANG_MAP = {
   GU: 'gu',
   UR: 'ur',
   OR: 'or',
-  AS: 'as'
+  AS: 'as',
+  // Tribal languages: no direct Google Translate support; map to closest script
+  GON: 'hi', // Gondi → Hindi (Devanagari script)
+  BHI: 'hi', // Bhili → Hindi (Devanagari script)
+  GO:  'hi', // Gondi alias (stateLanguageMap)
+  CH:  'te', // Chenchu alias → Telugu script
 };
 
 let widgetInitialized = false;

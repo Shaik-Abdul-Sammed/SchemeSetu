@@ -84,14 +84,17 @@ export function getDefaultLangForState(stateName) {
  * Maps app code → full config including BCP-47 and Google code.
  */
 export const SUPPORTED_LANGUAGES = {
-  EN: { languageCode: 'EN', bcp47: 'en-IN', googleCode: 'en', displayName: 'English',    nativeName: 'English',    script: 'Latin'      },
-  HI: { languageCode: 'HI', bcp47: 'hi-IN', googleCode: 'hi', displayName: 'Hindi',      nativeName: 'हिन्दी',     script: 'Devanagari' },
-  TE: { languageCode: 'TE', bcp47: 'te-IN', googleCode: 'te', displayName: 'Telugu',     nativeName: 'తెలుగు',    script: 'Telugu'     },
-  TA: { languageCode: 'TA', bcp47: 'ta-IN', googleCode: 'ta', displayName: 'Tamil',      nativeName: 'தமிழ்',     script: 'Tamil'      },
-  KN: { languageCode: 'KN', bcp47: 'kn-IN', googleCode: 'kn', displayName: 'Kannada',    nativeName: 'ಕನ್ನಡ',     script: 'Kannada'    },
-  ML: { languageCode: 'ML', bcp47: 'ml-IN', googleCode: 'ml', displayName: 'Malayalam',  nativeName: 'മലയാളം',   script: 'Malayalam'  },
-  BN: { languageCode: 'BN', bcp47: 'bn-IN', googleCode: 'bn', displayName: 'Bengali',    nativeName: 'বাংলা',     script: 'Bengali'    },
-  MR: { languageCode: 'MR', bcp47: 'mr-IN', googleCode: 'mr', displayName: 'Marathi',    nativeName: 'मराठी',     script: 'Devanagari' },
-  GO: { languageCode: 'GO', bcp47: 'te-IN', googleCode: 'te', displayName: 'Gondi',      nativeName: 'గోంది / गोंडी', script: 'Gunjala' },
-  CH: { languageCode: 'CH', bcp47: 'te-IN', googleCode: 'te', displayName: 'Chenchu',    nativeName: 'చెంచు / चेन्चू', script: 'Telugu' },
+  EN:  { languageCode: 'EN',  bcp47: 'en-IN', googleCode: 'en', displayName: 'English',    nativeName: 'English',           script: 'Latin'      },
+  HI:  { languageCode: 'HI',  bcp47: 'hi-IN', googleCode: 'hi', displayName: 'Hindi',      nativeName: 'हिन्दी',             script: 'Devanagari' },
+  TE:  { languageCode: 'TE',  bcp47: 'te-IN', googleCode: 'te', displayName: 'Telugu',     nativeName: 'తెలుగు',            script: 'Telugu'     },
+  TA:  { languageCode: 'TA',  bcp47: 'ta-IN', googleCode: 'ta', displayName: 'Tamil',      nativeName: 'தமிழ்',             script: 'Tamil'      },
+  KN:  { languageCode: 'KN',  bcp47: 'kn-IN', googleCode: 'kn', displayName: 'Kannada',    nativeName: 'ಕನ್ನಡ',             script: 'Kannada'    },
+  ML:  { languageCode: 'ML',  bcp47: 'ml-IN', googleCode: 'ml', displayName: 'Malayalam',  nativeName: 'മലയാളം',           script: 'Malayalam'  },
+  BN:  { languageCode: 'BN',  bcp47: 'bn-IN', googleCode: 'bn', displayName: 'Bengali',    nativeName: 'বাংলা',             script: 'Bengali'    },
+  MR:  { languageCode: 'MR',  bcp47: 'mr-IN', googleCode: 'mr', displayName: 'Marathi',    nativeName: 'मराठी',             script: 'Devanagari' },
+  // Tribal languages (GON and GO are aliases; BHI and CH are aliases)
+  GON: { languageCode: 'GON', bcp47: 'hi-IN', googleCode: 'hi', displayName: 'Gondi',      nativeName: 'గోండీ / गोंडी',     script: 'Devanagari' },
+  GO:  { languageCode: 'GO',  bcp47: 'te-IN', googleCode: 'te', displayName: 'Gondi',      nativeName: 'గోంది / गोंडी',     script: 'Gunjala'    },
+  BHI: { languageCode: 'BHI', bcp47: 'hi-IN', googleCode: 'hi', displayName: 'Bhili',      nativeName: 'भीली',              script: 'Devanagari' },
+  CH:  { languageCode: 'CH',  bcp47: 'te-IN', googleCode: 'te', displayName: 'Chenchu',    nativeName: 'చెంచు / चेन्चू',    script: 'Telugu'     },
 };

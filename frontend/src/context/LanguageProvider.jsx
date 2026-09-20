@@ -10,7 +10,12 @@ import { translateText } from '../services/translateService';
 const GOOGLE_LANG_MAP = {
   EN: 'en', HI: 'hi', TE: 'te', TA: 'ta', KN: 'kn',
   ML: 'ml', MR: 'mr', BN: 'bn', PA: 'pa', GU: 'gu',
-  UR: 'ur', OR: 'or', AS: 'as'
+  UR: 'ur', OR: 'or', AS: 'as',
+  // Tribal languages: no direct Google Translate support; use closest available script
+  GON: 'hi', // Gondi → Hindi (Devanagari script, closest Google Translate support)
+  BHI: 'hi', // Bhili → Hindi (Devanagari script, closest Google Translate support)
+  GO:  'hi', // Gondi alias (stateLanguageMap code)
+  CH:  'te', // Chenchu alias (stateLanguageMap code) → Telugu script
 };
 
 /**
@@ -57,7 +62,9 @@ export function LanguageProvider({ children }) {
   }, [lang]);
 
   const changeLanguage = (newLang) => {
-    if (translations[newLang]) {
+    // Accept language if it has app translations OR is a known tribal/mapped language
+    const isSupported = translations[newLang] || GOOGLE_LANG_MAP[newLang];
+    if (isSupported) {
       setLang(newLang);
       localStorage.setItem('schemesetu_lang', newLang);
       if (typeof document !== 'undefined') {

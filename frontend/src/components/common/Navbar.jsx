@@ -27,10 +27,11 @@ import {
   Settings,
   AlertCircle,
   Mic,
-  UserCheck
+  UserCheck,
+  HelpCircle
 } from 'lucide-react';
 
-export default function Navbar({ onOpenVoiceAssistant }) {
+export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { lang, t } = useLanguage();
   const { location, locationStatus } = useLocation();
@@ -123,31 +124,31 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             aria-label="Main Navigation"
             id="main-nav"
           >
-            <NavLink to="/" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile} end>
+            <NavLink id="tour-home" to="/" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile} end>
               {t('home', 'Home')}
             </NavLink>
 
-            <NavLink to="/schemes" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-schemes" to="/schemes" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Building2 size={14} aria-hidden="true" />
               {t('exploreSchemes', 'Schemes')}
             </NavLink>
 
-            <NavLink to="/applications" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-applications" to="/applications" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <FileCheck size={14} aria-hidden="true" />
               {t('applications', 'Apply')}
             </NavLink>
 
-            <NavLink to="/locations" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-locations" to="/locations" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <MapPin size={14} aria-hidden="true" />
               {t('partners', 'Centers')}
             </NavLink>
 
-            <NavLink to="/calculator" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-calculator" to="/calculator" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Calculator size={14} aria-hidden="true" />
               {t('calculator', 'Calculator')}
             </NavLink>
 
-            <NavLink to="/input" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-agent" to="/input" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Bot size={14} aria-hidden="true" />
               {t('agentMode', 'Agent')}
             </NavLink>
@@ -274,8 +275,8 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               </button>
             </div>
 
-            {/* Mobile Sahaj Mode Trigger */}
-            <div style={{ padding: '0.4rem 1rem' }}>
+            {/* Mobile Sahaj Mode Trigger (Drawer Only) */}
+            <div className="nav-link-mobile-location" style={{ padding: '0.4rem 1rem' }}>
               <button
                 type="button"
                 onClick={() => { setSahajModalOpen(true); closeMobile(); }}
@@ -306,6 +307,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
 
             {/* Sahaj Audio-Visual Mode Quick Button */}
             <button
+              id="tour-sahaj"
               type="button"
               className="navbar-sahaj-btn"
               onClick={() => setSahajModalOpen(true)}
@@ -319,19 +321,22 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                 color: '#92400E',
                 border: '1.5px solid #FCD34D',
                 borderRadius: '20px',
-                padding: '0.32rem 0.75rem',
+                padding: '0.32rem 0.65rem',
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               <span style={{ fontSize: '0.95rem' }}>🎨</span>
-              <span className="navbar-voice-label">{lang === 'TE' ? 'సహజ్' : (lang === 'HI' ? 'सहज' : 'Sahaj')}</span>
+              <span>{lang === 'TE' ? 'సహజ్' : (lang === 'HI' ? 'सहज' : 'Sahaj')}</span>
             </button>
 
             {/* GPS Location pill */}
             <button
+              id="tour-location-pill"
               type="button"
               className={`navbar-location-btn${location.isGPS ? ' gps-active' : ''}${locationStatus === 'denied' || locationStatus === 'unavailable' ? ' gps-denied' : ''}`}
               onClick={() => setLocationModalOpen(true)}
@@ -351,6 +356,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
 
             {/* Voice assistant */}
             <button
+              id="tour-voice"
               type="button"
               className="navbar-voice-btn"
               onClick={onOpenVoiceAssistant}
@@ -362,7 +368,34 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             </button>
 
             {/* Language selector */}
-            <LanguageSelectorIcon />
+            <div id="tour-language" style={{ display: 'inline-flex', flexShrink: 0 }}>
+              <LanguageSelectorIcon />
+            </div>
+
+            {/* Help & Tour Guide Button */}
+            <button
+              type="button"
+              className="navbar-help-btn"
+              onClick={onOpenHelp}
+              title={t('helpAndGuide', 'Help Center & Guided Tour')}
+              aria-label={t('helpAndGuide', 'Help Center & Guided Tour')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#FCD34D',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                flexShrink: 0
+              }}
+            >
+              <HelpCircle size={16} />
+            </button>
 
             {/* Mobile hamburger */}
             <button

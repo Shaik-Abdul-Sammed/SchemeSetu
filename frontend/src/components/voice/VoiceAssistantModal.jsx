@@ -734,29 +734,34 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
         </div>
 
         {/* Quick Language Switcher Bar — single source of truth for language selection */}
-        <div style={{
-          padding: '0.4rem 1.25rem',
-          backgroundColor: '#0F172A',
-          borderBottom: '1px solid #1E293B',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap'
-        }}>
-          <span style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700, flexShrink: 0, marginRight: '0.2rem' }}>Language:</span>
+        <div 
+          className="no-scrollbar"
+          style={{
+            padding: '0.65rem 1.25rem',
+            backgroundColor: '#0F172A',
+            borderBottom: '1px solid #1E293B',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            overflowX: 'auto',
+            whiteSpace: 'nowrap',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, flexShrink: 0, marginRight: '0.2rem' }}>Language:</span>
           {/* AUTO is first — it auto-detects from speech/text; active by default */}
           {[
             { code: 'AUTO', flag: '🌐', label: 'Auto Detect' },
             { code: 'EN', flag: '🇬🇧', label: 'English' },
-            { code: 'HI', flag: '🇮🇳', label: 'हिंदी' },
             { code: 'TE', flag: '🇮🇳', label: 'తెలుగు' },
+            { code: 'HI', flag: '🇮🇳', label: 'हिंदी' },
             { code: 'TA', flag: '🇮🇳', label: 'தமிழ்' },
             { code: 'KN', flag: '🇮🇳', label: 'ಕನ್ನಡ' },
+            { code: 'MR', flag: '🇮🇳', label: 'मराठी' },
             { code: 'ML', flag: '🇮🇳', label: 'മലയാളം' },
             { code: 'BN', flag: '🇮🇳', label: 'বাংলা' },
-            { code: 'MR', flag: '🇮🇳', label: 'मराठी' },
-            { code: 'GON', flag: '🔀', label: 'गोंडी' },
+            { code: 'GON', flag: '🔀', label: 'గోండీ' },
             { code: 'BHI', flag: '🔀', label: 'भीली' }
           ].map((item) => {
             const isSelected = selectedVoiceLang === item.code;
@@ -770,15 +775,15 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                 style={{
                   backgroundColor: isSelected ? '#F59E0B' : 'rgba(255, 255, 255, 0.08)',
                   color: isSelected ? '#0F172A' : '#CBD5E1',
-                  border: isSelected ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.73rem',
-                  fontWeight: isSelected ? 800 : 500,
+                  border: isSelected ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '16px',
+                  padding: '0.3rem 0.65rem',
+                  fontSize: '0.78rem',
+                  fontWeight: isSelected ? 800 : 600,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.25rem',
+                  gap: '0.3rem',
                   transition: 'all 0.15s ease',
                   flexShrink: 0,
                 }}

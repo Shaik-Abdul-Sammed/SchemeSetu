@@ -12,33 +12,61 @@ export default function AgentIncentiveTracker() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 my-4 text-slate-200">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+    <div style={{
+      backgroundColor: '#0F172A',
+      border: '1px solid #1E293B',
+      borderRadius: '16px',
+      padding: '1.25rem',
+      margin: '1rem 0 1.5rem',
+      color: '#E2E8F0',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid #1E293B',
+        paddingBottom: '0.85rem',
+        marginBottom: '1rem',
+        flexWrap: 'wrap',
+        gap: '0.75rem'
+      }}>
         <div>
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <Award className="w-5 h-5 text-amber-400" /> Field Agent Incentive & Commission Tracker
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+            <Award size={20} style={{ color: '#F59E0B' }} /> Field Agent Incentive & Commission Tracker
           </h3>
-          <p className="text-xs text-slate-400">Track earnings per verified citizen onboarding and regional agent ranking</p>
+          <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: '0.2rem 0 0' }}>
+            Track earnings per verified citizen onboarding and regional agent ranking
+          </p>
         </div>
-        <span className="text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full">
+        <span style={{
+          fontSize: '0.78rem',
+          fontFamily: 'monospace',
+          fontWeight: 800,
+          backgroundColor: 'rgba(245, 158, 11, 0.15)',
+          color: '#F59E0B',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          padding: '0.3rem 0.75rem',
+          borderRadius: '20px'
+        }}>
           {AGENT_STATS.ranking}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-slate-800/50 border border-slate-800 p-4 rounded-xl text-center">
-          <span className="text-xs text-slate-400 block mb-1">Total Verified Applications</span>
-          <strong className="text-xl font-bold text-emerald-400">{AGENT_STATS.verifiedSubmissions}</strong>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', border: '1px solid #334155', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginBottom: '0.25rem' }}>Total Verified Applications</span>
+          <strong style={{ fontSize: '1.5rem', fontWeight: 800, color: '#34D399' }}>{AGENT_STATS.verifiedSubmissions}</strong>
         </div>
 
-        <div className="bg-slate-800/50 border border-slate-800 p-4 rounded-xl text-center">
-          <span className="text-xs text-slate-400 block mb-1">Total Incentives Earned</span>
-          <strong className="text-xl font-bold text-amber-400">₹{AGENT_STATS.commissionEarned.toLocaleString('en-IN')}</strong>
+        <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', border: '1px solid #334155', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginBottom: '0.25rem' }}>Total Incentives Earned</span>
+          <strong style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FBBF24' }}>₹{AGENT_STATS.commissionEarned.toLocaleString('en-IN')}</strong>
         </div>
 
-        <div className="bg-slate-800/50 border border-slate-800 p-4 rounded-xl text-center">
-          <span className="text-xs text-slate-400 block mb-1">Pending Verification</span>
-          <strong className="text-xl font-bold text-blue-400">{AGENT_STATS.pendingSubmissions}</strong>
+        <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', border: '1px solid #334155', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginBottom: '0.25rem' }}>Pending Verification</span>
+          <strong style={{ fontSize: '1.5rem', fontWeight: 800, color: '#60A5FA' }}>{AGENT_STATS.pendingSubmissions}</strong>
         </div>
       </div>
     </div>

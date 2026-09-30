@@ -10,6 +10,10 @@
 **SchemeSetu** is a production-grade, voice-first Progressive Web App (PWA) and Mobile Application designed to eliminate informational, linguistic, and procedural barriers for marginalized citizens seeking government welfare and loan assistance schemes across Central and State Governments.
 
 ### Core Value Proposition
+- **Interactive Tour Guide with Floating Directional Arrows**: Guided step-by-step walkthrough pointing towards each navbar tool with glowing spotlights and directional arrows, accompanied by automatic multilingual voice narration (Telugu, Hindi, English). Automatically triggers after language onboarding or via the `💡 Help & Tour` button.
+- **Integrated Help Center & Audio Guide**: 5-module comprehensive audio-visual help center detailing Voice Assistant usage, Dialects & Localization, Sahaj Tribal Mode, Bank/CSC Locator with landmark navigation, and the Financial Calculator.
+- **Enhanced Sahaj (Tribal & Low-Literacy) Mode**: High-contrast, zero-clutter 90/10 visual-to-text layout, direct 14566 national helpline dialer, one-tap "Request Sahayak" volunteer doorstep assistance, and native Gondi/Bhili dialect support.
+- **Fixed UI & Engine Stability**: Eliminated external translation script DOM reconciliation collisions ("text display again"), fixed desktop navbar button squashing, repaired `useEffect` reference in partner details, and stabilized agent incentive submissions.
 - **Voice-First AI Conversational Assistant**: Speech recognition (`Web Speech API`) allowing low-literacy citizens to speak in their native dialect instead of filling complex forms.
 - **Explainable AI Eligibility Engine**: Transparent, human-understandable rule breakdown (e.g. `✅ Household income ₹2.4L < ₹5L ceiling`).
 - **Data-Driven SC Financial Limit Validation**: Checks requested loan/project costs against actual official scheme ceilings (Mudra Kishore/Tarun, PMEGP 35% SC subsidy, Stand-Up India ₹10L-₹1Cr, PM SVANidhi, Dalit Bandhu).

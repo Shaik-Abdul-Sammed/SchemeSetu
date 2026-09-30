@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, MapPin, Phone, Clock, Navigation, CheckCircle, Copy, Check, 

@@ -58,6 +58,10 @@ export default function LanguageSelectionModal({ isOpen: controlledIsOpen, onClo
     localStorage.setItem('schemesetu_gate_passed', 'true');
     localStorage.setItem('schemesetu_lang_pref', selectedCode);
     handleClose();
+    // Launch interactive tour guide pointing at navbar tools in the selected language
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('schemesetu_start_tour'));
+    }, 400);
   };
 
   if (!isOpen) return null;

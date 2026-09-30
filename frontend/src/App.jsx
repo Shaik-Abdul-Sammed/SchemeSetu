@@ -31,13 +31,28 @@ import NotFound from './pages/NotFound';
 
 import LanguageSelectionModal from './components/common/LanguageSelectionModal';
 import PageTranslator from './components/common/PageTranslator';
+import TourGuide from './components/common/TourGuide';
+import HelpCenterModal from './components/common/HelpCenterModal';
 import { setupCapacitorApp } from './utils/capacitorHandler';
 
 export default function App() {
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [tourGuideOpen, setTourGuideOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useRouterLocation();
+
+  useEffect(() => {
+    const handleStartTour = () => setTourGuideOpen(true);
+    const handleOpenHelp = () => setHelpModalOpen(true);
+    window.addEventListener('schemesetu_start_tour', handleStartTour);
+    window.addEventListener('schemesetu_open_help', handleOpenHelp);
+    return () => {
+      window.removeEventListener('schemesetu_start_tour', handleStartTour);
+      window.removeEventListener('schemesetu_open_help', handleOpenHelp);
+    };
+  }, []);
 
   useEffect(() => {
     setupCapacitorApp({
@@ -57,7 +72,11 @@ export default function App() {
         <LanguageSelectionModal isOpen={languageModalOpen} onClose={() => setLanguageModalOpen(false)} />
         <InstallAppBanner />
         <OfflineIndicator />
-        <Navbar onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />
+        <Navbar 
+          onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} 
+          onOpenTour={() => setTourGuideOpen(true)}
+          onOpenHelp={() => setHelpModalOpen(true)}
+        />
         <main style={{ flexGrow: 1, paddingBottom: '70px', paddingTop: '0' }}>
           <Routes>
             <Route path="/" element={<Home onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />} />
@@ -96,6 +115,19 @@ export default function App() {
         <VoiceAssistantModal 
           isOpen={voiceAssistantOpen} 
           onClose={() => setVoiceAssistantOpen(false)} 
+        />
+
+        {/* Interactive Guided Tour Guide with Arrows */}
+        <TourGuide 
+          isOpen={tourGuideOpen} 
+          onClose={() => setTourGuideOpen(false)} 
+        />
+
+        {/* Global Help Center & How-To Guide Modal */}
+        <HelpCenterModal 
+          isOpen={helpModalOpen} 
+          onClose={() => setHelpModalOpen(false)} 
+          onStartTour={() => setTourGuideOpen(true)}
         />
       </div>
     </ErrorBoundary>

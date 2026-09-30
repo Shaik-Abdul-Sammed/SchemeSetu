@@ -14,7 +14,7 @@ import {
 } from '../../utils/mapUtils';
 
 export default function TribalSahajModeModal({ isOpen, onClose }) {
-  const { lang, setLang, t } = useLanguage();
+  const { lang, changeLanguage, t } = useLanguage();
   const { location, nearbyPartners } = useLocation();
   const { speak, stop, isSpeaking } = useTextToSpeech({ lang });
 
@@ -336,21 +336,26 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
         </div>
 
         {/* Language Selection Quick Pills (Accessible) */}
-        <div style={{
-          backgroundColor: '#F8FAFC',
-          padding: '0.65rem 1rem',
-          borderBottom: '1px solid #E2E8F0',
-          display: 'flex',
-          gap: '0.5rem',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap'
-        }}>
+        <div 
+          className="no-scrollbar"
+          style={{
+            backgroundColor: '#F8FAFC',
+            padding: '0.65rem 1rem',
+            borderBottom: '1px solid #E2E8F0',
+            display: 'flex',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            whiteSpace: 'nowrap',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
           {languageOptions.map((opt) => (
             <button
               key={opt.code}
               type="button"
               onClick={() => {
-                setLang(opt.code);
+                changeLanguage(opt.code);
                 stop();
               }}
               style={{
@@ -791,27 +796,51 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setRequestHelpOpen(true)}
-              style={{
-                backgroundColor: '#059669',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.55rem 1.15rem',
-                fontSize: '0.84rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: '0 4px 10px rgba(5, 150, 105, 0.25)'
-              }}
-            >
-              <PhoneCall size={15} />
-              <span>{lang === 'TE' ? 'నాకు సహాయం చేయండి' : (lang === 'HI' ? 'मुझे सहायता चाहिए' : 'Request Sahayak')}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <a
+                href="tel:14566"
+                style={{
+                  backgroundColor: '#0F172A',
+                  color: '#FCD34D',
+                  border: '1px solid #334155',
+                  borderRadius: '10px',
+                  padding: '0.55rem 1rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+                title="National Toll-Free Helpline: 14566"
+              >
+                <PhoneCall size={15} style={{ color: '#FCD34D' }} />
+                <span>14566 {lang === 'TE' ? 'టోల్‌ఫ్రీ' : (lang === 'HI' ? 'टोल-फ्री' : 'Helpline')}</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setRequestHelpOpen(true)}
+                style={{
+                  backgroundColor: '#059669',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 4px 10px rgba(5, 150, 105, 0.25)'
+                }}
+              >
+                <HeartHandshake size={16} />
+                <span>{lang === 'TE' ? 'నాకు సహాయం చేయండి' : (lang === 'HI' ? 'सहायक सहायता' : 'Request Sahayak')}</span>
+              </button>
+            </div>
           </div>
         </div>
 

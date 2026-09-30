@@ -662,6 +662,7 @@ export default function InputHub() {
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
       setIsLoading(false);
+      submittingRef.current = false;
       return;
     }
 

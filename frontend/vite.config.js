@@ -38,9 +38,18 @@ export default defineConfig({
             }
             return 'vendor';
           }
+          if (id.includes('languageStore')) {
+            return 'i18n-core';
+          }
+          if (id.includes('uiEnrichmentTranslations') || id.includes('schemeTranslations')) {
+            return 'i18n-enrichment';
+          }
+          if (id.includes('src/data/mock/')) {
+            return 'mock-datasets';
+          }
         }
       }
     },
-    chunkSizeWarningLimit: 1200
+    chunkSizeWarningLimit: 1600
   }
 });

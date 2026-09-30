@@ -630,7 +630,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
     border-radius: 9px;
   }
   .nav-link-mobile-location {
-    display: block;
+    display: block !important;
     margin-top: 0.5rem;
     padding-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -664,7 +664,7 @@ button, input, select, a.btn, textarea { min-height: 44px; }
 }
 
 .nav-link-mobile-location {
-  display: none;
+  display: none !important;
 }
 
 /* ≤1024px: start hiding voice label */

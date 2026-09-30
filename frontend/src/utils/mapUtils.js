@@ -12,10 +12,13 @@ export function getDirectionsUrl(partner, userLocation = null, mode = 'driving')
   const pLat = partner.coordinates?.lat ?? partner.lat ?? null;
   const pLng = partner.coordinates?.lng ?? partner.lng ?? null;
 
+  const uLat = userLocation?.lat ?? userLocation?.latitude ?? null;
+  const uLng = userLocation?.lng ?? userLocation?.longitude ?? null;
+
   // Build origin parameter from user's current GPS or district
   let originParam = '';
-  if (userLocation?.lat && userLocation?.lng) {
-    originParam = `&origin=${userLocation.lat},${userLocation.lng}`;
+  if (uLat && uLng) {
+    originParam = `&origin=${uLat},${uLng}`;
   } else if (userLocation?.district && userLocation?.state) {
     originParam = `&origin=${encodeURIComponent(`${userLocation.district}, ${userLocation.state}, India`)}`;
   } else if (userLocation?.address) {

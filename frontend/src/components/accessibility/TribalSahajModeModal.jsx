@@ -15,10 +15,12 @@ import {
 
 export default function TribalSahajModeModal({ isOpen, onClose }) {
   const { lang, changeLanguage, t } = useLanguage();
-  const { location, nearbyPartners } = useLocation();
+  const { location, locationStatus, detectCurrentGPSLocation, nearbyPartners } = useLocation();
   const { speak, stop, isSpeaking } = useTextToSpeech({ lang });
 
   const [selectedSchemeId, setSelectedSchemeId] = useState('dairy');
+  const [selectedPartnerIndex, setSelectedPartnerIndex] = useState(0);
+  const [detectingGps, setDetectingGps] = useState(false);
   const [requestHelpOpen, setRequestHelpOpen] = useState(false);
   const [helpPhone, setHelpPhone] = useState('');
   const [helpSubmitted, setHelpSubmitted] = useState(false);
@@ -170,9 +172,23 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
 
   const currentScheme = schemes.find(s => s.id === selectedSchemeId) || schemes[0];
 
-  // Get single nearest low-NPA partner
-  const nearestPartner = nearbyPartners.find(p => p.fundAvailable && p.npaStatus !== 'high') || nearbyPartners[0];
-  const partnerOpen = nearestPartner ? isPartnerOpenNow(nearestPartner) : null;
+  // Resolve available partners and active selected partner
+  const availablePartners = nearbyPartners && nearbyPartners.length > 0 ? nearbyPartners : [];
+  const activePartner = availablePartners[selectedPartnerIndex] || availablePartners.find(p => p.fundAvailable && p.npaStatus !== 'high') || availablePartners[0];
+  const partnerOpen = activePartner ? isPartnerOpenNow(activePartner) : null;
+
+  const handleDetectGps = async () => {
+    setDetectingGps(true);
+    try {
+      if (detectCurrentGPSLocation) {
+        await detectCurrentGPSLocation();
+      }
+    } catch (err) {
+      console.warn('GPS detection in Sahaj Mode:', err);
+    } finally {
+      setDetectingGps(false);
+    }
+  };
 
   const getSchemeTitle = (s) => {
     if (lang === 'TE') return s.titleTe;
@@ -199,13 +215,34 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
   };
 
   const handlePlayPartnerSpeech = () => {
-    if (!nearestPartner) return;
+    if (!activePartner) return;
     if (isSpeaking) {
       stop();
     } else {
-      const speech = getAudioDirectionsText(nearestPartner, location, lang);
+      const speech = getAudioDirectionsText(activePartner, location, lang);
       speak(speech);
     }
+  };
+
+  const handlePlayLocationSpeech = () => {
+    if (isSpeaking) {
+      stop();
+      return;
+    }
+    const locName = location.district || location.state || (lang === 'TE' ? 'మీ ప్రాంతం' : 'your area');
+    const townName = location.city ? `${location.city.split('(')[0].trim()}, ` : '';
+    const dist = activePartner?.calculatedDistance ? `${activePartner.calculatedDistance} కిలోమీటర్ల` : 'సమీప';
+    let text = '';
+    if (lang === 'TE') {
+      text = `మీరు ప్రస్తుతం ${townName}${locName} లో ఉన్నారు. మీ GPS స్థానం ఆధారంగా సమీప బ్యాంకు ${activePartner?.name || 'బ్యాంకు'}. ఇది కేవలం ${dist} దూరంలో ఉంది. ల్యాండ్‌మార్క్: ${activePartner?.landmarkTe || activePartner?.landmark || 'మెయిన్ రోడ్'}.`;
+    } else if (lang === 'HI' || lang === 'BHI') {
+      text = `आप अभी ${townName}${locName} में हैं। आपके सटीक जीपीएस स्थान के अनुसार सबसे पास की बैंक शाखा ${activePartner?.name || 'शाखा'} है, जो लगभग ${activePartner?.calculatedDistance ? `${activePartner.calculatedDistance} किलोमीटर` : 'पास'} दूर है।`;
+    } else if (lang === 'GON') {
+      text = `మీరు ${townName}${locName} లో ఉన్నారు. సమీపంలో ${activePartner?.name || 'బ్యాంకు'} ఉంది. దారి మరియు సహాయం కోసం కింద బటన్లు చూడండి.`;
+    } else {
+      text = `You are currently in ${townName}${locName}. Based on your accurate GPS location, the nearest center is ${activePartner?.name || 'Branch'}, approximately ${activePartner?.calculatedDistance ? `${activePartner.calculatedDistance} km` : 'nearby'} away.`;
+    }
+    speak(text);
   };
 
   const handleHelpSubmit = (e) => {
@@ -619,8 +656,163 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Nearest Assistance Center / Channel Partner Card */}
-          {nearestPartner && (
+          {/* Accurate GPS Location Header & Nearby Centers Section */}
+          <div style={{
+            backgroundColor: '#ECFDF5',
+            borderRadius: '16px',
+            border: '2px solid #10B981',
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.12)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: '#D1FAE5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#059669',
+                  flexShrink: 0
+                }}>
+                  <MapPin size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {lang === 'TE' ? 'మీ ఖచ్చితమైన GPS స్థానం' : (lang === 'HI' ? 'आपका सटीक जीपीएस स्थान' : 'Your Accurate GPS Location')}
+                  </div>
+                  <div style={{ fontSize: '1.02rem', fontWeight: 900, color: '#064E3B', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <span>{location.city ? `${location.city.split('(')[0].trim()}, ` : ''}{location.district || 'YSR Kadapa'}, {location.state || 'Andhra Pradesh'}</span>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      backgroundColor: location.isGPS ? '#059669' : '#0D9488',
+                      color: '#FFFFFF',
+                      padding: '0.12rem 0.45rem',
+                      borderRadius: '12px'
+                    }}>
+                      {location.isGPS ? '● Live GPS' : '● Verified Radar'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons: Refresh GPS + Spoken Location */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handlePlayLocationSpeech}
+                  style={{
+                    backgroundColor: '#FEF3C7',
+                    color: '#92400E',
+                    border: '1.5px solid #FCD34D',
+                    borderRadius: '10px',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="స్థానం వినండి"
+                >
+                  <Volume2 size={15} />
+                  <span>{lang === 'TE' ? 'స్థానం వినండి' : (lang === 'HI' ? 'स्थान सुनें' : 'Listen Location')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDetectGps}
+                  disabled={detectingGps}
+                  style={{
+                    backgroundColor: '#059669',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.42rem 0.8rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: detectingGps ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)'
+                  }}
+                >
+                  <Navigation size={14} className={detectingGps ? 'animate-spin' : ''} />
+                  <span>{detectingGps ? (lang === 'TE' ? 'గుర్తిస్తోంది...' : 'Detecting...') : (lang === 'TE' ? '📡 GPS రీఫ్రెష్' : (lang === 'HI' ? '📡 जीपीएस रिफ्रेश' : '📡 Refresh GPS'))}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Top Nearby Centers Selector Chips */}
+            {availablePartners.length > 1 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                overflowX: 'auto',
+                paddingTop: '0.35rem',
+                borderTop: '1px solid #A7F3D0'
+              }} className="no-scrollbar">
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#047857', whiteSpace: 'nowrap' }}>
+                  {lang === 'TE' ? 'సమీప కేంద్రాలు:' : (lang === 'HI' ? 'निकटतम केंद्र:' : 'Nearest Centers:')}
+                </span>
+                {availablePartners.slice(0, 3).map((p, idx) => {
+                  const isSelected = selectedPartnerIndex === idx;
+                  const distLabel = p.calculatedDistance !== null && p.calculatedDistance !== undefined
+                    ? `${p.calculatedDistance} km`
+                    : (p.distanceKm ? `${p.distanceKm} km` : '');
+
+                  return (
+                    <button
+                      key={p.id || idx}
+                      type="button"
+                      onClick={() => setSelectedPartnerIndex(idx)}
+                      style={{
+                        padding: '0.35rem 0.7rem',
+                        borderRadius: '20px',
+                        backgroundColor: isSelected ? '#047857' : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#065F46',
+                        border: isSelected ? '1.5px solid #047857' : '1.5px solid #6EE7B7',
+                        fontWeight: 800,
+                        fontSize: '0.76rem',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        transition: 'all 0.12s ease'
+                      }}
+                    >
+                      <span>{p.type === 'Bank' || p.type?.includes('Bank') ? '🏛️' : '💻'}</span>
+                      <span>{p.name.split('-')[0].trim()}</span>
+                      {distLabel && (
+                        <span style={{
+                          backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : '#D1FAE5',
+                          color: isSelected ? '#FFFFFF' : '#047857',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: '8px',
+                          fontSize: '0.7rem'
+                        }}>
+                          {distLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Active Assistance Center / Channel Partner Card */}
+          {activePartner && (
             <div style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '18px',
@@ -633,10 +825,15 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.72rem', fontWeight: 900, backgroundColor: '#059669', color: '#FFFFFF', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                      {nearestPartner.type}
+                      {activePartner.type}
                     </span>
+                    {activePartner.calculatedDistance !== null && activePartner.calculatedDistance !== undefined && (
+                      <span style={{ fontSize: '0.74rem', fontWeight: 900, backgroundColor: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #FCD34D' }}>
+                        ⚡ {activePartner.calculatedDistance} km {lang === 'TE' ? 'దూరం' : (lang === 'HI' ? 'दूरी' : 'away')}
+                      </span>
+                    )}
                     {partnerOpen && (
                       <span style={{ fontSize: '0.72rem', fontWeight: 800, color: partnerOpen.color, backgroundColor: partnerOpen.badgeBg, padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
                         ● {partnerOpen.statusText}
@@ -644,7 +841,7 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
                     )}
                   </div>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0B192C', margin: '0.2rem 0' }}>
-                    {nearestPartner.name}
+                    {activePartner.name}
                   </h3>
                 </div>
 
@@ -686,11 +883,11 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
                     {lang === 'TE' ? 'ప్రధాన గుర్తు (ల్యాండ్‌మార్క్)' : (lang === 'HI' ? 'पहचान / लैंडमार्क' : 'Landmark & Location')}
                   </div>
                   <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#78350F', marginTop: '0.15rem' }}>
-                    {lang === 'TE' && nearestPartner.landmarkTe ? nearestPartner.landmarkTe : (nearestPartner.landmark || nearestPartner.address)}
+                    {lang === 'TE' && activePartner.landmarkTe ? activePartner.landmarkTe : (activePartner.landmark || activePartner.address)}
                   </div>
-                  {nearestPartner.transitAdvice && (
+                  {activePartner.transitAdvice && (
                     <div style={{ fontSize: '0.8rem', color: '#B45309', marginTop: '0.25rem' }}>
-                      🚌 {nearestPartner.transitAdvice}
+                      🚌 {activePartner.transitAdvice}
                     </div>
                   )}
                 </div>
@@ -699,9 +896,9 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
               {/* 1-Tap Action Buttons */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
                 {/* 1-Tap Call */}
-                {nearestPartner.phone && (
+                {activePartner.phone && (
                   <a
-                    href={`tel:${nearestPartner.phone.replace(/[^+\d]/g, '')}`}
+                    href={`tel:${activePartner.phone.replace(/[^+\d]/g, '')}`}
                     style={{
                       padding: '0.75rem',
                       borderRadius: '12px',
@@ -725,7 +922,7 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
                 {/* 1-Tap Walking Navigation */}
                 <button
                   type="button"
-                  onClick={() => openDirectionsInMaps(nearestPartner, location, 'walking')}
+                  onClick={() => openDirectionsInMaps(activePartner, location, 'walking')}
                   style={{
                     padding: '0.75rem',
                     borderRadius: '12px',
@@ -748,7 +945,7 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
                 {/* 1-Tap Driving Navigation */}
                 <button
                   type="button"
-                  onClick={() => openDirectionsInMaps(nearestPartner, location, 'driving')}
+                  onClick={() => openDirectionsInMaps(activePartner, location, 'driving')}
                   style={{
                     padding: '0.75rem',
                     borderRadius: '12px',

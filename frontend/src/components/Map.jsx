@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { MapPin, Navigation, Phone, CheckCircle2, AlertTriangle, Building2, ExternalLink } from 'lucide-react';
 import { safeOpenExternalUrl } from '../utils/capacitor';
 import { useLanguage } from '../context/LanguageContext';
+import { useLocation } from '../context/LocationContext';
+import { openDirectionsInMaps } from '../utils/mapUtils';
 
 export default function Map({ partners = [], selectedPartner, onSelectPartner }) {
   const { t } = useLanguage();
+  const { location } = useLocation();
   const [activeMarker, setActiveMarker] = useState(selectedPartner || partners[0] || null);
 
   const getMarkerColor = (partner) => {
@@ -91,10 +94,10 @@ export default function Map({ partners = [], selectedPartner, onSelectPartner })
             </span>
 
             <button
-              onClick={() => safeOpenExternalUrl(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeMarker.address)}`)}
+              onClick={() => openDirectionsInMaps(activeMarker, location)}
               className="btn btn-green btn-sm"
             >
-              <Navigation size={14} /> {t('openGoogleMaps', 'Open in Google Maps')}
+              <Navigation size={14} /> {t('openGoogleMaps', 'Get Directions')}
             </button>
           </div>
         </div>

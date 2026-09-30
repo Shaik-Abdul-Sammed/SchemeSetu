@@ -7,9 +7,11 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
 
+import { openDirectionsInMaps } from '../../utils/mapUtils';
+
 export default function PartnerDetailsModal({ partner, onClose }) {
   const { t } = useLanguage();
-  const { setManualLocation } = useLocation();
+  const { location, setManualLocation } = useLocation();
   const navigate = useNavigate();
   const [copiedIfsc, setCopiedIfsc] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
@@ -45,15 +47,9 @@ export default function PartnerDetailsModal({ partner, onClose }) {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  // Google Maps directions with exact partner coordinates (never falling back to Chennai)
+  // Google Maps directions with exact partner coordinates and user GPS origin
   const handleGetDirections = () => {
-    let url;
-    if (pLat && pLng) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${pLat},${pLng}`;
-    } else {
-      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${partner.name} ${partner.address || ''} ${partner.district || ''}`)}`;
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openDirectionsInMaps(partner, location);
   };
 
   const handleApplyAtBranch = () => {

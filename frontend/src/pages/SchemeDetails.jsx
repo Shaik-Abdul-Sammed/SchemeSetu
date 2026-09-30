@@ -12,7 +12,10 @@ import {
   UserCheck, 
   ArrowLeft,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Scale,
+  MapPin,
+  Calculator
 } from 'lucide-react';
 import { schemeService } from '../services/schemeService';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,6 +24,7 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import AudioReaderButton from '../components/common/AudioReaderButton';
 import ShareSchemeButton from '../components/common/ShareSchemeButton';
 import BenefitEstimator from '../components/scheme/BenefitEstimator';
+import AmortizationTable from '../components/financial/AmortizationTable';
 import SchemeFAQ from '../components/scheme/SchemeFAQ';
 import ApplicationGuidanceModal from '../components/scheme/ApplicationGuidanceModal';
 
@@ -138,6 +142,14 @@ export default function SchemeDetails() {
             {t('officialPortal', 'Official Portal')} <ExternalLink size={18} />
           </a>
 
+          <button 
+            onClick={() => navigate('/locations', { state: { prefilterScheme: scheme.id } })} 
+            className="btn btn-secondary btn-lg" 
+            style={{ backgroundColor: '#1E3E62', borderColor: '#38BDF8', color: '#38BDF8' }}
+          >
+            <MapPin size={18} /> {t('locateChannelPartner', 'Locate Nearest Channel Partner')}
+          </button>
+
           <AudioReaderButton textToRead={`${scheme.name}. ${scheme.summary}. ${scheme.benefits}`} label={t('readAloud', 'Read Aloud')} />
           <ShareSchemeButton scheme={scheme} />
         </div>
@@ -198,6 +210,30 @@ export default function SchemeDetails() {
               ))}
             </div>
           </div>
+
+          {/* Dynamic Financial Calculator: Projected EMI, Moratorium & 90% Concessional Coverage */}
+          {scheme.maxLoan ? (
+            <div style={{ marginTop: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Calculator size={20} style={{ color: '#059669' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0B192C', margin: 0 }}>
+                  {t('financialEmiCalculator', 'Dynamic Financial Calculator & EMI Moratorium Simulator')}
+                </h3>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 0.85rem 0' }}>
+                Simulate monthly EMIs, concessional interest rates (6.5% - 8.0%), 90% project cost coverage, and 3-12 month moratorium grace periods.
+              </p>
+              <AmortizationTable 
+                defaultPrincipal={scheme.maxLoan >= 500000 ? 500000 : scheme.maxLoan} 
+                defaultRate={scheme.interestRate || 6.5} 
+                defaultTenure={scheme.tenureMonths || 60} 
+              />
+            </div>
+          ) : (
+            <div style={{ marginTop: '0.25rem' }}>
+              <BenefitEstimator scheme={scheme} />
+            </div>
+          )}
         </div>
 
         {/* Right Column: Required Documents, FAQs, Quick Info */}

@@ -32,6 +32,7 @@ import { mockSchemes } from '../../data/mock/schemes';
 import { formatIndianCurrency } from '../../utils/numberValidator';
 import { parseUserInput } from '../../utils/voiceAssistantEngine';
 import { detectLanguage, askChatGptVoiceAssistant } from '../../utils/voiceChatGptEngine';
+import { getDirectionsUrl } from '../../utils/mapUtils';
 
 // Web Audio API Beep Synthesizer for mic activation feedback
 const playTone = (freq = 600, duration = 0.15) => {
@@ -69,6 +70,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
   const [voiceError, setVoiceError] = useState(null);
   const [contextSchemes, setContextSchemes] = useState([]);
   const [autoDetectedLang, setAutoDetectedLang] = useState(null);
+  const [selectedVoiceLang, setSelectedVoiceLang] = useState('AUTO'); // 'AUTO' | 'EN' | 'HI' | 'TE' | etc.
   const [isMuted, setIsMuted] = useState(false);       // mute TTS output
   const [interimText, setInterimText] = useState('');  // live transcript preview
 
@@ -107,15 +109,48 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     }
   };
 
-  // Language mapping to speech locales
+  // Language mapping to speech recognition locale
+  const getRecognitionLocale = () => {
+    if (selectedVoiceLang && selectedVoiceLang !== 'AUTO') {
+      return getVoiceLocaleForCode(selectedVoiceLang);
+    }
+    // In AUTO mode, infer initial acoustic model from user's detected state or browser locale
+    const state = location?.state?.toLowerCase() || '';
+    if (state.includes('andhra') || state.includes('telangana')) return 'te-IN';
+    if (state.includes('tamil')) return 'ta-IN';
+    if (state.includes('karnataka')) return 'kn-IN';
+    if (state.includes('kerala')) return 'ml-IN';
+    if (state.includes('maharashtra')) return 'mr-IN';
+    if (state.includes('bengal')) return 'bn-IN';
+    if (navigator.language) return navigator.language;
+    return 'en-IN';
+  };
+
+  // Language mapping to speech synthesis locales
   const getVoiceLocale = () => {
-    return getVoiceLocaleForCode(activeLangCode);
+    if (selectedVoiceLang && selectedVoiceLang !== 'AUTO') {
+      return getVoiceLocaleForCode(selectedVoiceLang);
+    }
+    return autoDetectedLang ? getVoiceLocaleForCode(autoDetectedLang) : getVoiceLocaleForCode(activeLangCode);
   };
 
   // Handle explicit language switch inside Voice Assistant
   const handleLanguageChange = (newCode) => {
     stopSpeaking();
     stopListening();
+    setSelectedVoiceLang(newCode);
+
+    if (newCode === 'AUTO') {
+      setAutoDetectedLang(null);
+      const greeting = "🌐 Auto-Detect mode is active. Speak or type in English, Telugu, Hindi, or any language — I will automatically recognize and reply in your language!";
+      const msg = { sender: 'bot', text: greeting, timestamp: new Date(), isGreeting: true };
+      setMessages(prev => [...prev, msg]);
+      setTimeout(() => {
+        speakText(greeting, 'en-IN');
+      }, 150);
+      return;
+    }
+
     if (changeLanguage) {
       changeLanguage(newCode);
     }
@@ -167,8 +202,12 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
     }
   };
 
-  // Initial welcome message in selected language
+  // Initial welcome message in selected language; reset explicit lang → start in AUTO mode
   useEffect(() => {
+    if (isOpen) {
+      // Always reset to AUTO mode each time the modal opens
+      window.__voiceExplicitLang__ = null;
+    }
     if (isOpen && messages.length === 0) {
       let welcome = "Hello! I am SchemeSetu AI Voice Assistant. Ask me about government welfare schemes, loans, eligibility, or application steps.";
       if (activeLangCode === 'HI') welcome = "नमस्ते! मैं स्कीमसेतू एआई आवाज़ सहायक हूँ। मुझसे सरकारी योजनाओं, लोन, पात्रता या आवेदन नियमों के बारे में पूछें।";
@@ -378,7 +417,8 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
       }
     };
 
-    launchRecognition(getVoiceLocale());
+    // Launch speech recognition using the active recognition locale (auto or pinned)
+    launchRecognition(getRecognitionLocale());
   };
 
   const stopListening = () => {
@@ -664,61 +704,36 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
             <div>
               <div style={{ fontWeight: 800, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <span>{t('voiceAssistant', 'SchemeSetu AI Voice Assistant')}</span>
-                <span className="badge" style={{ backgroundColor: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 800 }}>
-                  {activeLangCode}
+                <span className="badge" style={{ backgroundColor: selectedVoiceLang === 'AUTO' ? '#10B981' : '#F59E0B', color: selectedVoiceLang === 'AUTO' ? '#FFFFFF' : '#0F172A', fontSize: '0.72rem', fontWeight: 800 }}>
+                  {selectedVoiceLang === 'AUTO' ? (autoDetectedLang ? `Auto: ${autoDetectedLang}` : '🌐 Auto Detect') : selectedVoiceLang}
                 </span>
-                {autoDetectedLang && autoDetectedLang !== activeLangCode && (
+                {selectedVoiceLang !== 'AUTO' && autoDetectedLang && autoDetectedLang !== selectedVoiceLang && (
                   <span className="badge" style={{ backgroundColor: '#10B981', color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                    <Sparkles size={11} /> Auto: {autoDetectedLang}
+                    <Sparkles size={11} /> Spoken: {autoDetectedLang}
                   </span>
                 )}
               </div>
               <div style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-                {autoDetectedLang && autoDetectedLang !== activeLangCode ? `Language auto-detected as ${autoDetectedLang}` : `Real-time scheme intelligence & voice responses in ${activeLangCode}`}
+                {selectedVoiceLang === 'AUTO'
+                  ? (autoDetectedLang ? `Language auto-detected: ${autoDetectedLang} (replying in ${autoDetectedLang})` : 'Auto-recognizing language by default from speech and text')
+                  : `Voice intelligence & audio responses pinned to ${selectedVoiceLang}`}
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <select
-              value={activeLangCode}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                color: '#FCD34D',
-                border: '1px solid rgba(245, 158, 11, 0.5)',
-                borderRadius: '8px',
-                padding: '0.35rem 0.65rem',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                outline: 'none'
-              }}
-              aria-label="Select Voice Assistant Language"
-            >
-              <option value="EN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇬🇧 English (EN)</option>
-              <option value="HI" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 हिंदी (HI)</option>
-              <option value="TE" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 తెలుగు (TE)</option>
-              <option value="TA" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 தமிழ் (TA)</option>
-              <option value="KN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 ಕನ್ನಡ (KN)</option>
-              <option value="ML" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 മലയാളം (ML)</option>
-              <option value="BN" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 বাংলা (BN)</option>
-              <option value="MR" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🇮🇳 मराठी (MR)</option>
-              <option value="GON" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🔀 गोंडी (GON)</option>
-              <option value="BHI" style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}>🔀 भीली (BHI)</option>
-            </select>
-
             <button 
               onClick={() => { stopSpeaking(); stopListening(); onClose(); }}
               className="btn btn-sm btn-outline"
               style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', padding: '0.3rem 0.5rem' }}
+              aria-label="Close Voice Assistant"
             >
               <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Quick Language Switcher Bar */}
+        {/* Quick Language Switcher Bar — single source of truth for language selection */}
         <div style={{
           padding: '0.4rem 1.25rem',
           backgroundColor: '#0F172A',
@@ -729,8 +744,10 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
           overflowX: 'auto',
           whiteSpace: 'nowrap'
         }}>
-          <span style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700, flexShrink: 0, marginRight: '0.2rem' }}>Voice Language:</span>
+          <span style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700, flexShrink: 0, marginRight: '0.2rem' }}>Language:</span>
+          {/* AUTO is first — it auto-detects from speech/text; active by default */}
           {[
+            { code: 'AUTO', flag: '🌐', label: 'Auto Detect' },
             { code: 'EN', flag: '🇬🇧', label: 'English' },
             { code: 'HI', flag: '🇮🇳', label: 'हिंदी' },
             { code: 'TE', flag: '🇮🇳', label: 'తెలుగు' },
@@ -742,11 +759,13 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
             { code: 'GON', flag: '🔀', label: 'गोंडी' },
             { code: 'BHI', flag: '🔀', label: 'भीली' }
           ].map((item) => {
-            const isSelected = item.code === activeLangCode;
+            const isSelected = selectedVoiceLang === item.code;
             return (
               <button
                 key={item.code}
                 type="button"
+                aria-pressed={isSelected}
+                title={item.code === 'AUTO' ? 'Auto-detect language by default' : `Switch to ${item.label}`}
                 onClick={() => handleLanguageChange(item.code)}
                 style={{
                   backgroundColor: isSelected ? '#F59E0B' : 'rgba(255, 255, 255, 0.08)',
@@ -760,11 +779,26 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
                 }}
               >
                 <span>{item.flag}</span>
                 <span>{item.label}</span>
+                {/* Show detected language badge inside Auto button if auto-detected */}
+                {item.code === 'AUTO' && autoDetectedLang && (
+                  <span style={{
+                    background: isSelected ? '#0B192C' : '#10B981',
+                    color: '#FFFFFF',
+                    borderRadius: '8px',
+                    padding: '0 0.35rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    marginLeft: '2px'
+                  }}>
+                    {autoDetectedLang}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -940,9 +974,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
                         </button>
                       </div>
                       {msg.bankResults.map((bank, bIdx) => {
-                        const dirUrl = (bank.coordinates?.lat && bank.coordinates?.lng)
-                          ? `https://www.google.com/maps/dir/?api=1&destination=${bank.coordinates.lat},${bank.coordinates.lng}`
-                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bank.name + ' ' + (bank.address || ''))}`;
+                        const dirUrl = getDirectionsUrl(bank, location);
                         return (
                           <div 
                             key={bIdx}

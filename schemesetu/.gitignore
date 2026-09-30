@@ -1,0 +1,51 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+ephemeral/
+
+# Android
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+*.aab
+*.apk
+output-metadata.json
+local.properties
+*.jks
+*.keystore
+
+# iOS/macOS
+Pods/
+.symlinks/
+Flutter/Flutter.podspec
+Flutter/Generated.xcconfig
+Flutter/app.framework
+Flutter/App.framework
+Flutter/Flutter.framework
+
+# IntelliJ / Android Studio
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Logs & temporary files
+*.log
+*.patch
+*.txt
+check_braces*.py
+count_braces.py
+find_unmatched.py
+fix_*.py
+fix_*.dart
+patch.py
+rename.py
+restore_*.py
+revert_*.py

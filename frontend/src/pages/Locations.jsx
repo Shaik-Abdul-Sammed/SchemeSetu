@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation as useRouteLocation } from 'react-router-dom';
 import { 
   MapPin, 
   Search, 
@@ -27,10 +27,12 @@ import { MOCK_PARTNERS } from '../data/mock/partners';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
 import BranchComparisonTable from '../components/partners/BranchComparisonTable';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
+import { getDirectionsUrl } from '../utils/mapUtils';
 
 export default function Locations() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const routeLocation = useRouteLocation();
   const { 
     location, 
     locationStatus, 
@@ -75,6 +77,14 @@ export default function Locations() {
     }
   }, [location?.state, location?.district]);
 
+  // Handle incoming prefiltered scheme from SchemeDetails or Recommender
+  useEffect(() => {
+    if (routeLocation?.state?.prefilterScheme) {
+      setSearchQuery(routeLocation.state.prefilterScheme);
+      isUserFiltering.current = true;
+    }
+  }, [routeLocation?.state?.prefilterScheme]);
+
   // Attempt GPS detect via centralized location service
   const handleDetectGps = () => {
     isUserFiltering.current = false;
@@ -112,6 +122,7 @@ export default function Locations() {
       partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       partner.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (partner.district && partner.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (partner.schemes && partner.schemes.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))) ||
       (partner.supportedServices && partner.supportedServices.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
 
     const matchesState = selectedState === 'All' || partner.state === selectedState || (partner.address && partner.address.includes(selectedState));
@@ -392,9 +403,7 @@ export default function Locations() {
               ? partner.calculatedDistance
               : (partner.distanceKm || partner.distance);
             const numDist = distVal !== undefined && distVal !== null ? Number(distVal) : null;
-            const dirUrl = (partner.coordinates?.lat && partner.coordinates?.lng)
-              ? `https://www.google.com/maps/dir/?api=1&destination=${partner.coordinates.lat},${partner.coordinates.lng}`
-              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${partner.name} ${partner.address}`)}`;
+            const dirUrl = getDirectionsUrl(partner, location);
 
             return (
               <div 

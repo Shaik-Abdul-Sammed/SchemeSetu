@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Config for Halal Ka Paigam
+  - Enforces HTTPS for all connections (no cleartext traffic)
+  - Firebase, Firestore, and Storage all use HTTPS — no exceptions needed
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

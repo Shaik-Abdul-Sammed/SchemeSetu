@@ -1,7 +1,10 @@
 import React from 'react';
 import { Building2, Phone, MapPin, CheckCircle2, AlertTriangle, ShieldCheck, Navigation, ExternalLink, Clock } from 'lucide-react';
+import { useLocation } from '../../context/LocationContext';
+import { getDirectionsUrl } from '../../utils/mapUtils';
 
 export default function BranchComparisonTable({ partners = [], onSelectPartner }) {
+  const { location } = useLocation();
   if (!partners || partners.length === 0) return null;
 
   const topPartners = partners.slice(0, 3);
@@ -155,9 +158,7 @@ export default function BranchComparisonTable({ partners = [], onSelectPartner }
             <tr>
               <td style={{ padding: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>Quick Actions</td>
               {topPartners.map(p => {
-                const dirUrl = (p.coordinates?.lat && p.coordinates?.lng)
-                  ? `https://www.google.com/maps/dir/?api=1&destination=${p.coordinates.lat},${p.coordinates.lng}`
-                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.name} ${p.address}`)}`;
+                const dirUrl = getDirectionsUrl(p, location);
                 return (
                   <td key={p.id} style={{ padding: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>

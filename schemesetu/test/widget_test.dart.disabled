@@ -1,0 +1,52 @@
+import "flutter_test_config.dart";
+import 'dart:async';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:chit_fund_app/main.dart';
+import 'package:chit_fund_app/providers/auth_provider.dart';
+import 'package:chit_fund_app/providers/chit_provider.dart';
+import 'package:chit_fund_app/providers/settings_provider.dart';
+
+// Fake HTTP Client to mock font downloads during testing without network calls
+class FakeHttpClient extends http.BaseClient {
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    return http.StreamedResponse(
+      Stream.value(<int>[]),
+      200,
+    );
+  }
+}
+
+void main() {
+  testWidgets('App loads without crashing', (WidgetTester tester) async {
+    // Enable runtime fetching but intercept requests with our FakeHttpClient
+    GoogleFonts.config.allowRuntimeFetching = true;
+    GoogleFonts.config.httpClient = FakeHttpClient();
+
+    // Initialize SharedPreferences mock
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
+            ChangeNotifierProvider(create: (_) => AuthProvider()),
+            ChangeNotifierProvider(create: (_) => ChitProvider()),
+          ],
+          child: const HalalKaPaigamApp(),
+        ),
+      );
+
+      // Wait 3.5 seconds in real time for splash screen delay and transitions to settle
+      await Future.delayed(const Duration(milliseconds: 3500));
+      await tester.pump();
+    });
+
+    expect(find.byType(HalalKaPaigamApp), findsOneWidget);
+  });
+}

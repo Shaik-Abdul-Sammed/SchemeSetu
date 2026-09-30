@@ -25,15 +25,17 @@ import { useLocation } from '../context/LocationContext';
 import SchemeCard from '../components/scheme/SchemeCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import SnapchatLocationPicker from '../components/location/SnapchatLocationPicker';
+import TribalSahajModeModal from '../components/accessibility/TribalSahajModeModal';
 
 export default function Home({ onOpenVoiceAssistant }) {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const { location } = useLocation();
 
   const [featuredSchemes, setFeaturedSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [sahajModalOpen, setSahajModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchFeatured() {
@@ -172,6 +174,87 @@ export default function Home({ onOpenVoiceAssistant }) {
 
       <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
+        {/* 1.5. SAHAJ TRIBAL & AUDIO-VISUAL ASSISTED MODE HERO BANNER */}
+        <section style={{
+          backgroundColor: '#FFFBEB',
+          borderRadius: '20px',
+          border: '2px solid #FDE68A',
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+          flexWrap: 'wrap',
+          boxShadow: '0 4px 15px rgba(217, 119, 6, 0.08)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
+            <div style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '16px',
+              backgroundColor: '#FEF3C7',
+              border: '2px solid #FCD34D',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.8rem',
+              flexShrink: 0
+            }}>
+              🎨
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
+                  backgroundColor: '#D97706',
+                  color: '#FFFFFF',
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '6px'
+                }}>
+                  TRIBAL & ILLITERATE FRIENDLY
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 800 }}>
+                  🔊 {lang === 'TE' ? 'వాయిస్ & బొమ్మల మోడ్' : (lang === 'HI' ? 'चित्र व आवाज मोड' : 'Voice & Pictorial Mode')}
+                </span>
+              </div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#78350F', margin: '0.25rem 0 0.2rem' }}>
+                {lang === 'TE' ? 'సహజ్ ఆడియో & బొమ్మల సాయం' : (lang === 'HI' ? 'सहज चित्र व आवाज सहायता' : 'Sahaj Audio-Visual Welfare')}
+              </h2>
+              <p style={{ fontSize: '0.86rem', color: '#92400E', margin: 0, lineHeight: 1.4 }}>
+                {lang === 'TE'
+                  ? 'చదవడం లేదా ఫారాలు నింపడం కష్టంగా ఉందా? పశువులు, ట్రాక్టర్, కుట్టుమిషన్, దుకాణం కోసం బొమ్మలు మరియు ఆడియోతో రుణం పొందండి.'
+                  : (lang === 'HI'
+                    ? 'पढ़ने में कठिनाई? पशुपालन, ट्रैक्टर, सिलाई या दुकान के लिए चित्र और आवाज से ऋण की पूरी जानकारी प्राप्त करें।'
+                    : 'Low literacy or tribal citizen? Explore Dairy, Tractor, Tailoring & Kirana schemes via large pictorial cards and regional voice audio.')}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSahajModalOpen(true)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '14px',
+              backgroundColor: '#D97706',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: '0.95rem',
+              fontWeight: 900,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 14px rgba(217, 119, 6, 0.3)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <span>{lang === 'TE' ? 'సహజ్ మోడ్ తెరవండి' : (lang === 'HI' ? 'सहज मोड शुरू करें' : 'Open Sahaj Mode')}</span>
+            <ArrowRight size={18} />
+          </button>
+        </section>
+
         {/* 2. PRIMARY ACTION CARDS GRID */}
         <section>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
@@ -325,6 +408,12 @@ export default function Home({ onOpenVoiceAssistant }) {
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
+
+      {/* Accessible Tribal & Illiterate Mode Modal */}
+      <TribalSahajModeModal
+        isOpen={sahajModalOpen}
+        onClose={() => setSahajModalOpen(false)}
+      />
     </div>
   );
 }

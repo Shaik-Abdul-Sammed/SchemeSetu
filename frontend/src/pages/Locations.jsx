@@ -19,20 +19,36 @@ import {
   Copy,
   Check,
   Mail,
-  Share2
+  Share2,
+  Volume2,
+  VolumeX,
+  Footprints,
+  PhoneCall,
+  Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation } from '../context/LocationContext';
+import useTextToSpeech from '../hooks/useTextToSpeech';
 import { MOCK_PARTNERS } from '../data/mock/partners';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
 import BranchComparisonTable from '../components/partners/BranchComparisonTable';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
-import { getDirectionsUrl } from '../utils/mapUtils';
+import TribalSahajModeModal from '../components/accessibility/TribalSahajModeModal';
+import { 
+  getDirectionsUrl, 
+  getWalkingDirectionsUrl, 
+  isPartnerOpenNow, 
+  getAudioDirectionsText 
+} from '../utils/mapUtils';
 
 export default function Locations() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const navigate = useNavigate();
   const routeLocation = useRouteLocation();
+  const { speak, stop, isSpeaking } = useTextToSpeech({ lang });
+
+  const [activeSpeakingId, setActiveSpeakingId] = useState(null);
+  const [sahajModalOpen, setSahajModalOpen] = useState(false);
   const { 
     location, 
     locationStatus, 
@@ -55,6 +71,24 @@ export default function Locations() {
   const [selectedCenter, setSelectedCenter] = useState(null);
   const [copiedIfsc, setCopiedIfsc] = useState(false);
   const isUserFiltering = React.useRef(false);
+
+  // Stop speech on unmount
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
+
+  const handleSpeakPartner = (partner) => {
+    if (isSpeaking && activeSpeakingId === partner.id) {
+      stop();
+      setActiveSpeakingId(null);
+    } else {
+      setActiveSpeakingId(partner.id);
+      const text = getAudioDirectionsText(partner, location, lang);
+      speak(text, () => setActiveSpeakingId(null));
+    }
+  };
 
   const handleCopyIfsc = (code) => {
     if (!code) return;
@@ -180,6 +214,29 @@ export default function Locations() {
           >
             <Navigation size={16} className={locationStatus === 'detecting' ? 'animate-spin' : ''} />
             <span>{locationStatus === 'detecting' ? 'Detecting GPS...' : t('loc_detectGps', 'Use Current GPS Location')}</span>
+          </button>
+
+          {/* Accessible Tribal & Illiterate Mode Trigger */}
+          <button
+            type="button"
+            onClick={() => setSahajModalOpen(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              fontWeight: 800,
+              backgroundColor: '#FEF3C7',
+              color: '#92400E',
+              border: '1.5px solid #FCD34D',
+              borderRadius: '10px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(217, 119, 6, 0.15)'
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>🎨</span>
+            <span>{lang === 'TE' ? 'సహజ్ ఆడియో & బొమ్మల మోడ్' : (lang === 'HI' ? 'सहज चित्र-आवाज मोड' : 'Sahaj Audio-Visual Mode')}</span>
           </button>
 
           {location.isGPS && location.lat !== null && location.lng !== null && (
@@ -416,7 +473,14 @@ export default function Locations() {
               ? partner.calculatedDistance
               : (partner.distanceKm || partner.distance);
             const numDist = distVal !== undefined && distVal !== null ? Number(distVal) : null;
-            const dirUrl = getDirectionsUrl(partner, location);
+            const dirUrl = getDirectionsUrl(partner, location, 'driving');
+            const walkDirUrl = getWalkingDirectionsUrl(partner, location);
+            const openInfo = isPartnerOpenNow(partner);
+            const displayLandmark = (lang === 'TE' && partner.landmarkTe)
+              ? partner.landmarkTe
+              : ((lang === 'HI' || lang === 'BHI' || lang === 'GON') && partner.landmarkHi)
+                ? partner.landmarkHi
+                : partner.landmark;
 
             return (
               <div 
@@ -436,8 +500,8 @@ export default function Locations() {
               >
                 <div>
                   {/* Type, NPA status & Distance Bar */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                       <span className="badge badge-central" style={{ fontSize: '0.72rem', fontWeight: 800 }}>
                         {partner.type}
                       </span>
@@ -446,6 +510,18 @@ export default function Locations() {
                           ✓ Active Funds
                         </span>
                       )}
+                      <span 
+                        className="badge" 
+                        style={{ 
+                          backgroundColor: openInfo.badgeBg || '#ECFDF5', 
+                          color: openInfo.color || '#047857', 
+                          border: `1px solid ${openInfo.badgeBorder || '#A7F3D0'}`, 
+                          fontSize: '0.7rem', 
+                          fontWeight: 700 
+                        }}
+                      >
+                        ● {openInfo.statusText}
+                      </span>
                     </div>
                     
                     {numDist !== null && !isNaN(numDist) ? (
@@ -496,6 +572,25 @@ export default function Locations() {
                     )}
                   </div>
 
+                  {/* Landmark Callout */}
+                  {displayLandmark && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.4rem',
+                      fontSize: '0.82rem',
+                      color: '#78350F',
+                      backgroundColor: '#FFFBEB',
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '8px',
+                      border: '1px solid #FDE68A',
+                      marginBottom: '0.65rem'
+                    }}>
+                      <Building2 size={15} style={{ color: '#D97706', flexShrink: 0, marginTop: '2px' }} />
+                      <span><strong>{lang === 'TE' ? 'గుర్తు (ల్యాండ్‌మార్క్):' : (lang === 'HI' ? 'पहचान / लैंडमार्क:' : 'Landmark:')}</strong> {displayLandmark}</span>
+                    </div>
+                  )}
+
                   {/* Address */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.85rem', color: '#475569', marginBottom: '0.65rem', lineHeight: 1.4 }}>
                     <MapPin size={16} style={{ shrink: 0, marginTop: '2px', color: '#D97706' }} />
@@ -542,36 +637,72 @@ export default function Locations() {
                 </div>
 
                 {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.45rem', paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {/* Spoken voice button */}
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakPartner(partner)}
+                    className="btn btn-outline btn-sm"
+                    style={{
+                      fontSize: '0.76rem',
+                      padding: '0.35rem 0.6rem',
+                      color: activeSpeakingId === partner.id ? '#DC2626' : '#B45309',
+                      borderColor: activeSpeakingId === partner.id ? '#F87171' : '#FCD34D',
+                      backgroundColor: activeSpeakingId === partner.id ? '#FEF2F2' : '#FFFBEB',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                    title="Listen to address & directions in your language"
+                  >
+                    {activeSpeakingId === partner.id ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                    <span>{activeSpeakingId === partner.id ? (lang === 'TE' ? 'ఆపండి' : 'Stop') : (lang === 'TE' ? 'వినండి' : (lang === 'HI' ? 'सुनें' : 'Listen'))}</span>
+                  </button>
+
+                  {/* Walking Route */}
+                  <a
+                    href={walkDirUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline btn-sm"
+                    style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem', color: '#0369A1', borderColor: '#BAE6FD', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                    title="Walking Route in Google Maps"
+                  >
+                    <Footprints size={13} /> Walk
+                  </a>
+
+                  {/* Driving GPS Route */}
                   <a
                     href={dirUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-outline btn-sm"
-                    style={{ flexGrow: 1, fontSize: '0.78rem', justifyContent: 'center', color: '#0369A1', borderColor: '#BAE6FD' }}
+                    style={{ flexGrow: 1, fontSize: '0.76rem', justifyContent: 'center', color: '#0369A1', borderColor: '#BAE6FD', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                     title="Open Live GPS Route in Google Maps"
                   >
-                    <Navigation size={13} /> GPS Route
+                    <Navigation size={13} /> Drive
                   </a>
 
+                  {/* 1-Tap Call */}
                   {partner.phone && (
                     <a
                       href={`tel:${partner.phone.replace(/[^+\d]/g, '')}`}
                       className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.78rem', padding: '0.35rem 0.7rem', color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0' }}
+                      style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                       title={`Call ${partner.phone}`}
                     >
                       <Phone size={13} /> Call
                     </a>
                   )}
 
+                  {/* View Details */}
                   <button
                     type="button"
                     onClick={() => setSelectedCenter(partner)}
                     className="btn btn-primary btn-sm"
-                    style={{ fontSize: '0.78rem', fontWeight: 700 }}
+                    style={{ fontSize: '0.76rem', fontWeight: 700 }}
                   >
-                    View Details
+                    Details
                   </button>
                 </div>
               </div>
@@ -587,6 +718,12 @@ export default function Locations() {
           onClose={() => setSelectedCenter(null)}
         />
       )}
+
+      {/* Accessible Tribal & Illiterate Mode Modal */}
+      <TribalSahajModeModal
+        isOpen={sahajModalOpen}
+        onClose={() => setSahajModalOpen(false)}
+      />
     </div>
   );
 }

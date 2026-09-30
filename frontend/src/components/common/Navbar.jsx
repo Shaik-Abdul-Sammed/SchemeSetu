@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
 import LanguageSelectorIcon from './LanguageSelectorIcon';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
+import TribalSahajModeModal from '../accessibility/TribalSahajModeModal';
 import Logo from './Logo';
 import {
   Building2,
@@ -35,6 +36,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
   const { location, locationStatus } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [sahajModalOpen, setSahajModalOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
   const navigate = useNavigate();
@@ -255,6 +257,7 @@ export default function Navbar({ onOpenVoiceAssistant }) {
             )}
 
             {/* Mobile drawer location selector button */}
+            {/* Mobile drawer location selector button */}
             <div className="nav-link-mobile-location">
               <button
                 type="button"
@@ -270,10 +273,62 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                 </span>
               </button>
             </div>
+
+            {/* Mobile Sahaj Mode Trigger */}
+            <div style={{ padding: '0.4rem 1rem' }}>
+              <button
+                type="button"
+                onClick={() => { setSahajModalOpen(true); closeMobile(); }}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1rem',
+                  borderRadius: '12px',
+                  backgroundColor: '#FEF3C7',
+                  color: '#92400E',
+                  border: '1.5px solid #FCD34D',
+                  fontWeight: 800,
+                  fontSize: '0.86rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '1.1rem' }}>🎨</span>
+                <span>{lang === 'TE' ? 'సహజ్ ఆడియో & బొమ్మల మోడ్' : (lang === 'HI' ? 'सहज चित्र-आवाज मोड' : 'Sahaj Audio-Visual Mode')}</span>
+              </button>
+            </div>
           </nav>
 
           {/* ── 3. RIGHT CONTROLS (location, voice, language, hamburger) ── */}
           <div className="nav-controls">
+
+            {/* Sahaj Audio-Visual Mode Quick Button */}
+            <button
+              type="button"
+              className="navbar-sahaj-btn"
+              onClick={() => setSahajModalOpen(true)}
+              title={lang === 'TE' ? 'సహజ్ ఆడియో & బొమ్మల మోడ్' : (lang === 'HI' ? 'सहज चित्र-आवाज मोड' : 'Sahaj Audio-Visual Mode')}
+              aria-label="Open Sahaj Audio-Visual Mode"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                backgroundColor: '#FEF3C7',
+                color: '#92400E',
+                border: '1.5px solid #FCD34D',
+                borderRadius: '20px',
+                padding: '0.32rem 0.75rem',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span style={{ fontSize: '0.95rem' }}>🎨</span>
+              <span className="navbar-voice-label">{lang === 'TE' ? 'సహజ్' : (lang === 'HI' ? 'सहज' : 'Sahaj')}</span>
+            </button>
 
             {/* GPS Location pill */}
             <button
@@ -336,6 +391,12 @@ export default function Navbar({ onOpenVoiceAssistant }) {
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
+
+      {/* Accessible Tribal & Illiterate Mode Modal */}
+      <TribalSahajModeModal
+        isOpen={sahajModalOpen}
+        onClose={() => setSahajModalOpen(false)}
+      />
     </>
   );
 }

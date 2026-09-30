@@ -135,13 +135,72 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       };
     }
 
-    // 3. Scheme Recommendations
+    // 3. Smart Scheme Recommender (AI/Rule-Based Engine)
     if (url.includes('/schemes/recommend')) {
+      const body = options.body ? JSON.parse(options.body) : {};
+      const userIncome = Number(body.annualIncome || body.income || 240000);
+      const userCategory = String(body.casteCategory || body.category || 'SC').toUpperCase();
+      const projectType = String(body.projectType || body.occupation || '').toLowerCase();
+      const education = String(body.educationStatus || body.education || '').toLowerCase();
+      const cost = Number(body.estimatedCost || body.cost || body.projectCost || body.loanRequirement || 250000);
+
+      // Core SC Concessional Lending Rule Engine:
+      // Annual family income up to ₹5.00 Lakhs, covers up to 90% project/education cost at 6.5% - 8% p.a.
+      const scored = MOCK_SCHEMES.map(scheme => {
+        let score = 55;
+        const reasons = [];
+
+        // Beneficiary income eligibility check
+        const isIncomeEligible = userIncome <= 500000;
+        if (isIncomeEligible && (userCategory === 'SC' || userCategory === 'ST')) {
+          if (scheme.id.startsWith('nsfdc-')) {
+            score += 35;
+            reasons.push('Eligible for up to 90% concessional financing under Channel Finance System (Annual family income ≤ ₹5.00 Lakhs).');
+          }
+        }
+
+        // Project Type & Cost Categorization:
+        const isHigherEducation = projectType.includes('education') || projectType.includes('study') || 
+                                 education.includes('graduate') || education.includes('college') || education.includes('student') ||
+                                 projectType.includes('btech') || projectType.includes('degree');
+        
+        if (isHigherEducation && scheme.id === 'nsfdc-educational-loan') {
+          score += 40;
+          reasons.push('Top Match: Educational Loan Scheme covering up to 90% course fees & living costs up to ₹30.00 Lakhs at 6.5% concessional interest.');
+        } else if (!isHigherEducation && cost <= 140000 && scheme.id === 'nsfdc-micro-finance') {
+          score += 40;
+          reasons.push(`Top Match: Micro Finance Scheme tailored for small projects (₹${cost.toLocaleString('en-IN')} ≤ ₹1.40 Lakh) at 6.5% concessional interest with 90% funding.`);
+        } else if (!isHigherEducation && cost > 140000 && scheme.id === 'nsfdc-term-loan') {
+          score += 38;
+          reasons.push(`Top Match: Concessional Term Loan for enterprise projects (up to ₹50.00 Lakh) at 7.5% interest with 90% project cost coverage.`);
+        }
+
+        // Complementary Entrepreneurship Schemes
+        if (userCategory === 'SC' && scheme.id === 'pmegp') {
+          score += 20;
+          reasons.push('35% government capital subsidy with only 5% promoter equity for SC/ST rural beneficiaries.');
+        }
+        if (userCategory === 'SC' && scheme.id === 'dalit-bandhu' && (body.state || '').toLowerCase().includes('telangana')) {
+          score += 25;
+          reasons.push('Telangana Dalit Bandhu ₹10 Lakh 100% direct grant assistance.');
+        }
+        if (scheme.id === 'pm-mudra-yojana') {
+          score += 15;
+          reasons.push('Collateral-free micro-credit guarantee up to ₹20 Lakhs.');
+        }
+
+        return {
+          ...scheme,
+          matchScore: Math.min(99, score),
+          matchReasons: reasons
+        };
+      }).sort((a, b) => b.matchScore - a.matchScore);
+
       return {
         success: true,
-        count: MOCK_RECOMMENDATIONS.length,
-        schemes: MOCK_RECOMMENDATIONS,
-        data: MOCK_RECOMMENDATIONS
+        count: scored.length,
+        schemes: scored,
+        data: scored
       };
     }
 
@@ -150,14 +209,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       const body = options.body ? JSON.parse(options.body) : {};
       const userIncome = Number(body.annualIncome || 200000);
       const userAge = Number(body.age || 30);
-      const userCategory = body.casteCategory || 'General';
+      const userCategory = String(body.casteCategory || 'SC').toUpperCase();
+      const cost = Number(body.projectCost || body.loanRequirement || 250000);
 
       const results = MOCK_SCHEMES.map(scheme => {
         const meetsIncome = !scheme.maxIncome || userIncome <= scheme.maxIncome;
         const meetsAge = userAge >= scheme.minAge && userAge <= scheme.maxAge;
         const isEligible = meetsIncome && meetsAge;
 
-        let matchScore = 70;
+        let matchScore = 65;
         const matchReasons = [];
         const disqualifyReasons = [];
 
@@ -174,14 +234,23 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
         }
 
         if (userCategory === 'SC' || userCategory === 'ST') {
-          matchScore += 5;
-          matchReasons.push(`Priority allocation & margin money subsidy for ${userCategory} category beneficiaries.`);
+          matchScore += 10;
+          matchReasons.push(`Priority allocation & margin money subsidy for ${userCategory} category beneficiaries under Concessional Lending rules.`);
+        }
+
+        // Scheme specific guidelines
+        if (cost <= 140000 && scheme.id === 'nsfdc-micro-finance') {
+          matchScore += 10;
+          matchReasons.push('Optimized for micro projects up to ₹1.40 Lakh with 90% concessional funding.');
+        } else if (cost > 140000 && scheme.id === 'nsfdc-term-loan') {
+          matchScore += 10;
+          matchReasons.push('Optimized for term loan projects up to ₹50.00 Lakh with 90% concessional funding.');
         }
 
         return {
           scheme,
           isEligible,
-          matchScore: Math.min(98, matchScore),
+          matchScore: Math.min(99, matchScore),
           eligibilityStatus: isEligible ? 'Eligible' : 'Conditionally Eligible',
           matchReasons,
           disqualifyReasons
@@ -198,53 +267,94 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       };
     }
 
-    // 5. EMI Calculator
+    // 5. Dynamic Financial EMI & Moratorium Calculator
     if (url.includes('/calculator/emi')) {
       const body = options.body ? JSON.parse(options.body) : {};
-      const P = Number(body.principal || 250000);
-      const rate = Number(body.annualInterestRate || 7.5);
+      const projectCost = Number(body.projectCost || body.principal || 250000);
+      const coveragePct = Number(body.fundingCoveragePct || 90); // 90% concessional assistance
+      const P = Math.round((projectCost * coveragePct) / 100);
+      const promoterContribution = projectCost - P;
+      const rate = Number(body.annualInterestRate || 6.5);
       const R = (rate / 12) / 100;
-      const N = Number(body.tenureMonths || 36);
-      const morMonths = Number(body.moratoriumMonths || 0);
+      const N = Number(body.tenureMonths || 60);
+      const morMonths = Number(body.moratoriumMonths || 6);
 
-      const emi = Math.round((P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1)) || 0;
-      const totalRepayment = emi * N;
+      const activeRepaymentMonths = Math.max(1, N - morMonths);
+      const emi = Math.round((P * R * Math.pow(1 + R, activeRepaymentMonths)) / (Math.pow(1 + R, activeRepaymentMonths) - 1)) || 0;
+      const totalRepayment = emi * activeRepaymentMonths;
       const totalInterest = Math.max(0, totalRepayment - P);
 
       return {
         success: true,
         calculation: {
+          projectCost,
+          fundingCoveragePct: coveragePct,
+          promoterContribution,
           principal: P,
           annualInterestRate: rate,
           tenureMonths: N,
           moratoriumMonths: morMonths,
           monthlyEMI: emi,
           totalInterest,
-          totalRepayment
+          totalRepayment: P + totalInterest
         }
       };
     }
 
-    // 6. Nearest Partners Locator
+    // 6. Geo-Spatial Partner Locator & Router (Filters Out High-NPA Partners)
     if (url.includes('/partners/nearest') || url.includes('/partners')) {
       const body = options.body ? JSON.parse(options.body) : {};
-      const userLat = Number(body.lat || 13.0827);
-      const userLng = Number(body.lng || 80.2707);
+      
+      // Resolve user location
+      let userLat = Number(body.lat);
+      let userLng = Number(body.lng);
+      if (isNaN(userLat) || isNaN(userLng) || userLat === 0 || userLng === 0) {
+        try {
+          const savedLoc = JSON.parse(localStorage.getItem('schemesetu_location') || '{}');
+          if (savedLoc.lat && savedLoc.lng) {
+            userLat = Number(savedLoc.lat);
+            userLng = Number(savedLoc.lng);
+          }
+        } catch (e) {}
+      }
+      if (isNaN(userLat) || isNaN(userLng)) {
+        userLat = 14.3396; // Default to RGUKT RK Valley / Vempalli reference
+        userLng = 78.5818;
+      }
 
-      const mappedPartners = MOCK_PARTNERS.map(p => {
-        const dist = calculateDistance(userLat, userLng, p.coordinates.lat, p.coordinates.lng);
-        return {
-          ...p,
-          distance: dist,
-          distanceKm: dist,
-          distanceText: `${dist} km`
-        };
-      }).sort((a, b) => a.distance - b.distance);
+      const onlyEligible = body.onlyEligible !== false;
+
+      // Filter: Ensure applications aren't sent to partners with high NPAs or overdues
+      const mappedPartners = MOCK_PARTNERS
+        .filter(p => {
+          if (onlyEligible && (p.npaStatus === 'high' || p.fundAvailable === false)) {
+            return false;
+          }
+          return true;
+        })
+        .map(p => {
+          const pLat = p.coordinates?.lat ?? 14.3725;
+          const pLng = p.coordinates?.lng ?? 78.4552;
+          const dist = calculateDistance(userLat, userLng, pLat, pLng);
+          return {
+            ...p,
+            distance: dist,
+            distanceKm: dist,
+            distanceText: `${dist} km`,
+            calculatedDistance: dist
+          };
+        })
+        .sort((a, b) => a.distance - b.distance);
+
+      // Return top nearest eligible partners (limit 5 to prevent screen cluttering)
+      const limit = Number(body.limit || 5);
+      const topNearest = mappedPartners.slice(0, limit);
 
       return {
         success: true,
-        count: mappedPartners.length,
-        partners: mappedPartners
+        totalEligible: mappedPartners.length,
+        count: topNearest.length,
+        partners: topNearest
       };
     }
 
@@ -337,20 +447,39 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       let bankResults = [];
 
       if (transcript.includes('bank') || transcript.includes('शाखा') || transcript.includes('బ్యాంక్') || transcript.includes('near')) {
-        const userLat = body.lat || 17.3850;
-        const userLng = body.lng || 78.4867;
-        bankResults = MOCK_PARTNERS.map(p => {
-          const pLat = p.coordinates?.lat || 17.3850;
-          const pLng = p.coordinates?.lng || 78.4867;
-          const dist = calculateDistance(userLat, userLng, pLat, pLng);
-          return {
-            ...p,
-            distance: dist,
-            distanceText: `${dist} km`
-          };
-        }).sort((a, b) => a.distance - b.distance).slice(0, 3);
+        let userLat = Number(body.lat);
+        let userLng = Number(body.lng);
+        if (isNaN(userLat) || isNaN(userLng) || userLat === 0) {
+          try {
+            const savedLoc = JSON.parse(localStorage.getItem('schemesetu_location') || '{}');
+            if (savedLoc.lat && savedLoc.lng) {
+              userLat = Number(savedLoc.lat);
+              userLng = Number(savedLoc.lng);
+            }
+          } catch (e) {}
+        }
+        if (isNaN(userLat) || isNaN(userLng) || userLat === 0) {
+          userLat = 14.3396; // RGUKT RK Valley / Vempalli reference
+          userLng = 78.5818;
+        }
+
+        bankResults = MOCK_PARTNERS
+          .filter(p => p.npaStatus !== 'high' && p.fundAvailable !== false)
+          .map(p => {
+            const pLat = p.coordinates?.lat || userLat;
+            const pLng = p.coordinates?.lng || userLng;
+            const dist = calculateDistance(userLat, userLng, pLat, pLng);
+            return {
+              ...p,
+              distance: dist,
+              distanceText: `${dist} km`
+            };
+          })
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 1); // Single nearest verified branch
+
         if (bankResults.length > 0) {
-          responseText = `The nearest verified banking partner is ${bankResults[0].name}, approximately ${bankResults[0].distanceText} away at ${bankResults[0].address || 'nearby'}.`;
+          responseText = `The nearest authorized Channel Partner is ${bankResults[0].name}, approximately ${bankResults[0].distanceText} away at ${bankResults[0].address || 'nearby'}. This branch is cleared with active concessional funds.`;
         }
       }
 

@@ -160,32 +160,52 @@ export function askChatGptVoiceAssistant(rawQuery = '', currentLang = 'EN', loca
 
   // ── 5. FIND NEAREST BANK BRANCH / SERVICE CENTER ──────────────────────────
   if (q.includes('bank') || q.includes('branch') || q.includes('शाखा') || q.includes('బ్యాంక్') || q.includes('near me') || q.includes('center')) {
-    const userLat = location?.lat || 17.3850;
-    const userLng = location?.lng || 78.4867;
+    let userLat = location?.lat;
+    let userLng = location?.lng;
 
-    const nearby = MOCK_PARTNERS.map(p => {
-      const pLat = p.coordinates?.lat || userLat;
-      const pLng = p.coordinates?.lng || userLng;
-      const dist = haversine(userLat, userLng, pLat, pLng);
-      return {
-        ...p,
-        distance: dist,
-        distanceText: `${dist} km`
-      };
-    }).sort((a, b) => a.distance - b.distance).slice(0, 3);
+    // Fallback based on district/state or campus reference (RGUKT RK Valley / Vempalli)
+    if (!userLat || !userLng) {
+      const state = (location?.state || '').toLowerCase();
+      const dist = (location?.district || '').toLowerCase();
+      if (dist.includes('kadapa') || dist.includes('vempalli') || dist.includes('rk valley')) {
+        userLat = 14.3396;
+        userLng = 78.5818;
+      } else if (state.includes('telangana') || dist.includes('hyderabad')) {
+        userLat = 17.3850;
+        userLng = 78.4867;
+      } else {
+        userLat = 14.3396;
+        userLng = 78.5818;
+      }
+    }
+
+    // Filter out high-NPA partners to comply with Channel Finance rules
+    const nearby = MOCK_PARTNERS
+      .filter(p => p.npaStatus !== 'high' && p.fundAvailable !== false)
+      .map(p => {
+        const pLat = p.coordinates?.lat || userLat;
+        const pLng = p.coordinates?.lng || userLng;
+        const dist = haversine(userLat, userLng, pLat, pLng);
+        return {
+          ...p,
+          distance: dist,
+          distanceText: `${dist} km`
+        };
+      })
+      .sort((a, b) => a.distance - b.distance);
 
     const first = nearby[0] || { name: 'State Bank of India', distanceText: '1.2 km', address: 'Main Road Branch' };
 
     const responses = {
-      EN: `🏦 The nearest verified public sector bank is ${first.name}, located approximately ${first.distanceText} away (${first.address}). You can visit this branch directly for MUDRA, PMEGP, or Stand-Up India sanctioning.`,
-      HI: `🏦 आपके सबसे पास सरकारी बैंक शाखा ${first.name} है, जो लगभग ${first.distanceText} दूरी पर (${first.address}) स्थित है। यहाँ आप मुद्रा और PMEGP योजनाओं के लिए सीधे संपर्क कर सकते हैं।`,
-      TE: `🏦 మీకు అత్యంత సమీపంలో ఉన్న బ్యాంకు ${first.name}, దాదాపు ${first.distanceText} దూరంలో (${first.address}) ఉంది. మీరు ముద్రా లేదా PMEGP కోసం ఇక్కడికి వెళ్లవచ్చు.`
+      EN: `🏦 The nearest verified Channel Partner bank is ${first.name}, located approximately ${first.distanceText} away (${first.address}). This branch has active fund allocation and is cleared for concessional loan processing.`,
+      HI: `🏦 आपके सबसे पास अधिकृत चैनल पार्टनर बैंक ${first.name} है, जो लगभग ${first.distanceText} दूरी पर (${first.address}) स्थित है। यह शाखा सक्रिय निधि और रियायती ऋण के लिए अधिकृत है।`,
+      TE: `🏦 మీకు అత్యంత సమీపంలో ఉన్న అధికారిక ఛానెల్ భాగస్వామి బ్యాంక్ ${first.name}, దాదాపు ${first.distanceText} దూరంలో (${first.address}) ఉంది. ఈ శాఖ తక్కువ NPA కలిగి రాయితీ రుణాల మంజూరుకు అర్హత పొందింది.`
     };
 
     return {
       text: responses[detectedLang] || responses.EN,
       detectedLang,
-      bankResults: nearby,
+      bankResults: [first],
       schemes: [],
       quickFollowUps: ['Required Documents for Bank', '₹5L MUDRA Loan', 'Check Eligibility']
     };

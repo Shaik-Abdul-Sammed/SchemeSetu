@@ -46,11 +46,12 @@ export default function Locations() {
   } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState(location?.state || 'All');
-  const [selectedDistrict, setSelectedDistrict] = useState(location?.district || 'All');
+  const [selectedState, setSelectedState] = useState(() => location?.state || 'Andhra Pradesh');
+  const [selectedDistrict, setSelectedDistrict] = useState(() => location?.district || 'All');
   const [selectedMandal, setSelectedMandal] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [onlyEligible, setOnlyEligible] = useState(true);
+  const [nearestOnly, setNearestOnly] = useState(true);
   const [selectedCenter, setSelectedCenter] = useState(null);
   const [copiedIfsc, setCopiedIfsc] = useState(false);
   const isUserFiltering = React.useRef(false);
@@ -354,19 +355,31 @@ export default function Locations() {
       </div>
 
       {/* Results Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <h2 style={{ fontSize: '1.25rem', color: '#0B192C', fontWeight: 800, margin: 0 }}>
-          Assistance Centers & Bank Branches ({filteredPartners.length})
-        </h2>
-        <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
-          {(location && location.lat && location.lng) ? 'Sorted by proximity to your current location' : 'Showing verified partner locations'}
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', color: '#0B192C', fontWeight: 800, margin: 0 }}>
+            {nearestOnly && filteredPartners.length > 6 ? `Nearest Eligible Channel Partners (${Math.min(6, filteredPartners.length)} of ${filteredPartners.length})` : `Assistance Centers & Bank Branches (${filteredPartners.length})`}
+          </h2>
+          <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+            {(location && location.lat && location.lng) ? `Sorted by proximity to ${location.district || 'your location'}` : `Showing verified channel partners in ${selectedState}`}
+          </span>
+        </div>
+        {filteredPartners.length > 6 && (
+          <button
+            type="button"
+            onClick={() => setNearestOnly(!nearestOnly)}
+            className="btn btn-outline btn-sm"
+            style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', borderColor: '#CBD5E1', color: '#0369A1' }}
+          >
+            {nearestOnly ? `View All ${filteredPartners.length} Locations ↗` : 'Show Nearest Only'}
+          </button>
+        )}
       </div>
 
       {/* Multi-Branch Comparative Matrix for Nearby Bank Branches */}
       {filteredPartners.some(p => p.type?.includes('Bank') || p.type?.includes('RRB') || p.type?.includes('SCA')) && (
         <BranchComparisonTable 
-          partners={filteredPartners.filter(p => p.type?.includes('Bank') || p.type?.includes('RRB') || p.type?.includes('SCA'))} 
+          partners={(nearestOnly ? filteredPartners.slice(0, 6) : filteredPartners).filter(p => p.type?.includes('Bank') || p.type?.includes('RRB') || p.type?.includes('SCA'))} 
           onSelectPartner={(partner) => setSelectedCenter(partner)}
         />
       )}
@@ -383,13 +396,13 @@ export default function Locations() {
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button 
-              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); }}
+              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); setNearestOnly(false); }}
               className="btn btn-primary btn-sm"
             >
-              Show Nearest Regional Centers
+              Show All Regional Centers
             </button>
             <button 
-              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); }}
+              onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); setNearestOnly(true); }}
               className="btn btn-outline btn-sm"
             >
               Reset Filters
@@ -398,7 +411,7 @@ export default function Locations() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.35rem' }}>
-          {filteredPartners.map(partner => {
+          {(nearestOnly ? filteredPartners.slice(0, 6) : filteredPartners).map(partner => {
             const distVal = partner.calculatedDistance !== undefined && partner.calculatedDistance !== null
               ? partner.calculatedDistance
               : (partner.distanceKm || partner.distance);

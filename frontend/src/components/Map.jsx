@@ -34,9 +34,30 @@ export default function Map({ partners = [], selectedPartner, onSelectPartner })
         {/* Decorative Grid Lines to simulate GIS map view */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.15, backgroundImage: 'radial-gradient(#FFFFFF 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-        {/* Partner Map Pins */}
-        <div style={{ position: 'relative', zIndex: 10, display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', padding: '1rem' }}>
-          {partners.map((partner, idx) => {
+        {/* User Location Badge */}
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(56, 189, 248, 0.4)',
+          borderRadius: '20px',
+          padding: '0.35rem 0.75rem',
+          fontSize: '0.75rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          color: '#38BDF8',
+          zIndex: 20
+        }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+          <span>📍 {location?.district ? `${location.district}, ${location.state || 'AP'}` : 'Your Verified Location'}</span>
+        </div>
+
+        {/* Nearest Partner Map Pins (Limited to top closest to avoid cluttering) */}
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', padding: '1rem', marginTop: '1.5rem' }}>
+          {partners.slice(0, 4).map((partner, idx) => {
             const isSelected = activeMarker?.id === partner.id;
             const pinColor = getMarkerColor(partner);
             return (

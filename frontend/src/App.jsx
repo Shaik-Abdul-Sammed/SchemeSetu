@@ -21,6 +21,7 @@ import Schemes from './pages/Schemes';
 import SchemeDetails from './pages/SchemeDetails';
 import Eligibility from './pages/Eligibility';
 import Compare from './pages/Compare';
+import Calculator from './pages/Calculator';
 import Locations from './pages/Locations';
 import More from './pages/More';
 import Login from './pages/Login';
@@ -76,6 +77,8 @@ export default function App() {
             <Route path="/eligibility" element={<Eligibility />} />
             <Route path="/media" element={<Eligibility initialMode="media" />} />
             <Route path="/compare" element={<Compare />} />
+            <Route path="/calculator" element={<Calculator />} />
+            <Route path="/emi" element={<Calculator />} />
             <Route path="/more" element={<More onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} onOpenLanguageModal={() => setLanguageModalOpen(true)} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

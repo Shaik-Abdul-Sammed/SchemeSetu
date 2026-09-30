@@ -2,11 +2,24 @@ import React, { useState } from 'react';
 import { Download, Table, Calendar, DollarSign, Percent } from 'lucide-react';
 import { calculateAmortizationSchedule } from '../../utils/financialCalculators';
 
-export default function AmortizationTable({ defaultPrincipal = 500000, defaultRate = 8.5, defaultTenure = 60 }) {
+export default function AmortizationTable({ 
+  defaultPrincipal = 500000, 
+  defaultRate = 8.5, 
+  defaultTenure = 60,
+  defaultMoratorium = 0,
+  maxPrincipal = 5000000 
+}) {
   const [principal, setPrincipal] = useState(defaultPrincipal);
   const [rate, setRate] = useState(defaultRate);
   const [tenure, setTenure] = useState(defaultTenure);
-  const [moratorium, setMoratorium] = useState(0);
+  const [moratorium, setMoratorium] = useState(defaultMoratorium);
+
+  React.useEffect(() => {
+    setPrincipal(defaultPrincipal);
+    setRate(defaultRate);
+    setTenure(defaultTenure);
+    if (defaultMoratorium !== undefined) setMoratorium(defaultMoratorium);
+  }, [defaultPrincipal, defaultRate, defaultTenure, defaultMoratorium]);
 
   const { emi, totalInterest, totalAmount, schedule } = calculateAmortizationSchedule({
     projectCost: Math.round(principal / 0.9),
@@ -64,7 +77,7 @@ export default function AmortizationTable({ defaultPrincipal = 500000, defaultRa
           <input
             type="range"
             min="10000"
-            max="2000000"
+            max={maxPrincipal || 5000000}
             step="10000"
             value={principal}
             onChange={e => setPrincipal(Number(e.target.value))}

@@ -78,7 +78,7 @@ export default function Home({ onOpenVoiceAssistant }) {
       color: '#8B5CF6',
       bg: 'rgba(139, 92, 246, 0.12)',
       border: '#DDD6FE',
-      to: '/results'
+      to: '/calculator'
     },
     {
       title: t('partners', 'Assistance Locator'),

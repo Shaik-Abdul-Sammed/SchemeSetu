@@ -36,7 +36,7 @@ export default function More({ onOpenVoiceAssistant, onOpenLanguageModal }) {
           bg: 'rgba(139, 92, 246, 0.1)', 
           title: t('calculateEMI', 'EMI & Subsidy Calculator'), 
           desc: 'Calculate monthly EMIs, reducing interest, & government subsidies', 
-          to: '/results' 
+          to: '/calculator' 
         },
         { 
           icon: Scale, 

@@ -142,6 +142,11 @@ export default function Navbar({ onOpenVoiceAssistant }) {
               {t('partners', 'Centers')}
             </NavLink>
 
+            <NavLink to="/calculator" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+              <Calculator size={14} aria-hidden="true" />
+              {t('calculator', 'Calculator')}
+            </NavLink>
+
             <NavLink to="/input" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Bot size={14} aria-hidden="true" />
               {t('agentMode', 'Agent')}
@@ -153,11 +158,6 @@ export default function Navbar({ onOpenVoiceAssistant }) {
                 <NavLink to="/compare" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
                   <Scale size={14} aria-hidden="true" />
                   {t('compareSchemes', 'Compare')}
-                </NavLink>
-
-                <NavLink to="/results" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
-                  <Calculator size={14} aria-hidden="true" />
-                  {t('calculator', 'Calculator')}
                 </NavLink>
 
                 {user?.role === 'vle' && (

@@ -248,7 +248,8 @@ export default function useVoiceRecognition({
           // Call consumer
           if (onResult) {
             try {
-              onResult(finalText.trim(), confidence);
+              const resultLang = event.results?.[0]?.[0]?.lang || recognition.lang;
+              onResult(finalText.trim(), confidence, resultLang);
             } catch (err) {
               console.error('[useVoiceRecognition] onResult threw:', err);
             }

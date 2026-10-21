@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'schemesetu-development-secret-change-in-production';
+const { JWT_SECRET } = require('../config/envValidator');
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -18,6 +17,7 @@ function authenticateToken(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
+    // 401 on /auth/me is expected when the token is stale or mock
     return res.status(401).json({
       success: false,
       error: 'Unauthorized: Invalid or expired authentication token.'

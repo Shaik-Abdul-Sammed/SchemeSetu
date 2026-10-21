@@ -6,11 +6,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const LOGS_DIR = path.resolve(__dirname, '../../../logs');
+const LOGS_DIR = path.resolve(__dirname, '../../logs');
 const AUDIT_LOG_FILE = path.join(LOGS_DIR, 'audit_events.jsonl');
 
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(LOGS_DIR)) {
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.warn('[auditLogger] Unable to create logs directory, falling back to memory log:', e.message);
 }
 
 // In-memory ring buffer for recent audit events

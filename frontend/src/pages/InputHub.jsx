@@ -11,7 +11,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Mic, MicOff, Type, FileText, Send, Sparkles, User,
   ToggleLeft, ToggleRight, MapPin, CheckCircle, Loader2, Volume2,
@@ -28,6 +28,7 @@ import ProfileModal from '../components/profile/ProfileModal';
 import useVoiceRecognition, { VOICE_STATES, VOICE_ERRORS } from '../hooks/useVoiceRecognition';
 import useTextToSpeech from '../hooks/useTextToSpeech';
 import useLanguageDetection from '../hooks/useLanguageDetection';
+import useVoiceLanguageDetection from '../hooks/useVoiceLanguageDetection';
 import VoiceLanguageBar from '../components/voice/VoiceLanguageBar';
 
 import {
@@ -96,8 +97,18 @@ export default function InputHub() {
     setUserLanguage,
   } = useLanguageDetection({ stateName: location?.state });
 
-  // Mode
-  const [mode, setMode] = useState('user'); // 'user' | 'agent'
+  // Mode (read from query param ?mode=agent or ?mode=user)
+  const [searchParams] = useSearchParams();
+  const initialMode = searchParams.get('mode') === 'agent' ? 'agent' : 'user';
+  const [mode, setMode] = useState(initialMode);
+
+  useEffect(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'agent' || urlMode === 'user') {
+      setMode(urlMode);
+    }
+  }, [searchParams]);
+
   const [inputMode, setInputMode] = useState('voice'); // 'voice' | 'text' | 'scan'
 
   // Chat state
@@ -109,6 +120,20 @@ export default function InputHub() {
   const [validatedProfile, setValidatedProfile] = useState(null);
   const [topSchemes, setTopSchemes] = useState([]);
   const [rejectedSchemes, setRejectedSchemes] = useState([]);
+
+  const getFieldError = (fieldName) => {
+    if (!validationErrors || validationErrors.length === 0) return null;
+    return validationErrors.find(err => {
+      const lower = err.toLowerCase();
+      if (fieldName === 'name') return lower.includes('name');
+      if (fieldName === 'age') return lower.includes('age');
+      if (fieldName === 'income') return lower.includes('income');
+      if (fieldName === 'cost') return lower.includes('cost') || lower.includes('project');
+      if (fieldName === 'loanRequirement') return lower.includes('loan');
+      return false;
+    }) || null;
+  };
+
 
   // User Profile Input Criteria Collected
   // Pipeline tracking for Demo Mode Panel
@@ -163,13 +188,24 @@ export default function InputHub() {
     if (!isMuted) speak(text, undefined, overrideLang || effectiveLang);
   }, [isMuted, speak, effectiveLang]);
 
+  // ── Voice Language Auto-Detection ─────────────────────────────────────────
+  const [voiceToast, setVoiceToast] = useState(null);
+  const { detectAndSwitch } = useVoiceLanguageDetection({
+    currentLang: lang,
+    changeLanguage,
+    onToast: (msg) => setVoiceToast(msg)
+  });
+
   // ── STT ──────────────────────────────────────────────────────────────────
   const { state: voiceState, isListening, isProcessing: voiceProcessing,
           isRequesting, hasError: voiceHasError, isSupported: voiceSupported,
           interimTranscript, errorInfo, startListening, stopListening,
           clearError, toggle: toggleVoice } = useVoiceRecognition({
     lang: effectiveBcp47,
-    onResult: (transcript, confidence) => {
+    onResult: (transcript, confidence, resultLang) => {
+      // Auto-detect spoken language and switch if different
+      detectAndSwitch(transcript, resultLang);
+
       const normalized = normalizeTranscript(transcript);
       if (isTranscriptMeaningful(normalized)) {
         handleUserMessage(transcript);
@@ -1472,6 +1508,126 @@ export default function InputHub() {
               </p>
             </div>
 
+            {/* Quick Demo Beneficiary Selector for SIH26092 Judges */}
+            <div style={{
+              background: 'linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)',
+              border: '1.5px solid #93C5FD',
+              borderRadius: '12px',
+              padding: '1rem',
+              marginBottom: '1.25rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.88rem', color: '#1E3A8A' }}>
+                  <Sparkles size={16} color="#D97706" />
+                  <span>SIH26092 Judge Demo Profiles (1-Click Load)</span>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: '#475569', background: '#DBEAFE', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+                  SC Beneficiaries ≤ ₹5.00 Lakh
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgentForm({
+                      name: 'Ramesh Kumar',
+                      age: 34,
+                      gender: 'Male',
+                      casteCategory: 'SC',
+                      income: 350000,
+                      cost: 120000,
+                      loanRequirement: 100000,
+                      occupation: 'Vendor',
+                      location: 'Vempalli, YSR Kadapa, Andhra Pradesh',
+                      state: 'Andhra Pradesh'
+                    });
+                    setValidationErrors([]);
+                  }}
+                  className="btn"
+                  style={{
+                    fontSize: '0.82rem',
+                    padding: '0.4rem 0.75rem',
+                    background: '#FFFFFF',
+                    border: '1px solid #BFDBFE',
+                    color: '#1D4ED8',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <span>👤 Ramesh Kumar (Micro ₹1.2L)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgentForm({
+                      name: 'Lakshmi Devi',
+                      age: 41,
+                      gender: 'Female',
+                      casteCategory: 'SC',
+                      income: 450000,
+                      cost: 2500000,
+                      loanRequirement: 2000000,
+                      occupation: 'Small Business',
+                      location: 'Kadapa, Andhra Pradesh',
+                      state: 'Andhra Pradesh'
+                    });
+                    setValidationErrors([]);
+                  }}
+                  className="btn"
+                  style={{
+                    fontSize: '0.82rem',
+                    padding: '0.4rem 0.75rem',
+                    background: '#FFFFFF',
+                    border: '1px solid #A7F3D0',
+                    color: '#047857',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <span>👤 Lakshmi Devi (Term Loan ₹25L)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgentForm({
+                      name: 'Suresh Babu',
+                      age: 22,
+                      gender: 'Male',
+                      casteCategory: 'SC',
+                      income: 280000,
+                      cost: 400000,
+                      loanRequirement: 350000,
+                      occupation: 'Small Business',
+                      location: 'YSR Kadapa, Andhra Pradesh',
+                      state: 'Andhra Pradesh'
+                    });
+                    setValidationErrors([]);
+                  }}
+                  className="btn"
+                  style={{
+                    fontSize: '0.82rem',
+                    padding: '0.4rem 0.75rem',
+                    background: '#FFFFFF',
+                    border: '1px solid #FED7AA',
+                    color: '#C2410C',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <span>👤 Suresh Babu (Education ₹4L)</span>
+                </button>
+              </div>
+            </div>
+
             {/* Validation Errors Box */}
             {validationErrors.length > 0 && (
               <div style={{ backgroundColor: '#FEF2F2', border: '1.5px solid #FCA5A5', padding: '1rem 1.25rem', borderRadius: '10px', color: '#991B1B' }}>
@@ -1498,6 +1654,11 @@ export default function InputHub() {
                   placeholder="e.g. Ramesh Kumar"
                   required
                 />
+                {getFieldError('name') && (
+                  <span style={{ color: '#DC2626', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    {getFieldError('name')}
+                  </span>
+                )}
               </div>
 
               <div className="form-group">
@@ -1511,6 +1672,11 @@ export default function InputHub() {
                   className="form-control"
                   required
                 />
+                {getFieldError('age') && (
+                  <span style={{ color: '#DC2626', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    {getFieldError('age')}
+                  </span>
+                )}
               </div>
               
               <div className="form-group">
@@ -1556,6 +1722,11 @@ export default function InputHub() {
                   placeholder="e.g. 240000"
                   required
                 />
+                {getFieldError('income') && (
+                  <span style={{ color: '#DC2626', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    {getFieldError('income')}
+                  </span>
+                )}
               </div>
 
               <div className="form-group">
@@ -1570,6 +1741,11 @@ export default function InputHub() {
                   placeholder="e.g. 350000"
                   required
                 />
+                {getFieldError('cost') && (
+                  <span style={{ color: '#DC2626', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    {getFieldError('cost')}
+                  </span>
+                )}
               </div>
 
               <div className="form-group">
@@ -1584,7 +1760,13 @@ export default function InputHub() {
                   placeholder="e.g. 250000"
                   required
                 />
+                {getFieldError('loanRequirement') && (
+                  <span style={{ color: '#DC2626', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    {getFieldError('loanRequirement')}
+                  </span>
+                )}
               </div>
+
               <div className="form-group">
                 <label className="form-label" htmlFor="agent-occupation">{t('primaryOccupation', 'Primary Occupation')} *</label>
                 <select
@@ -1684,6 +1866,35 @@ export default function InputHub() {
           data={agentForm}
           onClose={() => setAgentReportOpen(false)}
         />
+      )}
+
+      {/* Voice Auto-Language Detection Toast */}
+      {voiceToast && (
+        <div 
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#059669',
+            color: '#FFFFFF',
+            padding: '0.65rem 1.25rem',
+            borderRadius: '24px',
+            boxShadow: '0 10px 25px rgba(5, 150, 105, 0.5)',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.55rem',
+            border: '1.5px solid rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          <Sparkles size={17} style={{ color: '#FDE047' }} />
+          <span>{voiceToast}</span>
+        </div>
       )}
     </div>
   );

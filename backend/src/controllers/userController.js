@@ -1,15 +1,108 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { isNonEmptyString, isValidEmail } = require('../utils/validators');
+const { JWT_SECRET } = require('../config/envValidator');
 
 // In-memory user database
 const usersStore = new Map();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'schemesetu-development-secret-change-in-production';
+// Pre-seed 4 SIH26092 Demo Evaluation Accounts
+const DEMO_SEED_USERS = [
+  {
+    id: 'user-demo-ramesh',
+    name: 'Ramesh Kumar',
+    email: 'ramesh.kumar@schemesetu.in',
+    password: 'Demo@123',
+    role: 'beneficiary',
+    category: 'SC',
+    annualIncome: 350000,
+    district: 'YSR Kadapa',
+    state: 'Andhra Pradesh'
+  },
+  {
+    id: 'user-demo-lakshmi',
+    name: 'Lakshmi Devi',
+    email: 'lakshmi.devi@schemesetu.in',
+    password: 'Demo@123',
+    role: 'beneficiary',
+    category: 'SC',
+    annualIncome: 450000,
+    district: 'Kadapa',
+    state: 'Andhra Pradesh'
+  },
+  {
+    id: 'user-demo-kavitha',
+    name: 'Kavitha VLE',
+    email: 'kavitha.vle@schemesetu.in',
+    password: 'Agent@123',
+    role: 'agent',
+    agentId: 'CSC-AP-KADAPA-01'
+  },
+  {
+    id: 'user-demo-admin',
+    name: 'SchemeSetu Nodal Officer',
+    email: 'admin@schemesetu.in',
+    password: 'Admin@123',
+    role: 'admin'
+  }
+];
+
+// Seed sync on load
+DEMO_SEED_USERS.forEach(user => {
+  const passwordHash = bcrypt.hashSync(user.password, 10);
+  usersStore.set(user.id, {
+    id: user.id,
+    name: user.name,
+    email: user.email.toLowerCase(),
+    passwordHash,
+    role: user.role,
+    category: user.category,
+    annualIncome: user.annualIncome,
+    district: user.district,
+    state: user.state,
+    agentId: user.agentId,
+    createdAt: new Date().toISOString()
+  });
+});
 
 /**
- * POST /api/v1/users/register
+ * GET /api/v1/demo-accounts
  */
+function getDemoAccounts(req, res) {
+  return res.status(200).json({
+    success: true,
+    message: 'SIH26092 Verified Demo Evaluation Accounts',
+    accounts: [
+      {
+        email: 'ramesh.kumar@schemesetu.in',
+        password: 'Demo@123',
+        name: 'Ramesh Kumar',
+        role: 'Beneficiary (SC Entrepreneur, Income ₹3.50L, YSR Kadapa)',
+        category: 'SC'
+      },
+      {
+        email: 'lakshmi.devi@schemesetu.in',
+        password: 'Demo@123',
+        name: 'Lakshmi Devi',
+        role: 'Beneficiary (SC Woman Artisan, Income ₹4.50L, Kadapa)',
+        category: 'SC'
+      },
+      {
+        email: 'kavitha.vle@schemesetu.in',
+        password: 'Agent@123',
+        name: 'Kavitha VLE',
+        role: 'Certified Agent / CSC Operator'
+      },
+      {
+        email: 'admin@schemesetu.in',
+        password: 'Admin@123',
+        name: 'SchemeSetu Nodal Officer',
+        role: 'State Nodal Administrator (MoSJE)'
+      }
+    ]
+  });
+}
+
 async function registerUser(req, res, next) {
   try {
     const { name, email, password } = req.body || {};
@@ -173,5 +266,7 @@ function getMe(req, res) {
 module.exports = {
   registerUser,
   loginUser,
-  getMe
+  getMe,
+  getDemoAccounts
 };
+

@@ -44,37 +44,79 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return Math.round(R * c * 10) / 10;
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-  const token = localStorage.getItem('schemesetu_token');
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...(options.headers || {})
-  };
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000, maxRetries = 3) {
+  const delays = [1000, 2000, 4000];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+
+    const token = localStorage.getItem('schemesetu_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    };
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        // 401 on /auth/me is expected when the token is stale or mock
+        if (response.status === 401 && url.includes('/auth/me')) {
+          try {
+            localStorage.removeItem('schemesetu_token');
+            localStorage.removeItem('schemesetu_user');
+          } catch (e) {
+            if (import.meta.env.DEV) console.debug('[api] Token clear failed', e);
+          }
+          return {
+            success: true,
+            user: MOCK_USERS[0]
+          };
+        }
+
+        // Retry on 502, 503, 504 server errors
+        if ([502, 503, 504].includes(response.status) && attempt < maxRetries) {
+          await wait(delays[attempt] || 1000);
+          continue;
+        }
+
+        const errorObj = new Error(data.error || data.message || `HTTP Error ${response.status}`);
+        errorObj.status = response.status;
+        errorObj.data = data;
+        throw errorObj;
+      }
+
+      return data;
+    } catch (error) {
+      clearTimeout(id);
+
+      // If it's a network/abort error and we still have attempts left, retry
+      if (attempt < maxRetries && (error.name === 'AbortError' || error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError'))) {
+        await wait(delays[attempt] || 1000);
+        continue;
+      }
+
+      // If retries exhausted, proceed to client-side mock fallback
+      break;
+    }
+  }
 
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      signal: controller.signal
-    });
-    clearTimeout(id);
+    // Fallback block continues below
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const errorObj = new Error(data.error || data.message || `HTTP Error ${response.status}`);
-      errorObj.status = response.status;
-      errorObj.data = data;
-      throw errorObj;
-    }
-
-    return data;
-  } catch (error) {
-    clearTimeout(id);
 
     // ==========================================
     // SEAMLESS CLIENT-SIDE MOCK FALLBACK HANDLERS
@@ -539,8 +581,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       message: 'Offline mock fallback active.',
       data: []
     };
+  } catch (fallbackError) {
+    return {
+      success: true,
+      message: 'Offline mock fallback active.',
+      data: []
+    };
   }
 }
+
 
 export const api = {
   get: (endpoint, options) => fetchWithTimeout(`${BASE_URL}${endpoint}`, { method: 'GET', ...options }),

@@ -38,8 +38,14 @@ export default defineConfig({
             }
             return 'vendor';
           }
-          if (id.includes('languageStore')) {
+          if (id.includes('src/locales/en.json') || id.includes('languageStore')) {
             return 'i18n-core';
+          }
+          if (id.includes('src/locales/')) {
+            const match = id.match(/\/locales\/([a-z]+)\.json/);
+            if (match) {
+              return `locale-${match[1]}`;
+            }
           }
           if (id.includes('uiEnrichmentTranslations') || id.includes('schemeTranslations')) {
             return 'i18n-enrichment';

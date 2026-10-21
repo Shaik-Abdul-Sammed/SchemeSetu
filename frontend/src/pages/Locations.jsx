@@ -33,7 +33,6 @@ import { MOCK_PARTNERS } from '../data/mock/partners';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
 import BranchComparisonTable from '../components/partners/BranchComparisonTable';
 import PartnerDetailsModal from '../components/location/PartnerDetailsModal';
-import TribalSahajModeModal from '../components/accessibility/TribalSahajModeModal';
 import { 
   getDirectionsUrl, 
   getWalkingDirectionsUrl, 
@@ -48,7 +47,6 @@ export default function Locations() {
   const { speak, stop, isSpeaking } = useTextToSpeech({ lang });
 
   const [activeSpeakingId, setActiveSpeakingId] = useState(null);
-  const [sahajModalOpen, setSahajModalOpen] = useState(false);
   const { 
     location, 
     locationStatus, 
@@ -219,7 +217,7 @@ export default function Locations() {
           {/* Accessible Tribal & Illiterate Mode Trigger */}
           <button
             type="button"
-            onClick={() => setSahajModalOpen(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('schemesetu_open_sahaj'))}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -446,11 +444,12 @@ export default function Locations() {
         <div className="card" style={{ padding: '3rem 1.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
           <Building2 size={40} style={{ color: '#94A3B8', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.2rem', color: '#1E293B', marginBottom: '0.5rem' }}>
-            No matching assistance centers found
+            {t('noPartnersNear', 'No partners near you yet. Try zooming out or changing your location.')}
           </h3>
           <p style={{ color: '#64748B', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto 1.5rem' }}>
-            We couldn't find any centers matching your filters. Try selecting "All States" or clearing your search term.
+            {t('noPartnersNearSub', 'We couldn\'t find any centers matching your filters. Try selecting "All States" or clearing your search term.')}
           </p>
+
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button 
               onClick={() => { setSearchQuery(''); setSelectedState('All'); setSelectedDistrict('All'); setSelectedType('All'); setNearestOnly(false); }}
@@ -718,12 +717,6 @@ export default function Locations() {
           onClose={() => setSelectedCenter(null)}
         />
       )}
-
-      {/* Accessible Tribal & Illiterate Mode Modal */}
-      <TribalSahajModeModal
-        isOpen={sahajModalOpen}
-        onClose={() => setSahajModalOpen(false)}
-      />
     </div>
   );
 }

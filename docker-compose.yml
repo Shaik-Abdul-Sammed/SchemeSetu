@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: schemesetu-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=schemesetu_sih_2026_super_secret_production_key_48291
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:80
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - schemesetu-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: schemesetu-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - schemesetu-net
+
+networks:
+  schemesetu-net:
+    driver: bridge

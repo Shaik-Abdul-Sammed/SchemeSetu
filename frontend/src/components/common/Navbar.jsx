@@ -5,7 +5,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
 import LanguageSelectorIcon from './LanguageSelectorIcon';
 import SnapchatLocationPicker from '../location/SnapchatLocationPicker';
-import TribalSahajModeModal from '../accessibility/TribalSahajModeModal';
 import Logo from './Logo';
 import {
   Building2,
@@ -28,8 +27,10 @@ import {
   AlertCircle,
   Mic,
   UserCheck,
-  HelpCircle
+  HelpCircle,
+  Award
 } from 'lucide-react';
+
 
 export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -37,7 +38,6 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
   const { location, locationStatus } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [sahajModalOpen, setSahajModalOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
   const navigate = useNavigate();
@@ -89,6 +89,23 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
     return '';
   };
 
+  const getNavLabel = (key, defaultText) => {
+    const l = (typeof lang === 'string' ? lang : lang?.code || 'EN').toUpperCase();
+    const navShort = {
+      home: { TE: 'హోమ్', HI: 'होम', EN: 'Home', TA: 'முகப்பு', KN: 'ಮುಖಪುಟ', ML: 'ഹോം', MR: 'होम', BN: 'হোম', GON: 'హోమ్', BHI: 'होम' },
+      schemes: { TE: 'పథకాలు', HI: 'योजनाएं', EN: 'Schemes', TA: 'திட்டங்கள்', KN: 'ಯೋಜನೆಗಳು', ML: 'പദ്ധതികൾ', MR: 'योजना', BN: 'পরিকল্পনা', GON: 'పథకాలు', BHI: 'योजना' },
+      apply: { TE: 'దరఖాస్తు', HI: 'आवेदन', EN: 'Apply', TA: 'விண்ணப்பம்', KN: 'ಅರ್ಜಿ', ML: 'അപേക്ഷ', MR: 'अर्ज', BN: 'আবেদন', GON: 'దరఖాస్తు', BHI: 'अरजी' },
+      centers: { TE: 'కేంద్రాలు', HI: 'केंद्र', EN: 'Centers', TA: 'மையங்கள்', KN: 'ಕೇಂದ್ರಗಳು', ML: 'കേന്ദ്രങ്ങൾ', MR: 'केंद्रे', BN: 'কেন্দ্র', GON: 'కేంద్రాలు', BHI: 'केंद्र' },
+      calculator: { TE: 'కాలిక్యులేటర్', HI: 'कैलकुलेटर', EN: 'Calculator', TA: 'கால்குலேட்டர்', KN: 'ಕ್ಯಾಲ್ಕುಲೇಟರ್', ML: 'കാൽക്കുലേറ്റർ', MR: 'कॅल्क्युलेटर', BN: 'ক্যালকুলেটর', GON: 'కాలిక్యులేటర్', BHI: 'हिसाब' },
+      agent: { TE: 'ఏజెంట్', HI: 'एजेंट', EN: 'Agent', TA: 'முகவர்', KN: 'ಏಜೆಂಟ್', ML: 'ഏജന്റ്', MR: 'एजंट', BN: 'এজেন্ট', GON: 'ఏజెంట్', BHI: 'एजेंट' },
+      compare: { TE: 'పోలిక', HI: 'तुलना', EN: 'Compare', TA: 'ஒப்பீடு', KN: 'ಹೋಲಿಕೆ', ML: 'തారതമ്യം', MR: 'तुलना', BN: 'তুলনা', GON: 'పోలిక', BHI: 'तुलना' }
+    };
+    if (navShort[key] && navShort[key][l]) {
+      return navShort[key][l];
+    }
+    return t(key, defaultText);
+  };
+
   const getLocationDisplayText = () => {
     if (locationStatus === 'detecting') return t('detectingLocation', 'Detecting…');
     const town = location.city ? location.city.split('(')[0].trim() : '';
@@ -125,40 +142,46 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
             id="main-nav"
           >
             <NavLink id="tour-home" to="/" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile} end>
-              {t('home', 'Home')}
+              {getNavLabel('home', 'Home')}
             </NavLink>
 
             <NavLink id="tour-schemes" to="/schemes" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Building2 size={14} aria-hidden="true" />
-              {t('exploreSchemes', 'Schemes')}
+              {getNavLabel('schemes', 'Schemes')}
             </NavLink>
 
             <NavLink id="tour-applications" to="/applications" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <FileCheck size={14} aria-hidden="true" />
-              {t('applications', 'Apply')}
+              {getNavLabel('apply', 'Apply')}
             </NavLink>
 
             <NavLink id="tour-locations" to="/locations" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <MapPin size={14} aria-hidden="true" />
-              {t('partners', 'Centers')}
+              {getNavLabel('centers', 'Centers')}
             </NavLink>
 
             <NavLink id="tour-calculator" to="/calculator" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Calculator size={14} aria-hidden="true" />
-              {t('calculator', 'Calculator')}
+              {getNavLabel('calculator', 'Calculator')}
             </NavLink>
 
-            <NavLink id="tour-agent" to="/input" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
+            <NavLink id="tour-agent" to="/input?mode=agent" className={({ isActive }) => `nav-link nav-link-agent${isActive ? ' active' : ''}`} onClick={closeMobile}>
               <Bot size={14} aria-hidden="true" />
-              {t('agentMode', 'Agent')}
+              {getNavLabel('agent', 'Agent')}
             </NavLink>
+
+            <NavLink to="/about" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile} style={{ color: '#FCD34D', fontWeight: 700 }}>
+              <Award size={14} aria-hidden="true" style={{ color: '#F59E0B' }} />
+              <span>SIH26092</span>
+            </NavLink>
+
 
             {/* Auth-conditional links */}
             {isAuthenticated ? (
               <>
-                <NavLink to="/compare" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={closeMobile}>
+                <NavLink to="/compare" className={({ isActive }) => `nav-link nav-link-compare${isActive ? ' active' : ''}`} onClick={closeMobile}>
                   <Scale size={14} aria-hidden="true" />
-                  {t('compareSchemes', 'Compare')}
+                  {getNavLabel('compare', 'Compare')}
                 </NavLink>
 
                 {user?.role === 'vle' && (
@@ -184,6 +207,15 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
                     aria-expanded={moreOpen}
                     aria-haspopup="true"
                     aria-label="User Account Menu"
+                    style={{
+                      height: '36px',
+                      borderRadius: '18px',
+                      padding: '0 0.75rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      flexShrink: 0
+                    }}
                   >
                     <span className="navbar-avatar">
                       {user?.name ? user.name.charAt(0).toUpperCase() : 'C'}
@@ -279,7 +311,10 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
             <div className="nav-link-mobile-location" style={{ padding: '0.4rem 1rem' }}>
               <button
                 type="button"
-                onClick={() => { setSahajModalOpen(true); closeMobile(); }}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('schemesetu_open_sahaj'));
+                  closeMobile();
+                }}
                 style={{
                   width: '100%',
                   padding: '0.65rem 1rem',
@@ -310,27 +345,31 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
               id="tour-sahaj"
               type="button"
               className="navbar-sahaj-btn"
-              onClick={() => setSahajModalOpen(true)}
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('schemesetu_open_sahaj'));
+              }}
               title={lang === 'TE' ? 'సహజ్ ఆడియో & బొమ్మల మోడ్' : (lang === 'HI' ? 'सहज चित्र-आवाज मोड' : 'Sahaj Audio-Visual Mode')}
               aria-label="Open Sahaj Audio-Visual Mode"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                backgroundColor: '#FEF3C7',
-                color: '#92400E',
-                border: '1.5px solid #FCD34D',
-                borderRadius: '20px',
-                padding: '0.32rem 0.65rem',
-                fontSize: '0.78rem',
+                gap: '0.4rem',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.32))',
+                color: '#FCD34D',
+                border: '1.5px solid #F59E0B',
+                borderRadius: '18px',
+                padding: '0 0.8rem',
+                minHeight: '44px',
+                fontSize: '0.85rem',
                 fontWeight: 800,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
-                flexShrink: 0
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.2)'
               }}
             >
-              <span style={{ fontSize: '0.95rem' }}>🎨</span>
+              <span style={{ fontSize: '1rem' }}>🎨</span>
               <span>{lang === 'TE' ? 'సహజ్' : (lang === 'HI' ? 'सहज' : 'Sahaj')}</span>
             </button>
 
@@ -342,13 +381,24 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
               onClick={() => setLocationModalOpen(true)}
               title={location.address ? `Location: ${location.address}` : 'Set Location'}
               aria-label={`Current Location: ${getLocationDisplayText()}`}
+              style={{
+                minHeight: '44px',
+                borderRadius: '18px',
+                padding: '0 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                flexShrink: 0
+              }}
             >
               {locationStatus === 'detecting' ? (
-                <Navigation size={13} className="animate-spin" aria-hidden="true" />
+                <Navigation size={14} className="animate-spin" aria-hidden="true" />
               ) : locationStatus === 'denied' || locationStatus === 'unavailable' ? (
-                <AlertCircle size={13} aria-hidden="true" />
+                <AlertCircle size={14} aria-hidden="true" />
               ) : (
-                <MapPin size={13} aria-hidden="true" />
+                <MapPin size={14} style={{ color: '#38BDF8' }} aria-hidden="true" />
               )}
               <span className="navbar-location-text">{getLocationDisplayText()}</span>
               {location.isGPS && <span className="gps-dot" title="GPS Active" />}
@@ -362,9 +412,23 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
               onClick={onOpenVoiceAssistant}
               title={t('voiceAssistant', 'AI Voice Assistant')}
               aria-label={t('voiceAssistant', 'AI Voice Assistant')}
+              style={{
+                minHeight: '44px',
+                borderRadius: '18px',
+                padding: '0 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                flexShrink: 0,
+                backgroundColor: 'rgba(16, 185, 129, 0.16)',
+                border: '1.5px solid rgba(16, 185, 129, 0.45)',
+                color: '#34D399'
+              }}
             >
-              <Mic size={14} aria-hidden="true" />
-              <span className="navbar-voice-label">{t('voiceText', 'Voice')}</span>
+              <Mic size={15} style={{ color: '#34D399' }} aria-hidden="true" />
+              <span className="navbar-voice-label">{lang === 'TE' ? 'వాయిస్' : (lang === 'HI' ? 'आवाज' : 'Voice')}</span>
             </button>
 
             {/* Language selector */}
@@ -383,19 +447,20 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                width: '44px',
+                minHeight: '44px',
+                borderRadius: '18px',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
                 color: '#FCD34D',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 flexShrink: 0
               }}
             >
-              <HelpCircle size={16} />
+              <HelpCircle size={18} />
             </button>
+
 
             {/* Mobile hamburger */}
             <button
@@ -424,12 +489,6 @@ export default function Navbar({ onOpenVoiceAssistant, onOpenTour, onOpenHelp })
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
-
-      {/* Accessible Tribal & Illiterate Mode Modal */}
-      <TribalSahajModeModal
-        isOpen={sahajModalOpen}
-        onClose={() => setSahajModalOpen(false)}
-      />
     </>
   );
 }

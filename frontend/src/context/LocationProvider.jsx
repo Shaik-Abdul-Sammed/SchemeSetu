@@ -555,15 +555,19 @@ export function LocationProvider({ children }) {
       } catch (e) {}
     }
     return {
-      lat: null,
-      lng: null,
-      accuracy: null,
-      timestamp: null,
-      state: '',
-      district: '',
-      address: '',
+      lat: 14.3396,
+      lng: 78.5818,
+      accuracy: 25,
+      timestamp: Date.now(),
+      town: 'Vempalli',
+      city: 'Vempalli',
+      district: 'YSR Kadapa',
+      state: 'Andhra Pradesh',
+      country: 'India',
+      address: 'IIIT RGUKT RK Valley, Vempalli, YSR Kadapa, Andhra Pradesh',
       isGPS: false,
       isDemo: false,
+      isDefault: true,
       accuracyWarning: ''
     };
   });
@@ -652,7 +656,8 @@ export function LocationProvider({ children }) {
     // --- Primary attempt: OpenStreetMap Nominatim (without forbidden User-Agent header) ---
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&zoom=14`,
         {
@@ -932,7 +937,9 @@ export function LocationProvider({ children }) {
       try {
         const parsed = JSON.parse(savedLoc);
         if (parsed.isManual && parsed.district) {
-          console.log('[GPS] Preserving user manual location selection:', parsed.district, parsed.state);
+          if (import.meta.env.DEV && typeof window !== 'undefined' && window.__DEBUG_GPS__) {
+            console.log('[GPS] Preserving user manual location selection:', parsed.district, parsed.state);
+          }
           return;
         }
       } catch (e) {}

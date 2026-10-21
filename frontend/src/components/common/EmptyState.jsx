@@ -5,8 +5,9 @@ import { useLanguage } from '../../context/LanguageContext';
 export default function EmptyState({ title, message, onClear }) {
   const { t } = useLanguage();
 
-  const displayTitle = title || t('noSchemesFound', 'No schemes found');
-  const displayMessage = message || t('noSchemesMessage', 'Try adjusting your search terms or clearing selected filters.');
+  const displayTitle = title || t('noSchemesFound', 'No schemes match your filters. Clear filters to see all.');
+  const displayMessage = message || t('noSchemesMessage', 'Try adjusting your search terms or clearing selected filters to view available welfare programs.');
+
 
   return (
     <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>

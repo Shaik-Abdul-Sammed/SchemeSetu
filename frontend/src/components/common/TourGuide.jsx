@@ -176,8 +176,9 @@ export default function TourGuide({ isOpen, onClose }) {
   // Resolve localized text
   const getLocalized = (obj) => {
     if (!obj) return '';
-    if (lang === 'te' && obj.te) return obj.te;
-    if (lang === 'hi' && obj.hi) return obj.hi;
+    const l = (typeof lang === 'string' ? lang : lang?.code || 'EN').toUpperCase();
+    if ((l === 'TE' || l === 'GON') && obj.te) return obj.te;
+    if ((l === 'HI' || l === 'BHI' || l === 'MR') && obj.hi) return obj.hi;
     return obj.en || Object.values(obj)[0] || '';
   };
 
@@ -250,6 +251,10 @@ export default function TourGuide({ isOpen, onClose }) {
     localStorage.setItem('schemesetu_tour_completed', 'true');
     setCurrentStepIndex(0);
     onClose();
+    // Flow: Select Language -> Tour Guide -> Samaj Mode
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('schemesetu_open_sahaj'));
+    }, 350);
   };
 
   if (!isOpen) return null;
@@ -450,16 +455,22 @@ export default function TourGuide({ isOpen, onClose }) {
           <button
             onClick={handleFinish}
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94A3B8',
-              fontSize: '0.8rem',
-              fontWeight: 600,
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '0.4rem 0.7rem',
+              color: '#FCD34D',
+              fontSize: '0.78rem',
+              fontWeight: 700,
               cursor: 'pointer',
-              textDecoration: 'underline'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem'
             }}
+            title="Open Samaj Mode directly"
           >
-            Skip
+            <span>🎨</span>
+            <span>{lang === 'TE' ? 'సహజ్ మోడ్' : (lang === 'HI' ? 'सहज मोड' : 'Samaj Mode')}</span>
           </button>
 
           <button
@@ -479,7 +490,12 @@ export default function TourGuide({ isOpen, onClose }) {
               boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)'
             }}
           >
-            <span>{currentStepIndex === totalSteps - 1 ? 'Finish Tour' : 'Next'}</span>
+            <span>
+              {currentStepIndex === totalSteps - 1 
+                ? (lang === 'TE' ? 'సహజ్ మోడ్ తెరవండి 🎨' : (lang === 'HI' ? 'सहज मोड खोलें 🎨' : 'Open Samaj Mode 🎨'))
+                : (lang === 'TE' ? 'తరువాత' : (lang === 'HI' ? 'आगे' : 'Next'))
+              }
+            </span>
             <ArrowRight size={14} />
           </button>
         </div>

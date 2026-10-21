@@ -25,7 +25,6 @@ import { useLocation } from '../context/LocationContext';
 import SchemeCard from '../components/scheme/SchemeCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import SnapchatLocationPicker from '../components/location/SnapchatLocationPicker';
-import TribalSahajModeModal from '../components/accessibility/TribalSahajModeModal';
 
 export default function Home({ onOpenVoiceAssistant }) {
   const navigate = useNavigate();
@@ -35,7 +34,6 @@ export default function Home({ onOpenVoiceAssistant }) {
   const [featuredSchemes, setFeaturedSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [sahajModalOpen, setSahajModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchFeatured() {
@@ -118,21 +116,21 @@ export default function Home({ onOpenVoiceAssistant }) {
             gap: '0.4rem', 
             padding: '0.3rem 0.75rem', 
             borderRadius: '20px', 
-            backgroundColor: 'rgba(16, 185, 129, 0.15)', 
-            color: '#34D399', 
+            backgroundColor: 'rgba(245, 158, 11, 0.18)', 
+            color: '#FCD34D', 
             fontSize: '0.78rem',
             fontWeight: 700,
             marginBottom: '0.85rem',
-            border: '1px solid rgba(16, 185, 129, 0.3)'
+            border: '1px solid rgba(245, 158, 11, 0.4)'
           }}>
-            <ShieldCheck size={14} /> {t('officialPortalBadge', 'Official Citizen Scheme Discovery Portal')}
+            <ShieldCheck size={14} /> SchemeSetu — Bridging SC Entrepreneurs to Concessional Credit (SIH26092)
           </div>
 
           <h1 style={{ fontSize: '1.85rem', fontWeight: 900, margin: '0 0 0.5rem', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
-            {t('heroTitle', 'Find financial schemes that fit your needs.')}
+            {t('heroTitle', 'AI-Driven Concessional Credit Matching for Marginalized Entrepreneurs')}
           </h1>
           <p style={{ color: '#94A3B8', fontSize: '0.92rem', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
-            {t('heroSubtitle', 'Concessional credit assistance, term loans, education support, & margin subsidies for SC entrepreneurs & citizens up to ₹5.00L annual income.')}
+            {t('heroSubtitle', 'Official SIH26092 platform for MoSJE & NSFDC: Concessional loans (4.0%–8.0%), 90% funding coverage, 3–12m moratorium, and verified Channel Partner routing for SC beneficiaries up to ₹5.00L annual income.')}
           </p>
 
           {/* Location Bar Pill (Interactive) */}
@@ -173,6 +171,37 @@ export default function Home({ onOpenVoiceAssistant }) {
       </section>
 
       <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        
+        {/* LIVE IMPACT COUNTER BANNER */}
+        <section style={{
+          background: 'linear-gradient(135deg, #0B192C 0%, #1E3E62 100%)',
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
+          color: '#FFFFFF',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '1rem',
+          textAlign: 'center',
+          boxShadow: '0 4px 15px rgba(11, 25, 44, 0.15)'
+        }}>
+          <div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#38BDF8' }}>15+</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1', fontWeight: 600 }}>MoSJE & NSFDC Schemes</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#34D399' }}>38+</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1', fontWeight: 600 }}>Kadapa Channel Partners</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#FCD34D' }}>₹45 Cr</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1', fontWeight: 600 }}>Concessional Credit Pipeline</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#F472B6' }}>≤ ₹5.00L</div>
+            <div style={{ fontSize: '0.75rem', color: '#CBD5E1', fontWeight: 600 }}>SC Household Income Target</div>
+          </div>
+        </section>
+
         
         {/* 1.5. SAHAJ TRIBAL & AUDIO-VISUAL ASSISTED MODE HERO BANNER */}
         <section style={{
@@ -233,7 +262,7 @@ export default function Home({ onOpenVoiceAssistant }) {
 
           <button
             type="button"
-            onClick={() => setSahajModalOpen(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('schemesetu_open_sahaj'))}
             style={{
               padding: '0.75rem 1.5rem',
               borderRadius: '14px',
@@ -408,12 +437,6 @@ export default function Home({ onOpenVoiceAssistant }) {
       {locationModalOpen && (
         <SnapchatLocationPicker onClose={() => setLocationModalOpen(false)} />
       )}
-
-      {/* Accessible Tribal & Illiterate Mode Modal */}
-      <TribalSahajModeModal
-        isOpen={sahajModalOpen}
-        onClose={() => setSahajModalOpen(false)}
-      />
     </div>
   );
 }

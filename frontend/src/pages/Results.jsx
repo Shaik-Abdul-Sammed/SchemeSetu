@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark, ChevronDown, ChevronUp, Navigation, FileCheck, Share2, Sparkles, ExternalLink, ShieldCheck, Zap, HelpCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, Award, Building2, MapPin, Calculator, Download, Bookmark, ChevronDown, ChevronUp, Navigation, FileCheck, Share2, Sparkles, ExternalLink, ShieldCheck, Zap, HelpCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+
 import { api } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
@@ -196,19 +197,40 @@ export default function Results() {
         </button>
       </div>
 
-      {/* INCOME GOAL CEILING CHECK CARD */}
-      <div className="card" style={{ 
-        marginBottom: '1.5rem', 
-        padding: '1.25rem', 
-        borderRadius: '16px', 
-        backgroundColor: (passedCriteria.income || 240000) <= 500000 ? '#ECFDF5' : '#FEF2F2',
-        border: `1px solid ${(passedCriteria.income || 240000) <= 500000 ? '#A7F3D0' : '#FCA5A5'}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
+      {/* If No Matching Schemes Found */}
+      {schemes.length === 0 ? (
+        <div className="card" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', marginTop: '1.5rem' }}>
+          <Building2 size={48} style={{ color: '#94A3B8', margin: '0 auto 1rem' }} />
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>
+            {t('noSchemesFound', 'No Matching Schemes Found / कोई योजना नहीं मिली')}
+          </h2>
+          <p style={{ color: '#64748B', fontSize: '0.92rem', maxWidth: '480px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+            {t('noSchemesFoundSub', 'Try adjusting your project cost, tenure, or declared household income to match concessional guidelines.')}
+          </p>
+          <button
+            onClick={() => navigate('/input')}
+            className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontWeight: 700 }}
+          >
+            <ArrowRight size={16} /> {t('modifyCriteria', 'Modify Criteria')}
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* INCOME GOAL CEILING CHECK CARD */}
+          <div className="card" style={{ 
+            marginBottom: '1.5rem', 
+            padding: '1.25rem', 
+            borderRadius: '16px', 
+            backgroundColor: (passedCriteria?.income ?? 240000) <= 500000 ? '#ECFDF5' : '#FEF2F2',
+            border: `1px solid ${(passedCriteria?.income ?? 240000) <= 500000 ? '#A7F3D0' : '#FCA5A5'}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ 
             width: '44px', 
@@ -358,8 +380,8 @@ export default function Results() {
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
             <div style={{ fontSize: '0.95rem', color: '#065F46', fontWeight: 600 }}>
               {t('explainIncomeBelow', 'Your household annual income (₹{income}) is below the scheme limit of ₹{limit}.')
-                .replace('{income}', (passedCriteria.income || 240000).toLocaleString('en-IN'))
-                .replace('{limit}', (activeScheme.eligibility?.maxIncome || 500000).toLocaleString('en-IN'))}
+                .replace('{income}', (passedCriteria?.income ?? 240000).toLocaleString('en-IN'))
+                .replace('{limit}', (activeScheme?.eligibility?.maxIncome ?? activeScheme?.maxIncome ?? 500000).toLocaleString('en-IN'))}
             </div>
           </div>
 
@@ -367,10 +389,11 @@ export default function Results() {
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
             <div style={{ fontSize: '0.95rem', color: '#065F46', fontWeight: 600 }}>
               {t('explainCostFits', 'Your required project cost (₹{cost}) fits within the loan bracket of ₹{limit}.')
-                .replace('{cost}', (passedCriteria.cost || 350000).toLocaleString('en-IN'))
-                .replace('{limit}', (activeScheme.maxLoan || 500000).toLocaleString('en-IN'))}
+                .replace('{cost}', (passedCriteria?.cost ?? 350000).toLocaleString('en-IN'))
+                .replace('{limit}', (activeScheme?.maxLoan ?? 500000).toLocaleString('en-IN'))}
             </div>
           </div>
+
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0' }}>
             <CheckCircle2 style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} size={20} />
@@ -491,6 +514,10 @@ export default function Results() {
           </div>
         )}
       </div>
+      </>
+      )}
+
+
 
       {/* Centered Bottom Action Container */}
       <div className="bottom-action-container">

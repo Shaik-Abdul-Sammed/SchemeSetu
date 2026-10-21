@@ -21,13 +21,20 @@ export default function LanguageSelectionModal({ isOpen: controlledIsOpen, onClo
   const [selectedCode, setSelectedCode] = useState(lang || 'EN');
 
   useEffect(() => {
-    const gatePassed = localStorage.getItem('schemesetu_gate_passed');
-    if (!gatePassed) {
-      setInternalIsOpen(true);
+    try {
+      const gatePassed = localStorage.getItem('schemesetu_gate_passed');
+      if (!gatePassed) {
+        setInternalIsOpen(true);
+      }
+    } catch (e) {
+      setInternalIsOpen(false);
     }
   }, []);
 
-  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const hasGatePassed = typeof window !== 'undefined' && Boolean(localStorage.getItem('schemesetu_gate_passed'));
+  const isOpen = controlledIsOpen !== undefined 
+    ? (controlledIsOpen || (!hasGatePassed && internalIsOpen)) 
+    : internalIsOpen;
 
   const handleClose = () => {
     setInternalIsOpen(false);

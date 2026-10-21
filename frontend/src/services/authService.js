@@ -47,11 +47,33 @@ export const authService = {
     return res;
   },
 
+  isTokenExpired(token) {
+    if (!token || typeof token !== 'string') return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      const payload = JSON.parse(atob(parts[1]));
+      if (!payload.exp) return false;
+      return Date.now() >= payload.exp * 1000;
+    } catch {
+      return false;
+    }
+  },
+
   async getCurrentUser() {
     const token = localStorage.getItem('schemesetu_token');
     if (!token) return null;
+
+    // Decode JWT exp claim before calling /auth/me; clear if expired
+    if (this.isTokenExpired(token)) {
+      localStorage.removeItem('schemesetu_token');
+      localStorage.removeItem('schemesetu_user');
+      return null;
+    }
+
     try {
-      const res = await api.get('/auth/me');
+      // 401 on /auth/me is expected when the token is stale or mock
+      const res = await api.get('/auth/me', { silent: true });
       return res.user;
     } catch {
       const local = localStorage.getItem('schemesetu_user');

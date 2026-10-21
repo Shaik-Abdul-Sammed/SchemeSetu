@@ -49,19 +49,8 @@ export default function EntranceVoiceGreeting() {
   };
 
   useEffect(() => {
-    const hasSeenGreeting = sessionStorage.getItem('schemesetu_entrance_greeted');
-    if (!hasSeenGreeting) {
-      setIsOpen(true);
-      sessionStorage.setItem('schemesetu_entrance_greeted', 'true');
-
-      // Attempt automatic speech greeting on mount
-      if (!hasSpokenOnOpenRef.current) {
-        hasSpokenOnOpenRef.current = true;
-        setTimeout(() => {
-          handleInitialVoiceGreeting();
-        }, 500);
-      }
-    }
+    // Disabled in favor of the canonical LanguageSelectionModal onboarding flow
+    setIsOpen(false);
   }, []);
 
   const handleSelectLanguage = (item) => {

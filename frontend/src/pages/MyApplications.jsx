@@ -119,6 +119,7 @@ export default function MyApplications() {
   const [uploadModalApp, setUploadModalApp] = useState(null);
   const [newAppModalOpen, setNewAppModalOpen] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [submittedApp, setSubmittedApp] = useState(null);
 
   // New Application Form State
   const [newForm, setNewForm] = useState({
@@ -244,8 +245,12 @@ export default function MyApplications() {
     const updated = [newRecord, ...applications];
     saveApplicationsToStorage(updated);
     setNewAppModalOpen(false);
+    if (!isDraft) {
+      setSubmittedApp(newRecord);
+    }
     showToast(isDraft ? `Draft application ${newId} saved!` : `Application ${newId} submitted successfully!`, 'success');
   };
+
 
   const handleDeleteApplication = (id) => {
     const updated = applications.filter(a => a.id !== id);
@@ -403,11 +408,12 @@ export default function MyApplications() {
         <div className="card" style={{ padding: '3rem 1.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
           <FileCheck size={40} style={{ color: '#94A3B8', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.2rem', color: '#1E293B', marginBottom: '0.5rem' }}>
-            {t('noAppsFoundCategory', 'No applications found in this category')}
+            {t('noAppsFoundCategory', "You haven't applied to any schemes yet. Start by finding a scheme.")}
           </h3>
           <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>
-            {t('noAppsFilterMsg', "You haven't submitted any applications under this filter yet.")}
+            {t('noAppsFilterMsg', "Explore central and state credit schemes with subsidised margin money.")}
           </p>
+
           <button 
             type="button" 
             onClick={() => { setNewForm({ ...newForm }); setNewAppModalOpen(true); }}
@@ -874,6 +880,141 @@ export default function MyApplications() {
           </div>
         </div>
       )}
+
+      {/* Application Submission Success Modal */}
+      {submittedApp && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '16px',
+            maxWidth: '520px',
+            width: '100%',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #E2E8F0',
+            textAlign: 'center',
+            padding: '2rem 1.75rem'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#ECFDF5',
+              color: '#059669',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              boxShadow: '0 0 0 8px #D1FAE5'
+            }}>
+              <CheckCircle2 size={36} />
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0B192C', margin: '0 0 0.5rem' }}>
+              Application Successfully Submitted!
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#64748B', margin: '0 0 1.25rem' }}>
+              Your application has been logged on SchemeSetu and routed for verification under SIH26092 guidelines.
+            </p>
+
+            <div style={{
+              backgroundColor: '#F8FAFC',
+              borderRadius: '12px',
+              padding: '1rem',
+              border: '1px solid #E2E8F0',
+              textAlign: 'left',
+              marginBottom: '1.5rem',
+              fontSize: '0.85rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: '#64748B' }}>Application Reference:</span>
+                <strong style={{ color: '#0B192C', fontFamily: 'monospace' }}>{submittedApp.id}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: '#64748B' }}>Beneficiary Name:</span>
+                <strong style={{ color: '#0B192C' }}>{submittedApp.applicant}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: '#64748B' }}>Scheme:</span>
+                <strong style={{ color: '#0B192C' }}>{submittedApp.schemeName}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748B' }}>Requested Loan:</span>
+                <strong style={{ color: '#059669', fontSize: '0.95rem' }}>₹{submittedApp.loanAmount?.toLocaleString('en-IN')}</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <button
+                type="button"
+                onClick={() => handleDownloadPdf(submittedApp)}
+                className="btn btn-primary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 700
+                }}
+              >
+                <Download size={16} /> Download Application Slip (PDF)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmittedApp(null);
+                  navigate('/locations');
+                }}
+                className="btn btn-outline"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: '#2563EB',
+                  borderColor: '#BFDBFE'
+                }}
+              >
+                <Building2 size={16} /> Find Nearest Channel Partner Bank
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubmittedApp(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748B',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  padding: '0.4rem',
+                  marginTop: '0.25rem'
+                }}
+              >
+                View in Applications List
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

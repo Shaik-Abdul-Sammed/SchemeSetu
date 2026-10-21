@@ -72,7 +72,8 @@ function getNearestPartners(req, res, next) {
           ...partner,
           distance,
           distanceKm: distance,
-          distanceText: `${distance.toFixed(2)} km`
+          distanceText: `${distance.toFixed(2)} km`,
+          isAcceptingApplications: true
         });
       }
     }
@@ -152,7 +153,8 @@ function getPartners(req, res, next) {
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+
     const total = partners.length;
     const totalPages = Math.ceil(total / limitNum) || 1;
     const offset = (pageNum - 1) * limitNum;

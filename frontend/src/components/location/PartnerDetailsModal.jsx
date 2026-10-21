@@ -201,6 +201,20 @@ export default function PartnerDetailsModal({ partner, onClose }) {
                 <span style={{
                   fontSize: '0.72rem',
                   fontWeight: 700,
+                  backgroundColor: (partner.isAcceptingApplications !== false) ? '#ECFDF5' : '#FEF2F2',
+                  color: (partner.isAcceptingApplications !== false) ? '#047857' : '#B91C1C',
+                  border: (partner.isAcceptingApplications !== false) ? '1px solid #A7F3D0' : '1px solid #FECACA',
+                  padding: '0.18rem 0.55rem',
+                  borderRadius: '6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  <CheckCircle size={13} /> {(partner.isAcceptingApplications !== false) ? 'Accepting Applications (NPA Clear)' : 'Applications Paused (NPA)'}
+                </span>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
                   backgroundColor: openStatus.badgeBg || '#ECFDF5',
                   color: openStatus.color || '#047857',
                   border: `1px solid ${openStatus.badgeBorder || '#A7F3D0'}`,
@@ -895,7 +909,7 @@ export default function PartnerDetailsModal({ partner, onClose }) {
                 transition: 'all 0.15s ease'
               }}
             >
-              <FileText size={15} /> Apply
+              <FileText size={15} /> {lang === 'TE' ? 'ఈ భాగస్వామి ద్వారా దరఖాస్తు చేసుకోండి' : (lang === 'HI' ? 'इस पार्टनर के माध्यम से आवेदन करें' : 'Apply through this partner')}
             </button>
           </div>
         </div>

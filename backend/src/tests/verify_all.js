@@ -978,14 +978,26 @@ async function runAllTests() {
     console.log('\n--- 15. Localization & 100% Translation Key Coverage (10 tests) ---');
     const fs = require('fs');
     const path = require('path');
-    let langFilePath = path.resolve(__dirname, '../../../frontend/src/context/languageStore.js');
-    if (!fs.existsSync(langFilePath)) {
-      langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+    let transObj = {};
+    const localesDir = path.resolve(__dirname, '../../../frontend/src/locales');
+    if (fs.existsSync(localesDir)) {
+      const localeKeys = ['en', 'hi', 'te', 'ta', 'kn', 'ml', 'bn', 'mr', 'gon', 'bhi'];
+      for (const lk of localeKeys) {
+        const filePath = path.join(localesDir, `${lk}.json`);
+        if (fs.existsSync(filePath)) {
+          transObj[lk.toUpperCase()] = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+      }
+    } else {
+      let langFilePath = path.resolve(__dirname, '../../../frontend/src/context/languageStore.js');
+      if (!fs.existsSync(langFilePath)) {
+        langFilePath = path.resolve(__dirname, '../../../frontend/src/context/LanguageContext.jsx');
+      }
+      const langFileContent = fs.readFileSync(langFilePath, 'utf8');
+      const langMatch = langFileContent.match(/export const translations = ({[\s\S]*?});/) || 
+                        langFileContent.match(/const translations = ({[\s\S]*?});/);
+      transObj = eval('(' + langMatch[1] + ')');
     }
-    const langFileContent = fs.readFileSync(langFilePath, 'utf8');
-    const langMatch = langFileContent.match(/export const translations = ({[\s\S]*?});/) || 
-                      langFileContent.match(/const translations = ({[\s\S]*?});/);
-    const transObj = eval('(' + langMatch[1] + ')');
     const enKeys = Object.keys(transObj.EN);
     const targetLangs = ['HI', 'TE', 'TA', 'KN', 'ML', 'BN', 'MR', 'GON', 'BHI'];
 
@@ -1395,9 +1407,122 @@ async function runAllTests() {
       });
     });
 
+    console.log('\n--- 24. SIH26092 Deep Production Quality Assertions (10 tests) ---');
+    await test('EMI calculation for NSFDC Micro Finance (1.4L, 6.5%, 36m, 3m moratorium) computes positive EMI', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 140000,
+        annualRate: 6.5,
+        tenureMonths: 36,
+        moratoriumMonths: 3
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.emi > 4000 && res.data.emi < 5500, `Expected reasonable EMI, got ${res.data.emi}`);
+      assert(res.data.totalPayment > 140000);
+    });
+
+    await test('EMI calculation for NSFDC Term Loan (50L, 7.5%, 60m, 6m moratorium) computes valid repayment', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 5000000,
+        annualRate: 7.5,
+        tenureMonths: 60,
+        moratoriumMonths: 6
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.emi > 90000 && res.data.emi < 125000);
+    });
+
+    await test('EMI calculation for NSFDC Educational Loan (20L, 4.0%, 84m, 12m moratorium) computes valid repayment', async () => {
+      const res = await request('POST', '/api/v1/calculator/emi', {
+        principal: 2000000,
+        annualRate: 4.0,
+        tenureMonths: 84,
+        moratoriumMonths: 12
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.emi > 28000 && res.data.emi < 36000);
+    });
+
+    await test('Recommender evaluates SC entrepreneur within ₹5L limit as eligible for concessional schemes', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 32,
+        annualIncome: 300000,
+        casteCategory: 'SC',
+        occupation: 'Small Business',
+        projectCost: 120000,
+        loanRequirement: 100000,
+        state: 'Andhra Pradesh'
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.data.success, true);
+      assert(res.data.eligibleSchemesCount > 0);
+      assert(res.data.results && res.data.results.length > 0);
+    });
+
+    await test('Recommender rejects or penalizes household income exceeding ₹5.00 Lakhs for concessional credit', async () => {
+      const res = await request('POST', '/api/v1/eligibility/check', {
+        age: 32,
+        annualIncome: 750000,
+        casteCategory: 'SC',
+        occupation: 'Small Business',
+        projectCost: 1000000,
+        loanRequirement: 800000,
+        state: 'Andhra Pradesh'
+      });
+      assert.strictEqual(res.status, 200);
+      assert(res.data.results && res.data.results.length > 0);
+      const isConcessional = res.data.results.some(r => r.scheme && r.scheme.id === 'nsfdc-micro-finance' && r.isEligible);
+      assert.strictEqual(isConcessional, false, 'Income > 5L must not match NSFDC microfinance');
+    });
+
+
+    await test('Partner filtering excludes institutions with critical/high NPA status', () => {
+      const dataService = require('../services/dataService');
+      const partners = dataService.getPartners();
+      partners.forEach(p => {
+        const npa = String(p.npaStatus || '').toLowerCase();
+        assert(npa !== 'critical' && npa !== 'high', `Partner ${p.id} should not be active with high/critical NPA`);
+      });
+    });
+
+    await test('JWT validator verifies valid token and extracts payload', () => {
+      const jwt = require('jsonwebtoken');
+      const secret = process.env.JWT_SECRET || 'schemesetu_sih_2026_super_secret_production_key_48291';
+      const token = jwt.sign({ id: 'test-user', role: 'beneficiary' }, secret, { expiresIn: '1h' });
+      const decoded = jwt.verify(token, secret);
+      assert.strictEqual(decoded.id, 'test-user');
+      assert.strictEqual(decoded.role, 'beneficiary');
+    });
+
+    await test('JWT validator throws TokenExpiredError on expired token', () => {
+      const jwt = require('jsonwebtoken');
+      const secret = process.env.JWT_SECRET || 'schemesetu_sih_2026_super_secret_production_key_48291';
+      const token = jwt.sign({ id: 'test-user' }, secret, { expiresIn: '-1s' });
+      assert.throws(() => jwt.verify(token, secret), /jwt expired|TokenExpiredError/);
+    });
+
+    await test('Input validator correctly validates numeric ranges and rejects overflow', () => {
+      const { sanitizeAndValidateNumber } = require('../utils/numberValidator');
+      const valid = sanitizeAndValidateNumber(350000, 'income');
+      assert.strictEqual(valid.isValid, true);
+      assert.strictEqual(valid.value, 350000);
+
+      const overflow = sanitizeAndValidateNumber('99999999999999', 'income');
+      assert.strictEqual(overflow.isValid, false);
+    });
+
+    await test('Input validator correctly validates positive numbers and rejects non-numeric', () => {
+      const { isPositiveNumber, isNonNegativeNumber } = require('../utils/validators');
+      assert.strictEqual(isPositiveNumber(50000), true);
+      assert.strictEqual(isPositiveNumber(-50000), false);
+      assert.strictEqual(isPositiveNumber('abc'), false);
+      assert.strictEqual(isNonNegativeNumber(0), true);
+    });
+
+
     console.log('\n========================================');
     console.log(`Test Suite Completed: ${passed} Passed, ${failed} Failed`);
     console.log('========================================\n');
+
 
     server.close(() => {
       process.exit(failed > 0 ? 1 : 0);

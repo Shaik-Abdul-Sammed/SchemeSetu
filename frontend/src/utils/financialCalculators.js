@@ -174,3 +174,55 @@ export function calculateRepaymentCapacity(annualIncome = 300000, proposedEmi = 
       : `High DTI warning (${dtiRatioPct}%). Total monthly obligations exceed 50% of monthly family income.`
   };
 }
+
+/**
+ * Standard SIH26092 Concessional EMI Calculator
+ * Formula: EMI = P * r * (1+r)^n / ((1+r)^n - 1)
+ * where r = annualRate / 12 / 100, n = tenure in months AFTER moratorium.
+ */
+export function calculateStandardEmi({ principal = 100000, rate = 8.0, tenureMonths = 36, moratoriumMonths = 6, validateFloor = false } = {}) {
+  const p = Number(principal);
+  if (isNaN(p) || p < 0) {
+    throw new Error('Principal must be non-negative');
+  }
+  const totalMonths = parseInt(tenureMonths, 10);
+  if (isNaN(totalMonths) || totalMonths <= 0) {
+    throw new Error('Tenure must be greater than zero');
+  }
+  const annualRate = Number(rate);
+  if (isNaN(annualRate) || annualRate < 0) {
+    throw new Error('Rate must be non-negative');
+  }
+  if (validateFloor && annualRate < 6.5) {
+    throw new Error('Rate below 6.5% floor');
+  }
+
+  const morMonths = Math.max(0, Math.min(totalMonths, parseInt(moratoriumMonths, 10) || 0));
+  const n = Math.max(1, totalMonths - morMonths);
+  const r = annualRate / 12 / 100;
+
+  let emi = 0;
+  if (r === 0) {
+    emi = p / n;
+  } else {
+    emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  }
+
+  const monthlyMoratoriumInterest = p * r;
+  const totalMoratoriumInterest = monthlyMoratoriumInterest * morMonths;
+  const repaymentTotalPayment = emi * n;
+  const totalInterest = Math.round((repaymentTotalPayment - p + totalMoratoriumInterest) * 100) / 100;
+  const totalAmount = Math.round((p + totalInterest) * 100) / 100;
+
+  return {
+    principal: p,
+    rate: annualRate,
+    tenureMonths: totalMonths,
+    moratoriumMonths: morMonths,
+    tenureAfterMoratorium: n,
+    emi: Math.round(emi * 100) / 100,
+    monthlyMoratoriumInterest: Math.round(monthlyMoratoriumInterest * 100) / 100,
+    totalInterest,
+    totalAmount
+  };
+}

@@ -70,7 +70,7 @@ export default class ErrorBoundary extends React.Component {
               SchemeSetu encountered an unexpected render issue. Don't worry, your data is safe and state has been protected.
             </p>
 
-            {this.state.error && (
+            {Boolean(import.meta.env?.DEV) && this.state.error && (
               <div style={{
                 fontSize: '0.75rem',
                 backgroundColor: '#0F172A',

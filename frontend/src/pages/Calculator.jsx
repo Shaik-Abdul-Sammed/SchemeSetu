@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Calculator as CalcIcon, 
@@ -15,12 +16,17 @@ import {
   CheckCircle2, 
   Sparkles,
   Info,
-  DollarSign
+  DollarSign,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import useTextToSpeech from '../hooks/useTextToSpeech';
+import useVoiceRecognition, { VOICE_STATES } from '../hooks/useVoiceRecognition';
+import { extractAmount } from '../utils/voiceUtils';
 import AmortizationTable from '../components/financial/AmortizationTable';
 import { formatIndianCurrency } from '../utils/numberValidator';
+
 
 export const SCHEME_PRESETS = [
   {
@@ -130,33 +136,93 @@ export default function Calculator() {
     setMoratoriumMonths(preset.moratoriumMonths);
   };
 
-  // Financial calculations
-  const govtLoanPrincipal = Math.min(
-    activePreset.maxLoan, 
-    Math.round((projectCost * coveragePct) / 100)
-  );
-  const beneficiaryMarginMoney = Math.max(0, projectCost - govtLoanPrincipal);
+  // Voice speech-to-amount input for low-literacy beneficiaries
+  const [voiceNotice, setVoiceNotice] = useState('');
+  const handleVoiceAmount = (transcript) => {
+    if (!transcript) return;
+    const detected = extractAmount(transcript);
+    if (detected && detected > 0) {
+      const maxAllowed = activePreset.maxLoan ? Math.min(5500000, Math.round(activePreset.maxLoan / 0.9)) : 5000000;
+      const bounded = Math.min(maxAllowed, Math.max(20000, detected));
+      setProjectCost(bounded);
+      setVoiceNotice(`Spoken amount recognized: ₹${bounded.toLocaleString('en-IN')}`);
+      setTimeout(() => setVoiceNotice(''), 4500);
+    } else {
+      setVoiceNotice(`Could not detect number from "${transcript}". Please say "One Lakh" or "50000".`);
+      setTimeout(() => setVoiceNotice(''), 4500);
+    }
+  };
 
-  // Monthly EMI after moratorium
-  const effectiveTenure = Math.max(1, tenureMonths - moratoriumMonths);
-  const monthlyRate = (interestRate / 12) / 100;
-  const emi = Math.round(
-    (govtLoanPrincipal * monthlyRate * Math.pow(1 + monthlyRate, effectiveTenure)) / 
-    (Math.pow(1 + monthlyRate, effectiveTenure) - 1)
-  ) || 0;
+  const {
+    state: voiceState,
+    startListening,
+    stopListening
+  } = useVoiceRecognition({
+    onResult: handleVoiceAmount,
+    lang
+  });
 
-  const totalRepayment = emi * effectiveTenure;
-  const totalInterest = Math.max(0, totalRepayment - govtLoanPrincipal);
+  // Memoized financial calculations
 
-  // Commercial bank comparison (market rate ~13.5% without concession)
-  const commercialRate = 0.135 / 12;
-  const commercialEmi = Math.round(
-    (govtLoanPrincipal * commercialRate * Math.pow(1 + commercialRate, effectiveTenure)) / 
-    (Math.pow(1 + commercialRate, effectiveTenure) - 1)
-  ) || 0;
-  const commercialTotalRepayment = commercialEmi * effectiveTenure;
-  const totalSavings = Math.max(0, commercialTotalRepayment - totalRepayment);
-  const monthlySavings = Math.max(0, commercialEmi - emi);
+  const {
+    govtLoanPrincipal,
+    beneficiaryMarginMoney,
+    effectiveTenure,
+    monthlyRate,
+    emi,
+    totalRepayment,
+    totalInterest,
+    commercialEmi,
+    commercialTotalRepayment,
+    totalSavings,
+    monthlySavings
+  } = useMemo(() => {
+    const loanPrincipal = Math.min(
+      activePreset.maxLoan, 
+      Math.round((projectCost * coveragePct) / 100)
+    );
+    const marginMoney = Math.max(0, projectCost - loanPrincipal);
+    const effTenure = Math.max(1, tenureMonths - moratoriumMonths);
+    const mRate = (interestRate / 12) / 100;
+    
+    let calcEmi = 0;
+    if (mRate > 0) {
+      calcEmi = Math.round(
+        (loanPrincipal * mRate * Math.pow(1 + mRate, effTenure)) / 
+        (Math.pow(1 + mRate, effTenure) - 1)
+      ) || 0;
+    } else {
+      calcEmi = Math.round(loanPrincipal / effTenure) || 0;
+    }
+
+    const repay = calcEmi * effTenure;
+    const interest = Math.max(0, repay - loanPrincipal);
+
+    // Commercial market rate ~13.5%
+    const cRate = 0.135 / 12;
+    const cEmi = Math.round(
+      (loanPrincipal * cRate * Math.pow(1 + cRate, effTenure)) / 
+      (Math.pow(1 + cRate, effTenure) - 1)
+    ) || 0;
+    const cRepay = cEmi * effTenure;
+    const totSav = Math.max(0, cRepay - repay);
+    const monSav = Math.max(0, cEmi - calcEmi);
+
+    return {
+      govtLoanPrincipal: loanPrincipal,
+      beneficiaryMarginMoney: marginMoney,
+      effectiveTenure: effTenure,
+      monthlyRate: mRate,
+      emi: calcEmi,
+      totalRepayment: repay,
+      totalInterest: interest,
+      commercialEmi: cEmi,
+      commercialTotalRepayment: cRepay,
+      totalSavings: totSav,
+      monthlySavings: monSav
+    };
+  }, [activePreset.maxLoan, projectCost, coveragePct, tenureMonths, moratoriumMonths, interestRate]);
+
 
   // Spoken audio summary
   const handleSpeakSummary = () => {
@@ -260,14 +326,44 @@ export default function Calculator() {
 
           {/* Project Cost Slider */}
           <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <label style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>
-                Total Estimated Project Cost
-              </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155', margin: 0 }}>
+                  Total Estimated Project Cost
+                </label>
+                <button
+                  type="button"
+                  onClick={voiceState === VOICE_STATES.LISTENING ? stopListening : startListening}
+                  className="btn btn-sm"
+                  aria-label="Speak Loan Amount with Microphone"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    backgroundColor: voiceState === VOICE_STATES.LISTENING ? '#FEE2E2' : '#F0FDF4',
+                    color: voiceState === VOICE_STATES.LISTENING ? '#DC2626' : '#059669',
+                    border: `1px solid ${voiceState === VOICE_STATES.LISTENING ? '#FCA5A5' : '#86EFAC'}`,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {voiceState === VOICE_STATES.LISTENING ? <MicOff size={13} /> : <Mic size={13} />}
+                  <span>{voiceState === VOICE_STATES.LISTENING ? 'Listening...' : 'Speak Amount'}</span>
+                </button>
+              </div>
               <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#059669' }}>
                 ₹{projectCost.toLocaleString('en-IN')}
               </span>
             </div>
+            {voiceNotice && (
+              <div style={{ fontSize: '0.78rem', color: '#047857', backgroundColor: '#ECFDF5', padding: '0.3rem 0.6rem', borderRadius: '6px', marginBottom: '0.4rem', border: '1px solid #A7F3D0' }}>
+                {voiceNotice}
+              </div>
+            )}
+
             <input
               type="range"
               min="20000"

@@ -175,30 +175,6 @@ Official Government Digital Service Dossier - 2026
                 }}>
                   <ShieldCheck size={15} /> {t('verifiedCitizen', 'Verified SC Beneficiary')}
                 </span>
-
-
-
-                <button 
-                  onClick={() => setLocationModalOpen(true)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                    color: '#38BDF8',
-                    padding: '0.3rem 0.8rem',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    cursor: 'pointer'
-                  }}
-                  title="Change Location Radar"
-                >
-                  <MapPin size={14} style={{ color: '#F59E0B' }} /> 
-                  <span>{location.district && location.state ? `${location.district}, ${location.state}` : (location.district || location.state || t('selectLocation', 'Select Location'))}</span>
-                  {location.isGPS && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />}
-                </button>
               </div>
 
               <h1 style={{ fontSize: '1.85rem', color: '#FFFFFF', margin: 0, lineHeight: 1.2, fontWeight: 900 }}>

@@ -49,32 +49,39 @@ export default function LanguageSelectorIcon() {
       speakGreeting(meta.greeting, meta.voiceLang);
     }
     setIsOpen(false);
+    // User selected language: start the Tour Guide, which then seamlessly opens Samaj Mode!
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('schemesetu_start_tour'));
+    }, 300);
   };
 
   return (
-    <div style={{ position: 'relative' }} ref={dropdownRef}>
+    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.35rem',
-          backgroundColor: 'rgba(255, 255, 255, 0.12)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: '8px',
-          padding: '0.35rem 0.65rem',
+          gap: '0.4rem',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.16)',
+          borderRadius: '18px',
+          padding: '0 0.75rem',
+          height: '36px',
           color: '#FFFFFF',
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          fontSize: '0.85rem',
-          fontWeight: 700
+          transition: 'all 0.15s ease',
+          fontSize: '0.82rem',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+          flexShrink: 0
         }}
         title="Change Language / भाषा बदलें / భాషను మార్చండి"
         aria-label="Select Language"
       >
-        <Globe size={16} style={{ color: '#F59E0B' }} />
+        <Globe size={15} style={{ color: '#F59E0B', flexShrink: 0 }} />
         <span style={{ fontSize: '0.82rem', letterSpacing: '0.04em' }}>{typeof lang === 'string' ? lang : (lang?.code || 'EN')}</span>
-        <ChevronDown size={13} style={{ opacity: 0.8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        <ChevronDown size={13} style={{ opacity: 0.8, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
       </button>
 
       {isOpen && (

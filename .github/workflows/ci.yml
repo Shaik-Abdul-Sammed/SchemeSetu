@@ -1,4 +1,4 @@
-name: SchemeSetu Continuous Integration Pipeline
+name: SchemeSetu CI Pipeline (SIH26092)
 
 on:
   push:
@@ -7,28 +7,39 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  test-and-build:
+    name: Backend Tests & Frontend Build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
-      - name: Install Backend & Frontend Dependencies
+      - name: Install Backend Dependencies
         run: |
-          cd backend && npm install
-          cd ../frontend && npm install
+          cd backend && npm ci
 
-      - name: Run Backend & Assistant Verification Tests
+      - name: Run Backend Full Test Suite (160 Assertions)
         run: |
-          node test_v4_assistant.js
-          node test_100_improvements.js
-          node test_100_pages_deploy.js
+          cd backend && npm test
 
-      - name: Build Frontend SPA Production Bundle
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend && npm ci
+
+      - name: Run Frontend Lint Check
+        run: |
+          cd frontend && npm run lint
+
+      - name: Build Frontend Production SPA Bundle
         run: |
           cd frontend && npm run build

@@ -372,49 +372,66 @@ export default function TribalSahajModeModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Language Selection Quick Pills (Accessible) */}
+        {/* Language Selection Quick Pills (Accessible with Generous Gap) */}
         <div 
-          className="no-scrollbar"
           style={{
             backgroundColor: '#F8FAFC',
-            padding: '0.65rem 1rem',
-            borderBottom: '1px solid #E2E8F0',
+            padding: '0.85rem 1.25rem',
+            borderBottom: '1.5px solid #E2E8F0',
             display: 'flex',
-            gap: '0.5rem',
-            overflowX: 'auto',
-            whiteSpace: 'nowrap',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+            flexDirection: 'column',
+            gap: '0.5rem'
           }}
         >
-          {languageOptions.map((opt) => (
-            <button
-              key={opt.code}
-              type="button"
-              onClick={() => {
-                changeLanguage(opt.code);
-                stop();
-              }}
-              style={{
-                padding: '0.35rem 0.85rem',
-                borderRadius: '20px',
-                fontSize: '0.78rem',
-                fontWeight: lang === opt.code ? 900 : 700,
-                backgroundColor: lang === opt.code ? '#0F172A' : '#FFFFFF',
-                color: lang === opt.code ? '#FCD34D' : '#334155',
-                border: `1.5px solid ${lang === opt.code ? '#0F172A' : '#CBD5E1'}`,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                flexShrink: 0,
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>{opt.label}</span>
-              {lang === opt.code && <Check size={13} style={{ color: '#FCD34D' }} />}
-            </button>
-          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ fontSize: '0.95rem' }}>🌐</span>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {lang === 'TE' ? 'మీ భాషను ఎంచుకోండి:' : (lang === 'HI' ? 'अपनी भाषा चुनें:' : 'Select Your Language:')}
+            </span>
+          </div>
+
+          <div
+            className="no-scrollbar"
+            style={{
+              display: 'flex',
+              gap: '0.85rem',
+              overflowX: 'auto',
+              whiteSpace: 'nowrap',
+              padding: '0.2rem 0',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+          >
+            {languageOptions.map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => {
+                  changeLanguage(opt.code);
+                  stop();
+                }}
+                style={{
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '24px',
+                  fontSize: '0.85rem',
+                  fontWeight: lang === opt.code ? 900 : 700,
+                  backgroundColor: lang === opt.code ? '#0F172A' : '#FFFFFF',
+                  color: lang === opt.code ? '#FCD34D' : '#334155',
+                  border: `2px solid ${lang === opt.code ? '#0F172A' : '#CBD5E1'}`,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  flexShrink: 0,
+                  boxShadow: lang === opt.code ? '0 3px 10px rgba(15, 23, 42, 0.25)' : '0 1px 4px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{opt.label}</span>
+                {lang === opt.code && <Check size={15} style={{ color: '#FCD34D' }} />}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Scrollable Main Interactive Canvas */}

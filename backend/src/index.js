@@ -29,10 +29,18 @@ const voiceRouter = require('./routes/v1/voice');
 
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const securityHeaders = require('./middleware/securityHeaders');
+const { validateEnvironment } = require('./config/envValidator');
+
+// Validate environment variables at startup
+validateEnvironment();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// Security Headers (Helmet Equivalent)
+app.use(securityHeaders());
 
 // CORS configuration for frontend integration
 const allowedOrigins = [
@@ -56,16 +64,17 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (origin.endsWith('.onrender.com')) return callback(null, true);
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
-    return callback(null, true);
+    return callback(new Error('CORS policy: Origin not allowed'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-user-id']
 }));
 
-// Body Parsers
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+// Default Body Parsers (1MB limit to prevent memory exhaustion / DoS)
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+
 
 // Health Check Handler
 function healthCheckHandler(req, res) {
@@ -134,9 +143,11 @@ app.use('/api/v1/eligibility', eligibilityRouter);
 app.use('/api/v1/calculator', calculatorRouter);
 app.use('/api/v1/partners', partnersRouter);
 app.use('/api/v1/agent', agentRouter);
-app.use('/api/v1/documents', documentsRouter);
+app.use('/api/v1/documents', bodyParser.json({ limit: '10mb' }), bodyParser.urlencoded({ extended: true, limit: '10mb' }), documentsRouter);
+app.get('/api/v1/demo-accounts', (req, res) => require('./controllers/userController').getDemoAccounts(req, res));
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/auth', usersRouter); // Alias for auth
+
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/feedback', feedbackRouter);
 app.use('/api/v1/uli', uliRouter);

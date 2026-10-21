@@ -98,18 +98,33 @@ From the project root directory, run:
 
 ---
 
+## 👥 SIH26092 Judge Demo Credentials
+
+Pre-seeded bcrypt-authenticated credentials for live hackathon evaluation:
+
+| Role | Email / Username | Password | Persona & Context |
+| :--- | :--- | :--- | :--- |
+| **SC Beneficiary (Micro)** | `ramesh.kumar@schemesetu.in` | `Demo@123` | SC entrepreneur, ₹3.5L income, Vempalli YSR Kadapa |
+| **SC Beneficiary (Term)** | `lakshmi.devi@schemesetu.in` | `Demo@123` | SC entrepreneur, ₹4.5L income, Kadapa AP |
+| **CSC / VLE Agent** | `kavitha.vle@schemesetu.in` | `Agent@123` | Village Level Entrepreneur assisted intake desk |
+| **MoSJE Admin** | `admin@schemesetu.in` | `Admin@123` | Platform administration, audit logs & telemetry |
+
+*Demo Accounts endpoint available at `GET /api/v1/demo-accounts`.*
+
+---
+
 ## 🧪 Automated Test Suite Execution
 
-Run the complete multi-level test suite (115 passing test assertions covering API filtering, auth isolation, EMI calculator, Haversine distance, PDF generation, and 100% localization key coverage):
+Run the complete multi-level test suite (160 passing test assertions covering API filtering, auth isolation, rate limiters, EMI calculator, Haversine distance, PDF generation, and 100% localization key coverage):
 
 ```bash
-cd backend && NODE_ENV=test npm test
+cd backend && npm test
 ```
 
-### Expected Output
+### Verified Test Suite Result
 ```text
 ========================================
-Test Suite Completed: 115 Passed, 0 Failed
+Test Suite Completed: 160 Passed, 0 Failed
 ========================================
 ```
 
@@ -117,21 +132,26 @@ Test Suite Completed: 115 Passed, 0 Failed
 
 ## 🌐 Deployment Instructions
 
-### 1. Frontend Deployment (Vercel / Netlify)
-1. Build the production static assets:
+### 1. Unified Docker Compose
+```bash
+docker-compose up --build -d
+```
+- Frontend: `http://localhost:3000`
+- Backend REST API: `http://localhost:5000`
+- Health check: `http://localhost:5000/api/health`
+
+### 2. Manual Production Build
+1. Build frontend static assets:
    ```bash
    cd frontend && npm run build
    ```
-2. Upload the `frontend/dist` directory or connect the GitHub repository `https://github.com/Shaik-Abdul-Sammed/SchemeSetu.git` with root directory set to `frontend`.
-
-### 2. Backend API Deployment (Render / Heroku)
-1. The backend includes a production `Procfile`:
-   ```text
-   web: node src/index.js
+2. Start backend server:
+   ```bash
+   cd backend && NODE_ENV=production npm start
    ```
-2. Deploy the `backend/` directory on Render/Heroku and configure environment variables (`PORT=5000`, `NODE_ENV=production`).
 
 ---
 
 ## 📄 License
 This project is developed for **Smart India Hackathon 2026 (SIH26092)** under the MIT License.
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LanguageContext } from './useLanguage';
-import { translations, AVAILABLE_LANGUAGES, getTranslation } from './languageStore';
+import { translations, AVAILABLE_LANGUAGES, getTranslation, loadLocale } from './languageStore';
 import { translateText } from '../services/translateService';
 
 /**
@@ -53,7 +53,14 @@ export function LanguageProvider({ children }) {
     return 'EN';
   });
 
+  const [, setLoadedVersion] = useState(0);
+
   useEffect(() => {
+    if (lang && lang !== 'EN') {
+      loadLocale(lang).then(() => {
+        setLoadedVersion(v => v + 1);
+      });
+    }
     if (typeof document !== 'undefined') {
       document.documentElement.lang = lang.toLowerCase();
       // Sync Google Translate cookie with current language
@@ -61,10 +68,13 @@ export function LanguageProvider({ children }) {
     }
   }, [lang]);
 
-  const changeLanguage = (newLang) => {
-    // Accept language if it has app translations OR is a known tribal/mapped language
-    const isSupported = translations[newLang] || GOOGLE_LANG_MAP[newLang];
+  const changeLanguage = async (newLang) => {
+    // Accept language if it is available or has app translations OR is a known tribal/mapped language
+    const isSupported = AVAILABLE_LANGUAGES.some(l => l.code === newLang) || translations[newLang] || GOOGLE_LANG_MAP[newLang];
     if (isSupported) {
+      if (newLang !== 'EN') {
+        await loadLocale(newLang);
+      }
       setLang(newLang);
       localStorage.setItem('schemesetu_lang', newLang);
       if (typeof document !== 'undefined') {
